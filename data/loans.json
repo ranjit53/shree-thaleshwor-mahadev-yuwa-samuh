@@ -1,0 +1,30 @@
+[
+  {
+    "id": "L-1694764800000",
+    "memberId": "M-0001",
+    "principal": 50000,
+    "interestRate": 12,
+    "startDate": "2023-09-01",
+    "termMonths": 12,
+    "purpose": "Business expansion"
+  },
+  {
+    "id": "L-1694851200000",
+    "memberId": "M-0002",
+    "principal": 30000,
+    "interestRate": 15,
+    "startDate": "2023-10-01",
+    "termMonths": 6,
+    "purpose": "Education"
+  },
+  {
+    "id": "L-1694937600000",
+    "memberId": "M-0003",
+    "principal": 75000,
+    "interestRate": 10,
+    "startDate": "2023-11-01",
+    "termMonths": 24,
+    "purpose": "Home renovation"
+  }
+]
+

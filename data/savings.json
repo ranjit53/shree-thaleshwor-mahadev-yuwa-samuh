@@ -1,0 +1,38 @@
+[
+  {
+    "id": "S-1694764800000",
+    "memberId": "M-0001",
+    "amount": 5000,
+    "date": "2023-09-15",
+    "remarks": "Initial deposit"
+  },
+  {
+    "id": "S-1694851200000",
+    "memberId": "M-0001",
+    "amount": 2000,
+    "date": "2023-10-15",
+    "remarks": "Monthly saving"
+  },
+  {
+    "id": "S-1694937600000",
+    "memberId": "M-0002",
+    "amount": 3000,
+    "date": "2023-09-20",
+    "remarks": "Initial deposit"
+  },
+  {
+    "id": "S-1695024000000",
+    "memberId": "M-0003",
+    "amount": 4000,
+    "date": "2023-10-10",
+    "remarks": "Initial deposit"
+  },
+  {
+    "id": "S-1695110400000",
+    "memberId": "M-0004",
+    "amount": 2500,
+    "date": "2023-11-05",
+    "remarks": "Initial deposit"
+  }
+]
+

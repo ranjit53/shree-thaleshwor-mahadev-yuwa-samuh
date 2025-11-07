@@ -1,0 +1,59 @@
+[
+  {
+    "id": "M-0001",
+    "name": "Ram Bahadur Thapa",
+    "phone": "9841234567",
+    "joinDate": "2023-01-15",
+    "address": "Kathmandu, Nepal"
+  },
+  {
+    "id": "M-0002",
+    "name": "Sita Devi Shrestha",
+    "phone": "9842345678",
+    "joinDate": "2023-02-20",
+    "address": "Lalitpur, Nepal"
+  },
+  {
+    "id": "M-0003",
+    "name": "Hari Prasad Karki",
+    "phone": "9843456789",
+    "joinDate": "2023-03-10",
+    "address": "Bhaktapur, Nepal"
+  },
+  {
+    "id": "M-0004",
+    "name": "Gita Kumari Tamang",
+    "phone": "9844567890",
+    "joinDate": "2023-04-05",
+    "address": "Pokhara, Nepal"
+  },
+  {
+    "id": "M-0005",
+    "name": "Krishna Bahadur Magar",
+    "phone": "9845678901",
+    "joinDate": "2023-05-12",
+    "address": "Chitwan, Nepal"
+  },
+  {
+    "id": "M-0006",
+    "name": "Maya Devi Gurung",
+    "phone": "9846789012",
+    "joinDate": "2023-06-18",
+    "address": "Dharan, Nepal"
+  },
+  {
+    "id": "M-0007",
+    "name": "Bikash Kumar Rai",
+    "phone": "9847890123",
+    "joinDate": "2023-07-22",
+    "address": "Biratnagar, Nepal"
+  },
+  {
+    "id": "M-0008",
+    "name": "Sunita Thapa Magar",
+    "phone": "9848901234",
+    "joinDate": "2023-08-30",
+    "address": "Butwal, Nepal"
+  }
+]
+

@@ -1,0 +1,39 @@
+[
+  {
+    "id": "P-1694764800000",
+    "loanId": "L-1694764800000",
+    "memberId": "M-0001",
+    "date": "2023-10-01",
+    "principalPaid": 4000,
+    "interestPaid": 500,
+    "remarks": "First payment"
+  },
+  {
+    "id": "P-1694851200000",
+    "loanId": "L-1694764800000",
+    "memberId": "M-0001",
+    "date": "2023-11-01",
+    "principalPaid": 4000,
+    "interestPaid": 460,
+    "remarks": "Second payment"
+  },
+  {
+    "id": "P-1694937600000",
+    "loanId": "L-1694851200000",
+    "memberId": "M-0002",
+    "date": "2023-11-01",
+    "principalPaid": 5000,
+    "interestPaid": 375,
+    "remarks": "First payment"
+  },
+  {
+    "id": "P-1695024000000",
+    "loanId": "L-1694937600000",
+    "memberId": "M-0003",
+    "date": "2023-12-01",
+    "principalPaid": 3000,
+    "interestPaid": 625,
+    "remarks": "First payment"
+  }
+]
+
