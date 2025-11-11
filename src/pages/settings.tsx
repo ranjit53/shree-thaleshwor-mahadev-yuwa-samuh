@@ -28,11 +28,18 @@ export default function SettingsPage() {
 
   const [bulkData, setBulkData] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  // Bulk fixed saving support
+  const [members, setMembers] = useState<Member[]>([]);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
+  const [bulkFixedAmount, setBulkFixedAmount] = useState<string>('');
+  const [bulkFixedDate, setBulkFixedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectAllMembers, setSelectAllMembers] = useState<boolean>(true);
 
   useEffect(() => {
     if (isAdmin) {
       loadSettings();
       loadBackups();
+      loadMembersForBulk();
     }
   }, [isAdmin]);
 
@@ -46,6 +53,18 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
+  const loadMembersForBulk = async () => {
+    try {
+      const list = await readFile<Member[]>('data/members.json');
+      const m = list || [];
+      setMembers(m);
+      const all = new Set(m.map(mm => mm.id));
+      setSelectedMemberIds(all);
+      setSelectAllMembers(true);
+    } catch (e) {
+      // ignore
+    }
+  };
 
   const loadBackups = async () => {
     try {
@@ -53,6 +72,55 @@ export default function SettingsPage() {
       setBackups(files.filter(f => f.endsWith('.json')));
     } catch (error: any) {
       console.error('Failed to load backups:', error);
+    }
+  };
+  const toggleSelectAllMembers = (checked: boolean) => {
+    setSelectAllMembers(checked);
+    if (checked) {
+      setSelectedMemberIds(new Set(members.map(m => m.id)));
+    } else {
+      setSelectedMemberIds(new Set());
+    }
+  };
+  const toggleMember = (id: string, checked: boolean) => {
+    const next = new Set(selectedMemberIds);
+    if (checked) next.add(id); else next.delete(id);
+    setSelectedMemberIds(next);
+    setSelectAllMembers(next.size === members.length && members.length > 0);
+  };
+  const applyBulkFixedSavings = async () => {
+    if (!isAdmin) {
+      toast.error('Only admins can perform bulk operations');
+      return;
+    }
+    const amount = parseFloat(bulkFixedAmount || '0');
+    if (!amount || amount <= 0) {
+      toast.error('Enter a positive amount');
+      return;
+    }
+    if (!bulkFixedDate) {
+      toast.error('Select a date');
+      return;
+    }
+    if (selectedMemberIds.size === 0) {
+      toast.error('Select at least one member');
+      return;
+    }
+    try {
+      const existing = (await readFile<Saving[]>('data/savings.json')) || [];
+      const now = Date.now();
+      const add: Saving[] = Array.from(selectedMemberIds).map((memberId, idx) => ({
+        id: `S-${now}-${idx}`,
+        memberId,
+        amount,
+        date: bulkFixedDate,
+        remarks: 'Bulk fixed saving',
+      }));
+      await writeFile('data/savings.json', [...existing, ...add]);
+      toast.success(`Imported ${add.length} saving records`);
+      setBulkFixedAmount('');
+    } catch (error: any) {
+      toast.error('Failed to import bulk savings: ' + error.message);
     }
   };
   
@@ -474,30 +542,104 @@ export default function SettingsPage() {
 
           {/* Bulk Saving Tab */}
           {activeTab === 'bulk' && (
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Upload size={24} />
-                Bulk Saving Import
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Month</label>
-                  <input
-                    type="month"
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-                  />
+            <div className="space-y-6">
+              {/* Fixed amount to selected members */}
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Upload size={24} />
+                  Bulk Saving (same amount to selected members)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Amount (per member) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={bulkFixedAmount}
+                      onChange={(e) => setBulkFixedAmount(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={bulkFixedDate}
+                      onChange={(e) => setBulkFixedDate(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={applyBulkFixedSavings}
+                      className="w-full bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90"
+                    >
+                      Apply to Selected ({selectedMemberIds.size})
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    CSV or JSON Data
-                  </label>
-                  <textarea
-                    value={bulkData}
-                    onChange={(e) => setBulkData(e.target.value)}
-                    rows={10}
-                    placeholder={`CSV format:
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b">
+                    <input
+                      id="select-all-members"
+                      type="checkbox"
+                      checked={selectAllMembers}
+                      onChange={(e) => toggleSelectAllMembers(e.target.checked)}
+                    />
+                    <label htmlFor="select-all-members" className="font-medium">
+                      Select all members
+                    </label>
+                    <span className="text-sm text-gray-500">({members.length} members)</span>
+                  </div>
+                  <div className="max-h-64 overflow-auto divide-y">
+                    {members.map((m) => (
+                      <label key={m.id} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedMemberIds.has(m.id)}
+                          onChange={(e) => toggleMember(m.id, e.target.checked)}
+                        />
+                        <span className="font-medium">{m.name}</span>
+                        <span className="text-sm text-gray-500">({m.id})</span>
+                      </label>
+                    ))}
+                    {members.length === 0 && (
+                      <div className="px-4 py-6 text-gray-500 text-sm">No members available.</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Existing CSV/JSON import */}
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Upload size={24} />
+                  Bulk Saving Import (CSV/JSON)
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Month</label>
+                    <input
+                      type="month"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      CSV or JSON Data
+                    </label>
+                    <textarea
+                      value={bulkData}
+                      onChange={(e) => setBulkData(e.target.value)}
+                      rows={10}
+                      placeholder={`CSV format:
 MemberId,Amount,Date
 M-0001,1000,2024-01-15
 M-0002,2000,2024-01-15
@@ -507,16 +649,17 @@ OR JSON format:
   {"memberId": "M-0001", "amount": 1000, "date": "2024-01-15"},
   {"memberId": "M-0002", "amount": 2000, "date": "2024-01-15"}
 ]`}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary font-mono text-sm"
-                  />
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary font-mono text-sm"
+                    />
+                  </div>
+                  <button
+                    onClick={handleBulkSaving}
+                    className="flex items-center gap-2 bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90"
+                  >
+                    <Save size={20} />
+                    Import Savings
+                  </button>
                 </div>
-                <button
-                  onClick={handleBulkSaving}
-                  className="flex items-center gap-2 bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90"
-                >
-                  <Save size={20} />
-                  Import Savings
-                </button>
               </div>
             </div>
           )}
