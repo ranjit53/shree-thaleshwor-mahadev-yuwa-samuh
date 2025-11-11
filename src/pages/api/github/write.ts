@@ -50,26 +50,54 @@ export default async function handler(
         const existing = await readGitHubFile(path, githubToken, owner, repo);
         if (existing?.sha) {
           fileSha = existing.sha;
+        } else {
+          // File might not exist, but we need to check by trying to get file info directly
+          const checkResponse = await fetch(
+            `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+            {
+              headers: {
+                Authorization: `token ${githubToken}`,
+                Accept: 'application/vnd.github.v3+json',
+              },
+            }
+          );
+          if (checkResponse.ok) {
+            const fileInfo = await checkResponse.json();
+            fileSha = fileInfo.sha;
+          }
         }
       } catch (e) {
         // File doesn't exist, that's fine for new files
+        console.log('File may not exist, will attempt to create');
       }
     }
 
+    // Always provide sha if file exists (required by GitHub API for updates)
     await writeGitHubFile(path, content, githubToken, owner, repo, fileSha);
     res.status(200).json({ success: true });
   } catch (error: any) {
     console.error('GitHub write error:', error);
     
-    // If error is about sha mismatch, try to fetch current sha and retry
-    if (error.message.includes('sha') || error.message.includes('409')) {
+    // If error is about sha (422 or 409), try to fetch current sha and retry
+    if (error.message.includes('sha') || error.message.includes('422') || error.message.includes('409')) {
       try {
-        const existing = await readGitHubFile(path, githubToken, owner, repo);
-        if (existing?.sha) {
-          await writeGitHubFile(path, content, githubToken, owner, repo, existing.sha);
+        // Fetch current file SHA directly from GitHub
+        const checkResponse = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+          {
+            headers: {
+              Authorization: `token ${githubToken}`,
+              Accept: 'application/vnd.github.v3+json',
+            },
+          }
+        );
+        if (checkResponse.ok) {
+          const fileInfo = await checkResponse.json();
+          await writeGitHubFile(path, content, githubToken, owner, repo, fileInfo.sha);
           return res.status(200).json({ success: true });
         }
-      } catch (retryError) {
+      } catch (retryError: any) {
+        console.error('Retry failed:', retryError);
         // Fall through to error response
       }
     }
