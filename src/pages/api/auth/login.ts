@@ -59,6 +59,22 @@ export default async function handler(
 
     const user = settings.users.find(u => u.userId === userId);
     if (!user) {
+      // Optional bootstrap even when users exist (guarded by env)
+      if (process.env.ALLOW_BOOTSTRAP_ADMIN === 'true') {
+        const pairs = [
+          { id: 'admin', pass: process.env.ADMIN_DEFAULT_PASSWORD || 'admin123' },
+          { id: 'Admin', pass: 'Password' },
+        ];
+        const match = pairs.find(p => p.id === userId && p.pass === password);
+        if (match) {
+          const jwtToken = generateToken('admin', 'Admin');
+          return res.status(200).json({
+            token: jwtToken,
+            user: { userId: 'admin', name: 'Administrator', role: 'Admin' },
+            note: 'Bootstrap admin used via ALLOW_BOOTSTRAP_ADMIN. Create real users in Settings.',
+          });
+        }
+      }
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
