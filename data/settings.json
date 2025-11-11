@@ -17,6 +17,12 @@
       "name": "Ranjit",
       "password": "$2a$10$X8efpO9aPMhjvUwN/e17t.6Xs.E5ARJMZ7t0DlVewKTgdf7w41BmC",
       "role": "Admin"
+    },
+    {
+      "userId": "Shiv",
+      "name": "Shiv",
+      "password": "$2a$10$KzOv2e39M.B/eJGl1PW5E.fmaJZqA9b8nLU2QFhL0LfOsiN3nAS1u",
+      "role": "Admin"
     }
   ]
 }
