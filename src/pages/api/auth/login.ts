@@ -34,7 +34,21 @@ export default async function handler(
     const result = await readGitHubFile('data/settings.json', token, owner, repo);
     const settings: Settings | null = result?.data || null;
     
-    if (!settings || !settings.users) {
+    // Bootstrap fallback: if no users configured yet, allow default admin login
+    const defaultAdminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123';
+    if (!settings || !settings.users || settings.users.length === 0) {
+      if (userId === 'admin' && password === defaultAdminPassword) {
+        const jwtToken = generateToken('admin', 'Admin');
+        return res.status(200).json({
+          token: jwtToken,
+          user: {
+            userId: 'admin',
+            name: 'Administrator',
+            role: 'Admin',
+          },
+          note: 'Logged in with bootstrap admin. Please create real users in Settings.',
+        });
+      }
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
