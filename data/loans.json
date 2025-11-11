@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": "L-1762885887476",
+    "memberId": "M-0014",
+    "principal": 18000,
+    "interestRate": 20,
+    "startDate": "2025-09-10",
+    "termMonths": 6
+  }
+]
