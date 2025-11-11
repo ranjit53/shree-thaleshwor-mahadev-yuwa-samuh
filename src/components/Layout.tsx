@@ -4,6 +4,7 @@
 
 import { useState, ReactNode } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -53,9 +54,18 @@ export default function Layout({ children }: LayoutProps) {
             >
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <h1 className="text-xl font-bold text-gray-800">
-              Shree Thaleshwor Mahadev Yuwa Samuh
-            </h1>
+            <Link href="/" className="flex items-center gap-2">
+              <Image
+                src="/logo.svg"
+                alt="Shree Thaleshwor Mahadev Yuwa Samuh"
+                width={36}
+                height={36}
+                priority
+              />
+              <h1 className="text-xl font-bold text-gray-800">
+                Shree Thaleshwor Mahadev Yuwa Samuh
+              </h1>
+            </Link>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
