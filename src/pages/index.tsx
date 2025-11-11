@@ -35,11 +35,11 @@ export default function Dashboard() {
     totalLoan: 0,
     totalInterest: 0,
     availableBalance: 0,
-    savingDefaulters: 0,
-    interestDefaulters: 0,
   });
   const [lineData, setLineData] = useState<any[]>([]);
   const [pieData, setPieData] = useState<any[]>([]);
+  const [savingDefaulters, setSavingDefaulters] = useState<Array<{ id: string; name: string }>>([]);
+  const [interestDefaulters, setInterestDefaulters] = useState<Array<{ id: string; name: string }>>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -71,7 +71,15 @@ export default function Dashboard() {
       const totalInterest = payments.reduce((sum, p) => sum + p.interestPaid, 0);
       const availableBalance = totalSaving - totalLoan;
 
-      // Calculate Monthly Defaulters
+      setStats({
+        totalMembers,
+        totalSaving,
+        totalLoan,
+        totalInterest,
+        availableBalance,
+      });
+
+      // Calculate Monthly Defaulters with names
       const now = new Date();
       const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       
@@ -92,18 +100,30 @@ export default function Dashboard() {
       );
       
       // Defaulters are those who saved last month but not this month
-      const savingDefaulters = Array.from(membersWhoSavedLastMonth).filter(
+      const savingDefaulterIds = Array.from(membersWhoSavedLastMonth).filter(
         memberId => !membersWhoSavedThisMonth.has(memberId)
-      ).length;
+      );
+      
+      const savingDefaulterList = savingDefaulterIds
+        .map(memberId => {
+          const member = members.find(m => m.id === memberId);
+          return member ? { id: member.id, name: member.name } : null;
+        })
+        .filter((m): m is { id: string; name: string } => m !== null);
+      
+      setSavingDefaulters(savingDefaulterList);
 
       // Loan Interest Defaulters: Members with active loans who haven't paid interest this month
-      const membersWithActiveLoans = new Set<string>();
+      const membersWithActiveLoans = new Map<string, string>(); // memberId -> memberName
       loans.forEach(loan => {
         const loanPayments = payments.filter(p => p.loanId === loan.id);
         const principalPaid = loanPayments.reduce((sum, p) => sum + p.principalPaid, 0);
         const outstanding = Math.max(0, loan.principal - principalPaid);
         if (outstanding > 0) {
-          membersWithActiveLoans.add(loan.memberId);
+          const member = members.find(m => m.id === loan.memberId);
+          if (member) {
+            membersWithActiveLoans.set(loan.memberId, member.name);
+          }
         }
       });
       
@@ -114,19 +134,11 @@ export default function Dashboard() {
       );
       
       // Defaulters are those with active loans but no interest payment this month
-      const interestDefaulters = Array.from(membersWithActiveLoans).filter(
-        memberId => !membersWhoPaidInterestThisMonth.has(memberId)
-      ).length;
-
-      setStats({
-        totalMembers,
-        totalSaving,
-        totalLoan,
-        totalInterest,
-        availableBalance,
-        savingDefaulters,
-        interestDefaulters,
-      });
+      const interestDefaulterList = Array.from(membersWithActiveLoans.entries())
+        .filter(([memberId]) => !membersWhoPaidInterestThisMonth.has(memberId))
+        .map(([id, name]) => ({ id, name }));
+      
+      setInterestDefaulters(interestDefaulterList);
 
       // Prepare line chart data (monthly trends)
       const monthlyData: { [key: string]: { saving: number; loan: number; month: string } } = {};
@@ -220,20 +232,6 @@ export default function Dashboard() {
       color: stats.availableBalance >= 0 ? 'bg-success' : 'bg-danger',
       onClick: () => router.push('/savings'),
     },
-    {
-      title: 'Saving Defaulters',
-      value: formatNumber(stats.savingDefaulters),
-      icon: UserX,
-      color: stats.savingDefaulters === 0 ? 'bg-success' : 'bg-danger',
-      onClick: () => router.push('/savings'),
-    },
-    {
-      title: 'Interest Defaulters',
-      value: formatNumber(stats.interestDefaulters),
-      icon: AlertTriangle,
-      color: stats.interestDefaulters === 0 ? 'bg-success' : 'bg-warning',
-      onClick: () => router.push('/payments'),
-    },
   ];
 
   if (loading) {
@@ -255,7 +253,7 @@ export default function Dashboard() {
           <h2 className="text-3xl font-bold text-gray-800">Dashboard</h2>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {statCards.map((card, index) => {
               const Icon = card.icon;
               return (
@@ -317,6 +315,61 @@ export default function Dashboard() {
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
                 </PieChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Defaulters Sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Saving Defaulters */}
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <UserX size={24} className="text-danger" />
+                Saving Defaulters ({savingDefaulters.length})
+              </h3>
+              {savingDefaulters.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No saving defaulters this month</p>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {savingDefaulters.map((defaulter) => (
+                    <div
+                      key={defaulter.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+                      onClick={() => router.push(`/savings`)}
+                    >
+                      <div>
+                        <p className="font-medium text-gray-800">{defaulter.name}</p>
+                        <p className="text-sm text-gray-500">{defaulter.id}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Interest Defaulters */}
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <AlertTriangle size={24} className="text-warning" />
+                Interest Defaulters ({interestDefaulters.length})
+              </h3>
+              {interestDefaulters.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No interest defaulters this month</p>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {interestDefaulters.map((defaulter) => (
+                    <div
+                      key={defaulter.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+                      onClick={() => router.push(`/payments`)}
+                    >
+                      <div>
+                        <p className="font-medium text-gray-800">{defaulter.name}</p>
+                        <p className="text-sm text-gray-500">{defaulter.id}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
