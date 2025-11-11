@@ -264,6 +264,34 @@ export default function SettingsPage() {
       toast.error('Failed to restore backup: ' + error.message);
     }
   };
+  
+  // Restore from already-parsed backup object (used for uploaded file)
+  const handleRestoreFromObject = async (backupData: any) => {
+    if (!isAdmin) {
+      toast.error('Only admins can restore backups');
+      return;
+    }
+    if (!backupData) {
+      toast.error('Invalid backup data');
+      return;
+    }
+    if (!confirm('Restore from uploaded backup? This will overwrite all current data.')) {
+      return;
+    }
+    try {
+      await Promise.all([
+        writeFile('data/members.json', backupData.members || []),
+        writeFile('data/savings.json', backupData.savings || []),
+        writeFile('data/loans.json', backupData.loans || []),
+        writeFile('data/payments.json', backupData.payments || []),
+        writeFile('data/settings.json', backupData.settings || { users: [] }),
+      ]);
+      toast.success('Data restored from uploaded file');
+      window.location.reload();
+    } catch (error: any) {
+      toast.error('Failed to restore uploaded backup: ' + error.message);
+    }
+  };
 
   if (!isAdmin) {
     return (
@@ -498,6 +526,31 @@ OR JSON format:
                 <p className="text-gray-600 mb-4">
                   Select a backup file to restore. This will overwrite all current data.
                 </p>
+                {/* Upload local backup file (fallback when no backups listed) */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Upload backup JSON (backup-YYYYMMDD-HHMMSS.json)
+                  </label>
+                  <input
+                    type="file"
+                    accept="application/json"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const text = await file.text();
+                        const data = JSON.parse(text);
+                        await handleRestoreFromObject(data);
+                      } catch (err: any) {
+                        toast.error('Invalid backup file');
+                      } finally {
+                        // reset input
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                    className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                  />
+                </div>
                 <div className="space-y-2">
                   {backups.length === 0 ? (
                     <p className="text-gray-500">No backups found</p>
