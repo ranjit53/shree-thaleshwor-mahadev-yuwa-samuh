@@ -1,12 +1,5 @@
 [
   {
-    "id": "S-1694764800000",
-    "memberId": "M-0001",
-    "amount": 5000,
-    "date": "2023-09-15",
-    "remarks": "Initial deposit"
-  },
-  {
     "id": "S-1694937600000",
     "memberId": "M-0002",
     "amount": 3000,
