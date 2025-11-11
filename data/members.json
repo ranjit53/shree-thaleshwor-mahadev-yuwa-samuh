@@ -54,6 +54,12 @@
     "phone": "9848901234",
     "joinDate": "2023-08-30",
     "address": "Butwal, Nepal"
+  },
+  {
+    "id": "M-0009",
+    "name": "Ranjit Singh",
+    "phone": "9844588219",
+    "joinDate": "2025-11-11",
+    "address": "Sarlahi"
   }
 ]
-
