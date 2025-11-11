@@ -56,9 +56,13 @@ export async function writeFile<T>(path: string, content: T, sha?: string): Prom
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ path }),
         });
-        const readResult: ApiResponse<any> & { sha?: string } = await readResponse.json();
-        if (readResult.sha) {
-          fileSha = readResult.sha;
+        
+        if (readResponse.ok) {
+          const readResult = await readResponse.json();
+          // The read API returns { data: ..., sha: ... }
+          if (readResult.sha) {
+            fileSha = readResult.sha;
+          }
         }
       } catch (e) {
         // File doesn't exist yet, that's fine - will create new file
