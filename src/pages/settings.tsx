@@ -107,6 +107,7 @@ export default function SettingsPage() {
       return;
     }
     try {
+      toast.loading(`Adding savings for ${selectedMemberIds.size} members...`, { id: 'bulk-saving' });
       const existing = (await readFile<Saving[]>('data/savings.json')) || [];
       const now = Date.now();
       const add: Saving[] = Array.from(selectedMemberIds).map((memberId, idx) => ({
@@ -117,33 +118,42 @@ export default function SettingsPage() {
         remarks: 'Bulk fixed saving',
       }));
       await writeFile('data/savings.json', [...existing, ...add]);
-      toast.success(`Imported ${add.length} saving records`);
+      toast.success(`Successfully added ${add.length} saving records`, { id: 'bulk-saving' });
       setBulkFixedAmount('');
+      // Optionally clear selection
+      // setSelectedMemberIds(new Set());
     } catch (error: any) {
-      toast.error('Failed to import bulk savings: ' + error.message);
+      toast.error('Failed to add bulk savings: ' + error.message, { id: 'bulk-saving' });
+      console.error('Bulk saving error:', error);
     }
   };
   
   const downloadBackup = async (backupPath: string) => {
     try {
+      toast.loading('Downloading backup...', { id: 'download-backup' });
       // Reuse readFile to fetch JSON content via backend API
       const data = await readFile<any>(backupPath);
       if (!data) {
-        toast.error('Failed to read backup content');
+        toast.error('Failed to read backup content', { id: 'download-backup' });
         return;
       }
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      // Ensure we have the actual backup data structure
+      const backupData = data.timestamp ? data : { timestamp: new Date().toISOString(), ...data };
+      const jsonString = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       const namePart = backupPath.split('/').pop() || 'backup.json';
-      a.download = namePart;
+      a.download = namePart.endsWith('.json') ? namePart : `${namePart}.json`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+      toast.success('Backup downloaded successfully', { id: 'download-backup' });
     } catch (error: any) {
-      toast.error('Failed to download backup: ' + (error.message || 'Unknown error'));
+      toast.error('Failed to download backup: ' + (error.message || 'Unknown error'), { id: 'download-backup' });
+      console.error('Download backup error:', error);
     }
   };
 
