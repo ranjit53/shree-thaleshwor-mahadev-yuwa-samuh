@@ -1,1 +1,11 @@
-
+[
+  {
+    "id": "P-1762889776868",
+    "loanId": "L-1762885887476",
+    "memberId": "M-0014",
+    "date": "2025-10-10",
+    "principalPaid": 0,
+    "interestPaid": 300,
+    "remarks": "intrest"
+  }
+]
