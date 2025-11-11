@@ -1,14 +1,5 @@
 [
   {
-    "id": "L-1694937600000",
-    "memberId": "M-0003",
-    "principal": 75000,
-    "interestRate": 10,
-    "startDate": "2023-11-01",
-    "termMonths": 24,
-    "purpose": "Home renovation"
-  },
-  {
     "id": "L-1762868046835",
     "memberId": "M-0009",
     "principal": 18000,
