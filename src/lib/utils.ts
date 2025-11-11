@@ -6,9 +6,9 @@
  * Format currency with thousand separators
  */
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('ne-NP', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'NPR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
