@@ -55,6 +55,29 @@ export default function SettingsPage() {
       console.error('Failed to load backups:', error);
     }
   };
+  
+  const downloadBackup = async (backupPath: string) => {
+    try {
+      // Reuse readFile to fetch JSON content via backend API
+      const data = await readFile<any>(backupPath);
+      if (!data) {
+        toast.error('Failed to read backup content');
+        return;
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const namePart = backupPath.split('/').pop() || 'backup.json';
+      a.download = namePart;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast.error('Failed to download backup: ' + (error.message || 'Unknown error'));
+    }
+  };
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -561,12 +584,21 @@ OR JSON format:
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                       >
                         <span className="font-mono text-sm">{backup}</span>
-                        <button
-                          onClick={() => handleRestore(backup)}
-                          className="px-4 py-2 bg-warning text-white rounded-lg hover:bg-warning/90"
-                        >
-                          Restore
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => downloadBackup(backup)}
+                            className="px-3 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                            title="Download backup file"
+                          >
+                            Download
+                          </button>
+                          <button
+                            onClick={() => handleRestore(backup)}
+                            className="px-4 py-2 bg-warning text-white rounded-lg hover:bg-warning/90"
+                          >
+                            Restore
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
