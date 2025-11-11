@@ -47,12 +47,16 @@ export default function Dashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [members, savings, loans, payments] = await Promise.all([
-        readFile<Member[]>('data/members.json') || [],
-        readFile<Saving[]>('data/savings.json') || [],
-        readFile<Loan[]>('data/loans.json') || [],
-        readFile<Payment[]>('data/payments.json') || [],
+      const [membersRes, savingsRes, loansRes, paymentsRes] = await Promise.all([
+        readFile<Member[]>('data/members.json'),
+        readFile<Saving[]>('data/savings.json'),
+        readFile<Loan[]>('data/loans.json'),
+        readFile<Payment[]>('data/payments.json'),
       ]);
+      const members: Member[] = membersRes ?? [];
+      const savings: Saving[] = savingsRes ?? [];
+      const loans: Loan[] = loansRes ?? [];
+      const payments: Payment[] = paymentsRes ?? [];
 
       // Calculate statistics
       const totalMembers = members.length;
