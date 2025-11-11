@@ -1,0 +1,125 @@
+{
+  "timestamp": "2025-11-11T14-12-24",
+  "members": [
+    {
+      "id": "M-0001",
+      "name": "दिनेश्वर सिं ",
+      "phone": "9861946891",
+      "joinDate": "2025-09-11",
+      "address": "Bagmati-3,Sarlahi"
+    }
+  ],
+  "savings": [
+    {
+      "id": "S-1694764800000",
+      "memberId": "M-0001",
+      "amount": 5000,
+      "date": "2023-09-15",
+      "remarks": "Initial deposit"
+    },
+    {
+      "id": "S-1694851200000",
+      "memberId": "M-0001",
+      "amount": 2000,
+      "date": "2023-10-15",
+      "remarks": "Monthly saving"
+    },
+    {
+      "id": "S-1694937600000",
+      "memberId": "M-0002",
+      "amount": 3000,
+      "date": "2023-09-20",
+      "remarks": "Initial deposit"
+    },
+    {
+      "id": "S-1695024000000",
+      "memberId": "M-0003",
+      "amount": 4000,
+      "date": "2023-10-10",
+      "remarks": "Initial deposit"
+    },
+    {
+      "id": "S-1695110400000",
+      "memberId": "M-0004",
+      "amount": 2500,
+      "date": "2023-11-05",
+      "remarks": "Initial deposit"
+    },
+    {
+      "id": "S-1762868003627",
+      "memberId": "M-0009",
+      "amount": 15000,
+      "date": "2025-11-11",
+      "remarks": "ff"
+    }
+  ],
+  "loans": [],
+  "payments": [
+    {
+      "id": "P-1694764800000",
+      "loanId": "L-1694764800000",
+      "memberId": "M-0001",
+      "date": "2023-10-01",
+      "principalPaid": 4000,
+      "interestPaid": 500,
+      "remarks": "First payment"
+    },
+    {
+      "id": "P-1694851200000",
+      "loanId": "L-1694764800000",
+      "memberId": "M-0001",
+      "date": "2023-11-01",
+      "principalPaid": 4000,
+      "interestPaid": 460,
+      "remarks": "Second payment"
+    },
+    {
+      "id": "P-1694937600000",
+      "loanId": "L-1694851200000",
+      "memberId": "M-0002",
+      "date": "2023-11-01",
+      "principalPaid": 5000,
+      "interestPaid": 375,
+      "remarks": "First payment"
+    },
+    {
+      "id": "P-1695024000000",
+      "loanId": "L-1694937600000",
+      "memberId": "M-0003",
+      "date": "2023-12-01",
+      "principalPaid": 3000,
+      "interestPaid": 625,
+      "remarks": "First payment"
+    },
+    {
+      "id": "P-1762868071377",
+      "loanId": "L-1762868046835",
+      "memberId": "M-0009",
+      "date": "2025-11-11",
+      "principalPaid": 0,
+      "interestPaid": 300
+    }
+  ],
+  "settings": {
+    "users": [
+      {
+        "userId": "admin",
+        "name": "Administrator",
+        "password": "$2a$10$rOzJqZqZqZqZqZqZqZqZqOqZqZqZqZqZqZqZqZqZqZqZqZqZqZqZq",
+        "role": "Admin"
+      },
+      {
+        "userId": "Ranjit123",
+        "name": "Ranjit",
+        "password": "$2a$10$.ghhOrrusijHtHDFsmdAju38rkM2HDnoVPVXSS1ELUN/qRkebEEE2",
+        "role": "Admin"
+      },
+      {
+        "userId": "Surendra123",
+        "name": "Surendra",
+        "password": "$2a$10$7KdJTyt3Ws9mQsuvnZgQDOF2QrdW.319vIePvbspv1YVfBW9pKLz.",
+        "role": "Viewer"
+      }
+    ]
+  }
+}
