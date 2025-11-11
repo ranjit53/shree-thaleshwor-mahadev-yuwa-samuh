@@ -34,6 +34,13 @@
     "principalPaid": 3000,
     "interestPaid": 625,
     "remarks": "First payment"
+  },
+  {
+    "id": "P-1762868071377",
+    "loanId": "L-1762868046835",
+    "memberId": "M-0009",
+    "date": "2025-11-11",
+    "principalPaid": 0,
+    "interestPaid": 300
   }
 ]
-
