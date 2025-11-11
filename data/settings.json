@@ -3,10 +3,9 @@
     {
       "userId": "admin",
       "name": "Administrator",
-      "password": "<admin12345>",
+      "password": "$2a$10$rOzJqZqZqZqZqZqZqZqZqOqZqZqZqZqZqZqZqZqZqZqZqZqZqZqZq",
       "role": "Admin"
     }
   ]
 }
-
 
