@@ -624,53 +624,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Existing CSV/JSON import */}
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Upload size={24} />
-                  Bulk Saving Import (CSV/JSON)
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Month</label>
-                    <input
-                      type="month"
-                      value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      CSV or JSON Data
-                    </label>
-                    <textarea
-                      value={bulkData}
-                      onChange={(e) => setBulkData(e.target.value)}
-                      rows={10}
-                      placeholder={`CSV format:
-MemberId,Amount,Date
-M-0001,1000,2024-01-15
-M-0002,2000,2024-01-15
-
-OR JSON format:
-[
-  {"memberId": "M-0001", "amount": 1000, "date": "2024-01-15"},
-  {"memberId": "M-0002", "amount": 2000, "date": "2024-01-15"}
-]`}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary font-mono text-sm"
-                    />
-                  </div>
-                  <button
-                    onClick={handleBulkSaving}
-                    className="flex items-center gap-2 bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90"
-                  >
-                    <Save size={20} />
-                    Import Savings
-                  </button>
-                </div>
-              </div>
             </div>
           )}
 
