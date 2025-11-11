@@ -11,6 +11,12 @@
       "name": "user",
       "password": "$2a$10$udaB1avtin2m1BRIpmf2Kew/nkv/Va9.2uexZ7Q24OjVmsOz4oyFO",
       "role": "Viewer"
+    },
+    {
+      "userId": "Ranjit",
+      "name": "Ranjit",
+      "password": "$2a$10$X8efpO9aPMhjvUwN/e17t.6Xs.E5ARJMZ7t0DlVewKTgdf7w41BmC",
+      "role": "Admin"
     }
   ]
 }
