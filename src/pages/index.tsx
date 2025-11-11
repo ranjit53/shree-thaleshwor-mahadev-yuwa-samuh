@@ -21,7 +21,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Users, PiggyBank, CreditCard, DollarSign, TrendingUp } from 'lucide-react';
+import { Users, PiggyBank, CreditCard, DollarSign, TrendingUp, AlertTriangle, UserX } from 'lucide-react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 
@@ -35,6 +35,8 @@ export default function Dashboard() {
     totalLoan: 0,
     totalInterest: 0,
     availableBalance: 0,
+    savingDefaulters: 0,
+    interestDefaulters: 0,
   });
   const [lineData, setLineData] = useState<any[]>([]);
   const [pieData, setPieData] = useState<any[]>([]);
@@ -69,12 +71,61 @@ export default function Dashboard() {
       const totalInterest = payments.reduce((sum, p) => sum + p.interestPaid, 0);
       const availableBalance = totalSaving - totalLoan;
 
+      // Calculate Monthly Defaulters
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      // Saving Defaulters: Members who saved last month but not this month
+      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const prevMonthStr = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+      
+      const membersWhoSavedLastMonth = new Set(
+        savings
+          .filter(s => s.date.startsWith(prevMonthStr))
+          .map(s => s.memberId)
+      );
+      
+      const membersWhoSavedThisMonth = new Set(
+        savings
+          .filter(s => s.date.startsWith(currentMonth))
+          .map(s => s.memberId)
+      );
+      
+      // Defaulters are those who saved last month but not this month
+      const savingDefaulters = Array.from(membersWhoSavedLastMonth).filter(
+        memberId => !membersWhoSavedThisMonth.has(memberId)
+      ).length;
+
+      // Loan Interest Defaulters: Members with active loans who haven't paid interest this month
+      const membersWithActiveLoans = new Set<string>();
+      loans.forEach(loan => {
+        const loanPayments = payments.filter(p => p.loanId === loan.id);
+        const principalPaid = loanPayments.reduce((sum, p) => sum + p.principalPaid, 0);
+        const outstanding = Math.max(0, loan.principal - principalPaid);
+        if (outstanding > 0) {
+          membersWithActiveLoans.add(loan.memberId);
+        }
+      });
+      
+      const membersWhoPaidInterestThisMonth = new Set(
+        payments
+          .filter(p => p.date.startsWith(currentMonth) && p.interestPaid > 0)
+          .map(p => p.memberId)
+      );
+      
+      // Defaulters are those with active loans but no interest payment this month
+      const interestDefaulters = Array.from(membersWithActiveLoans).filter(
+        memberId => !membersWhoPaidInterestThisMonth.has(memberId)
+      ).length;
+
       setStats({
         totalMembers,
         totalSaving,
         totalLoan,
         totalInterest,
         availableBalance,
+        savingDefaulters,
+        interestDefaulters,
       });
 
       // Prepare line chart data (monthly trends)
@@ -169,6 +220,20 @@ export default function Dashboard() {
       color: stats.availableBalance >= 0 ? 'bg-success' : 'bg-danger',
       onClick: () => router.push('/savings'),
     },
+    {
+      title: 'Saving Defaulters',
+      value: formatNumber(stats.savingDefaulters),
+      icon: UserX,
+      color: stats.savingDefaulters === 0 ? 'bg-success' : 'bg-danger',
+      onClick: () => router.push('/savings'),
+    },
+    {
+      title: 'Interest Defaulters',
+      value: formatNumber(stats.interestDefaulters),
+      icon: AlertTriangle,
+      color: stats.interestDefaulters === 0 ? 'bg-success' : 'bg-warning',
+      onClick: () => router.push('/payments'),
+    },
   ];
 
   if (loading) {
@@ -190,7 +255,7 @@ export default function Dashboard() {
           <h2 className="text-3xl font-bold text-gray-800">Dashboard</h2>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-4">
             {statCards.map((card, index) => {
               const Icon = card.icon;
               return (
