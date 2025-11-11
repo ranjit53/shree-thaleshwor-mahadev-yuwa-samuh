@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(0,0,0,0.25)"/>
+    </filter>
+  </defs>
+  <rect x="16" y="16" rx="48" ry="48" width="224" height="224" fill="url(#g)" filter="url(#s)"/>
+  <!-- Stylized rupee-like mark for finance -->
+  <g transform="translate(64,48)">
+    <path d="M32 0h64a12 12 0 0 1 0 24H80.5c7.5 4.3 13.1 11.5 15.2 20H112a12 12 0 0 1 0 24h-14.2c-8.4 28.3-37.1 44.9-65.9 37.6l-1.9-.5 33.5 33.5a12 12 0 1 1-17 17L7 135a12 12 0 0 1 4.7-19.7l20.5-7.5a44 44 0 0 0 28.6-55.8H24a12 12 0 0 1 0-24h35.2A20 20 0 0 0 56 24H32A12 12 0 0 1 32 0z" fill="#fff" opacity="0.95"/>
+  </g>
+</svg>
+
