@@ -37,6 +37,7 @@ export async function readFile<T>(path: string): Promise<T | null> {
 
 /**
  * Write a JSON file to GitHub (via backend API)
+ * Automatically fetches SHA if not provided
  */
 export async function writeFile<T>(path: string, content: T, sha?: string): Promise<void> {
   const token = localStorage.getItem('token');
@@ -46,13 +47,32 @@ export async function writeFile<T>(path: string, content: T, sha?: string): Prom
   }
 
   try {
+    // If SHA not provided, try to fetch it first
+    let fileSha = sha;
+    if (!fileSha) {
+      try {
+        const readResponse = await fetch(`${API_BASE}/github/read`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path }),
+        });
+        const readResult: ApiResponse<any> & { sha?: string } = await readResponse.json();
+        if (readResult.sha) {
+          fileSha = readResult.sha;
+        }
+      } catch (e) {
+        // File doesn't exist yet, that's fine - will create new file
+        console.log('File does not exist, will create new file');
+      }
+    }
+
     const response = await fetch(`${API_BASE}/github/write`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ path, content, sha }),
+      body: JSON.stringify({ path, content, sha: fileSha }),
     });
 
     const result: ApiResponse<void> = await response.json();
