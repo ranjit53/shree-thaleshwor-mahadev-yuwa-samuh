@@ -17,6 +17,12 @@
       "name": "Surendra",
       "password": "$2a$10$7KdJTyt3Ws9mQsuvnZgQDOF2QrdW.319vIePvbspv1YVfBW9pKLz.",
       "role": "Viewer"
+    },
+    {
+      "userId": "user",
+      "name": "user",
+      "password": "$2a$10$udaB1avtin2m1BRIpmf2Kew/nkv/Va9.2uexZ7Q24OjVmsOz4oyFO",
+      "role": "Viewer"
     }
   ]
 }
