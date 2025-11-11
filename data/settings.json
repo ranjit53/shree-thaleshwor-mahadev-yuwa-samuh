@@ -5,7 +5,12 @@
       "name": "Administrator",
       "password": "$2a$10$rOzJqZqZqZqZqZqZqZqZqOqZqZqZqZqZqZqZqZqZqZqZqZqZqZqZq",
       "role": "Admin"
+    },
+    {
+      "userId": "Ranjit123",
+      "name": "Ranjit",
+      "password": "$2a$10$.ghhOrrusijHtHDFsmdAju38rkM2HDnoVPVXSS1ELUN/qRkebEEE2",
+      "role": "Admin"
     }
   ]
 }
-
