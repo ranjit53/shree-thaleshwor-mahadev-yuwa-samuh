@@ -37,7 +37,12 @@ export default async function handler(
     // Bootstrap fallback: if no users configured yet, allow default admin login
     const defaultAdminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123';
     if (!settings || !settings.users || settings.users.length === 0) {
-      if (userId === 'admin' && password === defaultAdminPassword) {
+      const bootstrapPairs = [
+        { id: 'admin', pass: defaultAdminPassword },
+        { id: 'Admin', pass: 'Password' }, // user-requested bootstrap credentials
+      ];
+      const match = bootstrapPairs.find(p => p.id === userId && p.pass === password);
+      if (match) {
         const jwtToken = generateToken('admin', 'Admin');
         return res.status(200).json({
           token: jwtToken,
