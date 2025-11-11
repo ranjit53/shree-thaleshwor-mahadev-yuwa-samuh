@@ -25,6 +25,14 @@
     "startDate": "2023-11-01",
     "termMonths": 24,
     "purpose": "Home renovation"
+  },
+  {
+    "id": "L-1762868046835",
+    "memberId": "M-0009",
+    "principal": 18000,
+    "interestRate": 20,
+    "startDate": "2025-11-11",
+    "termMonths": 6,
+    "purpose": "home"
   }
 ]
-
