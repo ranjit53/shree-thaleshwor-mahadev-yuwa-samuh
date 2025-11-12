@@ -154,7 +154,7 @@ export default function SavingsPage() {
     return (
       <ProtectedRoute>
         <Layout>
-          <div className="flex items-center justify-center h-64">
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         </Layout>
@@ -165,7 +165,8 @@ export default function SavingsPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="space-y-6">
+        <div className="min-h-screen bg-gray-50">
+          <div className="w-full md:max-w-6xl md:mx-auto space-y-6 p-4 md:p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-3xl font-bold text-gray-800">Savings</h2>
             {isAdmin && (
@@ -384,4 +385,5 @@ export default function SavingsPage() {
     </ProtectedRoute>
   );
 }
+
 
