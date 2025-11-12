@@ -648,6 +648,172 @@ export default function PaymentsPage() {
               </table>
             </div>
           </div>
+
+          {/* Fine & Expenditure Records */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-800">Fine Payments</h3>
+                <span className="text-sm text-gray-500">
+                  Total: {formatCurrency(fines.reduce((sum, f) => sum + f.amount, 0))}
+                </span>
+              </div>
+              {fines.length === 0 ? (
+                <p className="text-gray-500 text-center py-6">No fines recorded.</p>
+              ) : (
+                <div className="overflow-x-auto max-h-72">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600 uppercase">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Date</th>
+                        <th className="px-4 py-2 text-left">Member</th>
+                        <th className="px-4 py-2 text-right">Amount</th>
+                        <th className="px-4 py-2 text-left">Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {[...fines].sort((a, b) => (a.date < b.date ? 1 : -1)).map((fine) => {
+                        const member = members.find((m) => m.id === fine.memberId);
+                        return (
+                          <tr key={fine.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-2">{formatDate(fine.date)}</td>
+                            <td className="px-4 py-2">
+                              <div className="font-medium text-gray-800">{member?.name || fine.memberId}</div>
+                              <div className="text-xs text-gray-500">{fine.memberId}</div>
+                            </td>
+                            <td className="px-4 py-2 text-right text-danger font-semibold">
+                              {formatCurrency(fine.amount)}
+                            </td>
+                            <td className="px-4 py-2 text-gray-600">{fine.reason}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-800">Expenditures</h3>
+                <span className="text-sm text-gray-500">
+                  Total: {formatCurrency(expenditures.reduce((sum, e) => sum + e.amount, 0))}
+                </span>
+              </div>
+              {expenditures.length === 0 ? (
+                <p className="text-gray-500 text-center py-6">No expenditures recorded.</p>
+              ) : (
+                <div className="overflow-x-auto max-h-72">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600 uppercase">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Date</th>
+                        <th className="px-4 py-2 text-left">Item</th>
+                        <th className="px-4 py-2 text-right">Amount</th>
+                        <th className="px-4 py-2 text-left">Note</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {[...expenditures].sort((a, b) => (a.date < b.date ? 1 : -1)).map((exp) => (
+                        <tr key={exp.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-2">{formatDate(exp.date)}</td>
+                          <td className="px-4 py-2 text-gray-800 font-medium">{exp.item}</td>
+                          <td className="px-4 py-2 text-right text-danger font-semibold">
+                            {formatCurrency(exp.amount)}
+                          </td>
+                          <td className="px-4 py-2 text-gray-600">{exp.note || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* View Payment History Modal */}
+          {viewingLoanId && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-2xl font-bold text-gray-800">Payment History</h3>
+                    <button
+                      onClick={() => setViewingLoanId(null)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {(() => {
+                    const loan = loans.find((l) => l.id === viewingLoanId);
+                    if (!loan) return null;
+                    const member = members.find((m) => m.id === loan.memberId);
+                    const loanPayments = getLoanPayments(viewingLoanId);
+
+                    return (
+                      <>
+                        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                          <p className="font-semibold">
+                            {member?.name} ({loan.memberId})
+                          </p>
+                          <p className="text-sm text-gray-600">Loan: {formatCurrency(loan.principal)}</p>
+                        </div>
+                        <div className="space-y-2">
+                          {loanPayments.length === 0 ? (
+                            <p className="text-gray-500 text-center py-8">No payments yet</p>
+                          ) : (
+                            loanPayments.map((payment) => (
+                              <div
+                                key={payment.id}
+                                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                              >
+                                <div>
+                                  <p className="font-semibold">{formatDate(payment.date)}</p>
+                                  <p className="text-sm text-gray-600">
+                                    Principal: {formatCurrency(payment.principalPaid)} | Interest:{' '}
+                                    {formatCurrency(payment.interestPaid)}
+                                  </p>
+                                  {payment.remarks && (
+                                    <p className="text-sm text-gray-500 mt-1">{payment.remarks}</p>
+                                  )}
+                                </div>
+                                {isAdmin && (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => {
+                                        handleEdit(payment);
+                                        setViewingLoanId(null);
+                                      }}
+                                      className="p-2 text-warning hover:bg-warning/10 rounded-lg"
+                                    >
+                                      <Edit size={18} />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        handleDelete(payment);
+                                        if (loanPayments.length === 1) {
+                                          setViewingLoanId(null);
+                                        }
+                                      }}
+                                      className="p-2 text-danger hover:bg-danger/10 rounded-lg"
+                                    >
+                                      <Trash2 size={18} />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </Layout>
     </ProtectedRoute>
