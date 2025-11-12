@@ -44,7 +44,9 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             श्री थलेश्वर महादेव युवा समूह
           </h1>
-          <p className="text-gray-600"> 💕Welcome In Shree Thaleshwor Mahadev Yuwa Samuh💕 Management System </p>
+          <p className="text-gray-600"> 💕Welcome💕 </p>
+           <p className="text-gray-600"> Shree Thaleshwor Mahadev Yuwa Samuh </p>
+           <p className="text-gray-600"> Finance Management System </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -89,12 +91,13 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center text-sm text-gray-500">
           <p> Developed By Ranjit Kumar Mahato </p>
-               <p> If Any Quere Contact </p>
-                  <p> Whatapps Num.: +977 9844588219 </p>
+              <p> If Any Inquiry </p>
+            <p> Whatapps Num. : +977 9844588219 </p>
         </div>
       </div>
     </div>
   );
 }
+
 
 
