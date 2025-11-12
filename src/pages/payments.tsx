@@ -301,7 +301,7 @@ export default function PaymentsPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="space-y-6">
+        <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-3xl font-bold text-gray-800">Payments</h2>
             {isAdmin && (
@@ -1127,4 +1127,5 @@ export default function PaymentsPage() {
     </ProtectedRoute>
   );
 }
+
 
