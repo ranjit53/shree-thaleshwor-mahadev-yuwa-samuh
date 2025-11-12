@@ -7,7 +7,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import { readFile, writeFile } from '@/lib/api';
 import { formatCurrency, formatDate, calculateMonthlyInterest, calculateOutstandingPrincipal } from '@/lib/utils';
-import type { Member, Loan, Payment } from '@/types';
+import type { Member, Loan, Payment, FinePayment, Expenditure } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -22,6 +22,10 @@ export default function PaymentsPage() {
   const [viewingLoanId, setViewingLoanId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { isAdmin } = useAuth();
+  const [showFineForm, setShowFineForm] = useState(false);
+  const [showExpForm, setShowExpForm] = useState(false);
+  const [fines, setFines] = useState<FinePayment[]>([]);
+  const [expenditures, setExpenditures] = useState<Expenditure[]>([]);
 
   const [formData, setFormData] = useState({
     loanId: '',
@@ -30,6 +34,19 @@ export default function PaymentsPage() {
     interestPaid: '',
     remarks: '',
   });
+  const [fineForm, setFineForm] = useState({
+    memberId: '',
+    date: new Date().toISOString().split('T')[0],
+    amount: '',
+    reason: 'Saving Default' as 'Saving Default' | 'Interest Default' | 'Other',
+    note: '',
+  });
+  const [expForm, setExpForm] = useState({
+    date: new Date().toISOString().split('T')[0],
+    item: '',
+    amount: '',
+    note: '',
+  });
 
   useEffect(() => {
     loadData();
@@ -37,14 +54,18 @@ export default function PaymentsPage() {
 
   const loadData = async () => {
     try {
-      const [membersData, loansData, paymentsData] = await Promise.all([
+      const [membersData, loansData, paymentsData, finesData, expData] = await Promise.all([
         readFile<Member[]>('data/members.json'),
         readFile<Loan[]>('data/loans.json'),
         readFile<Payment[]>('data/payments.json'),
+        readFile<FinePayment[]>('data/fines.json'),
+        readFile<Expenditure[]>('data/expenditures.json'),
       ]);
       setMembers(membersData || []);
       setLoans(loansData || []);
       setPayments(paymentsData || []);
+      setFines(finesData || []);
+      setExpenditures(expData || []);
     } catch (error: any) {
       toast.error('Failed to load data: ' + error.message);
     } finally {
@@ -164,6 +185,8 @@ export default function PaymentsPage() {
     setShowAddForm(false);
     setEditingPayment(null);
     setViewingLoanId(null);
+    setShowFineForm(false);
+    setShowExpForm(false);
   };
 
   const handleEdit = (payment: Payment) => {
@@ -215,16 +238,38 @@ export default function PaymentsPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-3xl font-bold text-gray-800">Payments</h2>
             {isAdmin && (
-              <button
-                onClick={() => {
-                  resetForm();
-                  setShowAddForm(true);
-                }}
-                className="flex items-center gap-2 bg-info text-white px-4 py-2 rounded-lg hover:bg-info/90 transition-colors"
-              >
-                <Plus size={20} />
-                Add Payment
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setShowAddForm(true);
+                  }}
+                  className="flex items-center gap-2 bg-info text-white px-4 py-2 rounded-lg hover:bg-info/90 transition-colors"
+                >
+                  <Plus size={20} />
+                  Add Payment
+                </button>
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setShowFineForm(true);
+                  }}
+                  className="flex items-center gap-2 bg-warning text-white px-4 py-2 rounded-lg hover:bg-warning/90 transition-colors"
+                >
+                  <Plus size={20} />
+                  Add Fine
+                </button>
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setShowExpForm(true);
+                  }}
+                  className="flex items-center gap-2 bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger/90 transition-colors"
+                >
+                  <Plus size={20} />
+                  Add Expenditure
+                </button>
+              </div>
             )}
           </div>
 
@@ -348,6 +393,183 @@ export default function PaymentsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* Add Fine Form */}
+          {showFineForm && isAdmin && (
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h3 className="text-xl font-semibold mb-4">Add Fine Payment</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Member</label>
+                  <select
+                    required
+                    value={fineForm.memberId}
+                    onChange={(e) => setFineForm({ ...fineForm, memberId: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
+                  >
+                    <option value="">Select Member</option>
+                    {members.map(m => (
+                      <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={fineForm.date}
+                    onChange={(e) => setFineForm({ ...fineForm, date: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={fineForm.amount}
+                    onChange={(e) => setFineForm({ ...fineForm, amount: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                  <select
+                    value={fineForm.reason}
+                    onChange={(e) => setFineForm({ ...fineForm, reason: e.target.value as any })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
+                  >
+                    <option>Saving Default</option>
+                    <option>Interest Default</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                  <input
+                    type="text"
+                    value={fineForm.note}
+                    onChange={(e) => setFineForm({ ...fineForm, note: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={async () => {
+                    if (!isAdmin) return;
+                    try {
+                      const list = fines || [];
+                      const newItem: FinePayment = {
+                        id: `F-${Date.now()}`,
+                        memberId: fineForm.memberId,
+                        date: fineForm.date,
+                        amount: parseFloat(fineForm.amount),
+                        reason: fineForm.reason,
+                        note: fineForm.note || undefined,
+                      };
+                      const updated = [...list, newItem];
+                      await writeFile('data/fines.json', updated);
+                      setFines(updated);
+                      resetForm();
+                    } catch (e: any) {
+                      toast.error('Failed to add fine: ' + e.message);
+                    }
+                  }}
+                  className="bg-warning text-white px-6 py-2 rounded-lg hover:bg-warning/90"
+                >
+                  Save Fine
+                </button>
+                <button
+                  onClick={resetForm}
+                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Add Expenditure Form */}
+          {showExpForm && isAdmin && (
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h3 className="text-xl font-semibold mb-4">Add Expenditure</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={expForm.date}
+                    onChange={(e) => setExpForm({ ...expForm, date: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Item</label>
+                  <input
+                    type="text"
+                    placeholder="DayBook, A4 Paper, Pen, Stamp, Inkpad, etc."
+                    value={expForm.item}
+                    onChange={(e) => setExpForm({ ...expForm, item: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={expForm.amount}
+                    onChange={(e) => setExpForm({ ...expForm, amount: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
+                  />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                  <input
+                    type="text"
+                    value={expForm.note}
+                    onChange={(e) => setExpForm({ ...expForm, note: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={async () => {
+                    if (!isAdmin) return;
+                    try {
+                      const list = expenditures || [];
+                      const newItem: Expenditure = {
+                        id: `E-${Date.now()}`,
+                        date: expForm.date,
+                        item: expForm.item,
+                        amount: parseFloat(expForm.amount),
+                        note: expForm.note || undefined,
+                      };
+                      const updated = [...list, newItem];
+                      await writeFile('data/expenditures.json', updated);
+                      setExpenditures(updated);
+                      resetForm();
+                    } catch (e: any) {
+                      toast.error('Failed to add expenditure: ' + e.message);
+                    }
+                  }}
+                  className="bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90"
+                >
+                  Save Expenditure
+                </button>
+                <button
+                  onClick={resetForm}
+                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           )}
 
