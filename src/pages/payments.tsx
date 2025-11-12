@@ -24,6 +24,8 @@ export default function PaymentsPage() {
   const { isAdmin } = useAuth();
   const [showFineForm, setShowFineForm] = useState(false);
   const [showExpForm, setShowExpForm] = useState(false);
+  const [editingFine, setEditingFine] = useState<FinePayment | null>(null);
+  const [editingExpenditure, setEditingExpenditure] = useState<Expenditure | null>(null);
   const [fines, setFines] = useState<FinePayment[]>([]);
   const [expenditures, setExpenditures] = useState<Expenditure[]>([]);
 
@@ -187,6 +189,8 @@ export default function PaymentsPage() {
     setViewingLoanId(null);
     setShowFineForm(false);
     setShowExpForm(false);
+    setEditingFine(null);
+    setEditingExpenditure(null);
   };
 
   const handleEdit = (payment: Payment) => {
@@ -199,6 +203,69 @@ export default function PaymentsPage() {
       remarks: payment.remarks || '',
     });
     setViewingLoanId(null);
+  };
+
+  const handleDeleteFine = async (fine: FinePayment) => {
+    if (!isAdmin) {
+      toast.error('Only admins can delete fines');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this fine payment?')) {
+      return;
+    }
+
+    try {
+      const updatedFines = fines.filter(f => f.id !== fine.id);
+      await writeFile('data/fines.json', updatedFines);
+      setFines(updatedFines);
+      toast.success('Fine payment deleted successfully');
+    } catch (error: any) {
+      toast.error('Failed to delete fine: ' + error.message);
+    }
+  };
+
+  const handleEditFine = (fine: FinePayment) => {
+    setEditingFine(fine);
+    setFineForm({
+      memberId: fine.memberId,
+      date: fine.date,
+      amount: fine.amount.toString(),
+      reason: fine.reason,
+      note: fine.note || '',
+    });
+    setShowFineForm(true);
+  };
+
+  const handleDeleteExpenditure = async (exp: Expenditure) => {
+    if (!isAdmin) {
+      toast.error('Only admins can delete expenditures');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this expenditure?')) {
+      return;
+    }
+
+    try {
+      const updatedExpenditures = expenditures.filter(e => e.id !== exp.id);
+      await writeFile('data/expenditures.json', updatedExpenditures);
+      setExpenditures(updatedExpenditures);
+      toast.success('Expenditure deleted successfully');
+    } catch (error: any) {
+      toast.error('Failed to delete expenditure: ' + error.message);
+    }
+  };
+
+  const handleEditExpenditure = (exp: Expenditure) => {
+    setEditingExpenditure(exp);
+    setExpForm({
+      date: exp.date,
+      item: exp.item,
+      amount: exp.amount.toString(),
+      note: exp.note || '',
+    });
+    setShowExpForm(true);
   };
 
   // Group payments by loan for display
@@ -399,7 +466,9 @@ export default function PaymentsPage() {
           {/* Add Fine Form */}
           {showFineForm && isAdmin && (
             <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">Add Fine Payment</h3>
+              <h3 className="text-xl font-semibold mb-4">
+                {editingFine ? 'Edit Fine Payment' : 'Add Fine Payment'}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Member</label>
@@ -472,26 +541,44 @@ export default function PaymentsPage() {
                     }
                     try {
                       const list = fines || [];
-                      const newItem: FinePayment = {
-                        id: `F-${Date.now()}`,
-                        memberId: fineForm.memberId,
-                        date: fineForm.date,
-                        amount,
-                        reason: fineForm.reason,
-                        note: fineForm.note || undefined,
-                      };
-                      const updated = [...list, newItem];
+                      let updated: FinePayment[];
+                      if (editingFine) {
+                        updated = list.map(f => 
+                          f.id === editingFine.id
+                            ? {
+                                ...f,
+                                memberId: fineForm.memberId,
+                                date: fineForm.date,
+                                amount,
+                                reason: fineForm.reason,
+                                note: fineForm.note || undefined,
+                              }
+                            : f
+                        );
+                        toast.success('Fine payment updated successfully');
+                      } else {
+                        const newItem: FinePayment = {
+                          id: `F-${Date.now()}`,
+                          memberId: fineForm.memberId,
+                          date: fineForm.date,
+                          amount,
+                          reason: fineForm.reason,
+                          note: fineForm.note || undefined,
+                        };
+                        updated = [...list, newItem];
+                        toast.success('Fine payment added successfully');
+                      }
                       await writeFile('data/fines.json', updated);
                       setFines(updated);
                       await loadData();
                       resetForm();
                     } catch (e: any) {
-                      toast.error('Failed to add fine: ' + e.message);
+                      toast.error('Failed to save fine: ' + e.message);
                     }
                   }}
                   className="bg-warning text-white px-6 py-2 rounded-lg hover:bg-warning/90"
                 >
-                  Save Fine
+                  {editingFine ? 'Update' : 'Save'} Fine
                 </button>
                 <button
                   onClick={resetForm}
@@ -506,7 +593,9 @@ export default function PaymentsPage() {
           {/* Add Expenditure Form */}
           {showExpForm && isAdmin && (
             <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">Add Expenditure</h3>
+              <h3 className="text-xl font-semibold mb-4">
+                {editingExpenditure ? 'Edit Expenditure' : 'Add Expenditure'}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
@@ -563,25 +652,42 @@ export default function PaymentsPage() {
                     }
                     try {
                       const list = expenditures || [];
-                      const newItem: Expenditure = {
-                        id: `E-${Date.now()}`,
-                        date: expForm.date,
-                        item: expForm.item,
-                        amount,
-                        note: expForm.note || undefined,
-                      };
-                      const updated = [...list, newItem];
+                      let updated: Expenditure[];
+                      if (editingExpenditure) {
+                        updated = list.map(e => 
+                          e.id === editingExpenditure.id
+                            ? {
+                                ...e,
+                                date: expForm.date,
+                                item: expForm.item,
+                                amount,
+                                note: expForm.note || undefined,
+                              }
+                            : e
+                        );
+                        toast.success('Expenditure updated successfully');
+                      } else {
+                        const newItem: Expenditure = {
+                          id: `E-${Date.now()}`,
+                          date: expForm.date,
+                          item: expForm.item,
+                          amount,
+                          note: expForm.note || undefined,
+                        };
+                        updated = [...list, newItem];
+                        toast.success('Expenditure added successfully');
+                      }
                       await writeFile('data/expenditures.json', updated);
                       setExpenditures(updated);
                       await loadData();
                       resetForm();
                     } catch (e: any) {
-                      toast.error('Failed to add expenditure: ' + e.message);
+                      toast.error('Failed to save expenditure: ' + e.message);
                     }
                   }}
                   className="bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90"
                 >
-                  Save Expenditure
+                  {editingExpenditure ? 'Update' : 'Save'} Expenditure
                 </button>
                 <button
                   onClick={resetForm}
@@ -592,62 +698,6 @@ export default function PaymentsPage() {
               </div>
             </div>
           )}
-
-          {/* Payments Table */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loan Principal</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dues Principal</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Interest Payment</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredLoans.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                        No payments found
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredLoans.map((loanId) => {
-                      const loan = loans.find(l => l.id === loanId);
-                      if (!loan) return null;
-                      const member = members.find(m => m.id === loan.memberId);
-                      const loanPayments = getLoanPayments(loanId);
-                      const totalPrincipalPaid = loanPayments.reduce((sum, p) => sum + p.principalPaid, 0);
-                      const totalInterestPaid = loanPayments.reduce((sum, p) => sum + p.interestPaid, 0);
-                      const outstanding = getOutstanding(loan);
-                      
-                      return (
-                        <tr key={loanId} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap font-medium">{loan.memberId}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{member?.name || '-'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(loan.principal)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap font-semibold">{formatCurrency(outstanding)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(totalInterestPaid)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <button
-                              onClick={() => setViewingLoanId(loanId)}
-                              className="p-2 text-info hover:bg-info/10 rounded-lg transition-colors"
-                              title="Review"
-                            >
-                              <Eye size={18} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
 
           {/* All Payments Details Section */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -667,6 +717,9 @@ export default function PaymentsPage() {
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Fine/Expenditure</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Amount</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                    {isAdmin && (
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -689,6 +742,8 @@ export default function PaymentsPage() {
                       note?: string;
                       loanId?: string;
                       payment?: Payment;
+                      fine?: FinePayment;
+                      expenditure?: Expenditure;
                     }> = [];
 
                     // Add loan payments
@@ -723,6 +778,7 @@ export default function PaymentsPage() {
                         totalAmount: fine.amount,
                         reason: fine.reason,
                         note: fine.note,
+                        fine,
                       });
                     });
 
@@ -736,14 +792,62 @@ export default function PaymentsPage() {
                         expenditureAmount: exp.amount,
                         totalAmount: exp.amount,
                         note: exp.note,
+                        expenditure: exp,
                       });
                     });
 
-                    // Sort by date (newest first)
-                    allPayments.sort((a, b) => (a.date < b.date ? 1 : -1));
+                    // Group by member ID and type (combine same member entries of same type)
+                    const groupedByMemberAndType = new Map<string, typeof allPayments>();
+                    allPayments.forEach((payment) => {
+                      // Create key from memberId/item and type
+                      const key = `${payment.memberId || payment.item || payment.id}_${payment.type}`;
+                      if (!groupedByMemberAndType.has(key)) {
+                        groupedByMemberAndType.set(key, []);
+                      }
+                      groupedByMemberAndType.get(key)!.push(payment);
+                    });
+
+                    // Combine entries for same member and type into single rows
+                    const combinedPayments: typeof allPayments = [];
+                    groupedByMemberAndType.forEach((memberPayments) => {
+                      if (memberPayments.length === 1) {
+                        // Single entry, add as is
+                        combinedPayments.push(memberPayments[0]);
+                      } else {
+                        // Multiple entries for same member and type, combine them
+                        const firstPayment = memberPayments[0];
+                        const combined: typeof firstPayment = {
+                          ...firstPayment,
+                          principalPaid: memberPayments.reduce((sum, p) => sum + (p.principalPaid || 0), 0) || undefined,
+                          interestPaid: memberPayments.reduce((sum, p) => sum + (p.interestPaid || 0), 0) || undefined,
+                          fineAmount: memberPayments.reduce((sum, p) => sum + (p.fineAmount || 0), 0) || undefined,
+                          expenditureAmount: memberPayments.reduce((sum, p) => sum + (p.expenditureAmount || 0), 0) || undefined,
+                          totalAmount: memberPayments.reduce((sum, p) => sum + p.totalAmount, 0),
+                          // Combine details
+                          details: memberPayments.map(p => p.details).filter(Boolean).join('; ') || undefined,
+                          note: memberPayments.map(p => p.note).filter(Boolean).join('; ') || undefined,
+                          reason: memberPayments.map(p => p.reason).filter(Boolean).join(', ') || undefined,
+                          // Use the most recent date
+                          date: memberPayments.sort((a, b) => (a.date < b.date ? 1 : -1))[0].date,
+                          // Keep all original objects for editing (use the first one, but we'll handle multiple in UI)
+                          payment: memberPayments.find(p => p.payment)?.payment,
+                          fine: memberPayments.find(p => p.fine)?.fine,
+                          expenditure: memberPayments.find(p => p.expenditure)?.expenditure,
+                        };
+                        combinedPayments.push(combined);
+                      }
+                    });
+
+                    // Sort by date (newest first), then by member name
+                    combinedPayments.sort((a, b) => {
+                      if (a.date !== b.date) {
+                        return a.date < b.date ? 1 : -1;
+                      }
+                      return (a.memberName || a.item || '').localeCompare(b.memberName || b.item || '');
+                    });
 
                     // Filter by search term if applicable
-                    const filtered = allPayments.filter((p) => {
+                    const filtered = combinedPayments.filter((p) => {
                       if (!searchTerm) return true;
                       const search = searchTerm.toLowerCase();
                       return (
@@ -757,7 +861,7 @@ export default function PaymentsPage() {
                     if (filtered.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={isAdmin ? 9 : 8} className="px-6 py-8 text-center text-gray-500">
                             No payments found
                           </td>
                         </tr>
@@ -836,6 +940,66 @@ export default function PaymentsPage() {
                             )}
                           </div>
                         </td>
+                        {isAdmin && (
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-2">
+                              {payment.type === 'Loan Payment' && payment.payment && (
+                                <>
+                                  <button
+                                    onClick={() => handleEdit(payment.payment!)}
+                                    className="p-2 text-warning hover:bg-warning/10 rounded-lg transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Edit size={18} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(payment.payment!)}
+                                    className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </>
+                              )}
+                              {payment.type === 'Fine Payment' && payment.fine && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditFine(payment.fine!)}
+                                    className="p-2 text-warning hover:bg-warning/10 rounded-lg transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Edit size={18} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteFine(payment.fine!)}
+                                    className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </>
+                              )}
+                              {payment.type === 'Expenditure' && payment.expenditure && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditExpenditure(payment.expenditure!)}
+                                    className="p-2 text-warning hover:bg-warning/10 rounded-lg transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Edit size={18} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteExpenditure(payment.expenditure!)}
+                                    className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ));
                   })()}
@@ -869,6 +1033,7 @@ export default function PaymentsPage() {
                       )}
                     </td>
                     <td></td>
+                    {isAdmin && <td></td>}
                   </tr>
                 </tfoot>
               </table>
