@@ -268,24 +268,6 @@ export default function PaymentsPage() {
     setShowExpForm(true);
   };
 
-  // Group payments by loan for display
-  const paymentsByLoan = new Map<string, Payment[]>();
-  loans.forEach(loan => {
-    const loanPayments = getLoanPayments(loan.id);
-    if (loanPayments.length > 0) {
-      paymentsByLoan.set(loan.id, loanPayments);
-    }
-  });
-
-  const filteredLoans = Array.from(paymentsByLoan.keys()).filter(loanId => {
-    const loan = loans.find(l => l.id === loanId);
-    const member = loan ? members.find(m => m.id === loan.memberId) : null;
-    return (
-      member?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      loanId.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
-
   if (loading) {
     return (
       <ProtectedRoute>
@@ -439,7 +421,7 @@ export default function PaymentsPage() {
                     <input
                       type="text"
                       value={formData.remarks}
-                      onChange={(e) => setFormData({ ...formData, remarks: (e.target as HTMLInputElement).value })}
+                      onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info"
                     />
                   </div>
@@ -929,7 +911,6 @@ export default function PaymentsPage() {
                         {isAdmin && (
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
-                              {/* Edit & Delete Buttons */}
                               {payment.type === 'Loan Payment' && payment.payment && (
                                 <>
                                   <button
@@ -985,23 +966,31 @@ export default function PaymentsPage() {
                                 </>
                               )}
 
-                              {/* REVIEW BUTTON — NOW IN EVERY ROW */}
+                              {/* REVIEW BUTTON - Fixed with correct toast usage */}
                               <button
                                 onClick={() => {
                                   if (payment.type === 'Loan Payment' && payment.loanId) {
                                     setViewingLoanId(payment.loanId);
                                   } else if (payment.type === 'Fine Payment' && payment.fine) {
-                                    toast.info(
-                                      `Fine – ${payment.memberName} (${payment.memberId})\n` +
-                                      `Amount: ${formatCurrency(payment.fine.amount)}\n` +
-                                      `Reason: ${payment.fine.reason}\n` +
-                                      `Note: ${payment.fine.note || '–'}`
+                                    toast(
+                                      <div className="text-sm">
+                                        <strong>Fine</strong><br />
+                                        Member: {payment.memberName} ({payment.memberId})<br />
+                                        Amount: {formatCurrency(payment.fine.amount)}<br />
+                                        Reason: {payment.fine.reason}<br />
+                                        {payment.fine.note && <>Note: {payment.fine.note}</>}
+                                      </div>,
+                                      { icon: 'ℹ️', duration: 5000 }
                                     );
                                   } else if (payment.type === 'Expenditure' && payment.expenditure) {
-                                    toast.info(
-                                      `Expenditure – ${payment.item}\n` +
-                                      `Amount: ${formatCurrency(payment.expenditure.amount)}\n` +
-                                      `Note: ${payment.expenditure.note || '–'}`
+                                    toast(
+                                      <div className="text-sm">
+                                        <strong>Expenditure</strong><br />
+                                        Item: {payment.item}<br />
+                                        Amount: {formatCurrency(payment.expenditure.amount)}<br />
+                                        {payment.expenditure.note && <>Note: {payment.expenditure.note}</>}
+                                      </div>,
+                                      { icon: '📋', duration: 5000 }
                                     );
                                   }
                                 }}
@@ -1019,18 +1008,12 @@ export default function PaymentsPage() {
                 </tbody>
                 <tfoot className="bg-gray-50">
                   <tr>
-                    <td colSpan={3} className="px-6 py-4 font-semibold text-gray-800">
-                      Total
-                    </td>
+                    <td colSpan={3} className="px-6 py-4 font-semibold text-gray-800">Total</td>
                     <td className="px-6 py-4 text-right font-semibold text-gray-800">
-                      {formatCurrency(
-                        payments.reduce((sum, p) => sum + p.principalPaid, 0)
-                      )}
+                      {formatCurrency(payments.reduce((sum, p) => sum + p.principalPaid, 0))}
                     </td>
                     <td className="px-6 py-4 text-right font-semibold text-info">
-                      {formatCurrency(
-                        payments.reduce((sum, p) => sum + p.interestPaid, 0)
-                      )}
+                      {formatCurrency(payments.reduce((sum, p) => sum + p.interestPaid, 0))}
                     </td>
                     <td className="px-6 py-4 text-right font-semibold text-warning">
                       {formatCurrency(
