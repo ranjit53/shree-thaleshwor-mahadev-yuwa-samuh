@@ -285,24 +285,6 @@ export default function MembersPage() {
                             >
                               <Eye size={18} />
                             </button>
-                            {isAdmin && (
-                              <>
-                                <button
-                                  onClick={() => handleEdit(member)}
-                                  className="p-2 text-warning hover:bg-warning/10 rounded-lg transition-colors"
-                                  title="Edit"
-                                >
-                                  <Edit size={18} />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(member)}
-                                  className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
-                              </>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -376,4 +358,3 @@ export default function MembersPage() {
     </ProtectedRoute>
   );
 }
-
