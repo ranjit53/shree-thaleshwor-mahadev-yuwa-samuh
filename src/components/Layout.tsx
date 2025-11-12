@@ -65,6 +65,7 @@ export default function Layout({ children }: LayoutProps) {
               <h1 className="text-xl font-bold text-gray-800">
                 श्री थलेश्वर महादेव युवा समूह
               </h1>
+              <p className="text-gray-600"> Shree Thaleshwor Mahadev Yuwa Samuh </p>
             </Link>
           </div>
           <div className="flex items-center gap-3">
@@ -137,5 +138,6 @@ export default function Layout({ children }: LayoutProps) {
     </div>
   );
 }
+
 
 
