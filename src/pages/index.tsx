@@ -21,7 +21,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Users, PiggyBank, CreditCard, DollarSign, TrendingUp, AlertTriangle, UserX } from 'lucide-react';
+import { Users, PiggyBank, CreditCard, DollarSign, TrendingUp, TrendingDown, AlertTriangle, UserX } from 'lucide-react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 
@@ -77,7 +77,7 @@ export default function Dashboard() {
       const totalInterest = payments.reduce((sum, p) => sum + p.interestPaid, 0);
       const totalFineComputed = fines.reduce((sum, f) => sum + f.amount, 0);
       const totalExpenditureComputed = expenditures.reduce((sum, e) => sum + e.amount, 0);
-      const availableBalance = totalSaving - totalLoan - totalExpenditureComputed;
+      const availableBalance = totalSaving + totalInterest + totalFineComputed - totalLoan - totalExpenditureComputed;
 
       setStats({
         totalMembers,
@@ -245,12 +245,12 @@ export default function Dashboard() {
     {
       title: 'Total Expenditure',
       value: formatCurrency(totalExpenditure),
-      icon: CreditCard,
+      icon: TrendingDown,
       color: 'bg-danger',
       onClick: () => router.push('/payments'),
     },
     {
-      title: 'Available Balance',
+      title: 'Net Available Balance',
       value: formatCurrency(stats.availableBalance),
       icon: TrendingUp,
       color: stats.availableBalance >= 0 ? 'bg-success' : 'bg-danger',
@@ -277,7 +277,7 @@ export default function Dashboard() {
           <h2 className="text-3xl font-bold text-gray-800">Dashboard</h2>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-4">
             {statCards.map((card, index) => {
               const Icon = card.icon;
               return (
