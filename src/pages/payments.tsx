@@ -649,6 +649,232 @@ export default function PaymentsPage() {
             </div>
           </div>
 
+          {/* All Payments Details Section */}
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-2xl font-bold text-gray-800">All Payment Details</h3>
+              <p className="text-sm text-gray-600 mt-1">Complete list of all payments including loan interest, fines, and expenditures</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member/Item</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Principal Paid</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Interest Paid</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Fine/Expenditure</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {(() => {
+                    // Combine all payments into a single array with type indicators
+                    const allPayments: Array<{
+                      id: string;
+                      date: string;
+                      type: 'Loan Payment' | 'Fine Payment' | 'Expenditure';
+                      memberName?: string;
+                      memberId?: string;
+                      item?: string;
+                      principalPaid?: number;
+                      interestPaid?: number;
+                      fineAmount?: number;
+                      expenditureAmount?: number;
+                      totalAmount: number;
+                      details?: string;
+                      reason?: string;
+                      note?: string;
+                      loanId?: string;
+                      payment?: Payment;
+                    }> = [];
+
+                    // Add loan payments
+                    payments.forEach((payment) => {
+                      const loan = loans.find(l => l.id === payment.loanId);
+                      const member = loan ? members.find(m => m.id === loan.memberId) : null;
+                      allPayments.push({
+                        id: payment.id,
+                        date: payment.date,
+                        type: 'Loan Payment',
+                        memberName: member?.name,
+                        memberId: loan?.memberId,
+                        principalPaid: payment.principalPaid,
+                        interestPaid: payment.interestPaid,
+                        totalAmount: payment.principalPaid + payment.interestPaid,
+                        details: payment.remarks,
+                        loanId: payment.loanId,
+                        payment,
+                      });
+                    });
+
+                    // Add fine payments
+                    fines.forEach((fine) => {
+                      const member = members.find(m => m.id === fine.memberId);
+                      allPayments.push({
+                        id: fine.id,
+                        date: fine.date,
+                        type: 'Fine Payment',
+                        memberName: member?.name,
+                        memberId: fine.memberId,
+                        fineAmount: fine.amount,
+                        totalAmount: fine.amount,
+                        reason: fine.reason,
+                        note: fine.note,
+                      });
+                    });
+
+                    // Add expenditures
+                    expenditures.forEach((exp) => {
+                      allPayments.push({
+                        id: exp.id,
+                        date: exp.date,
+                        type: 'Expenditure',
+                        item: exp.item,
+                        expenditureAmount: exp.amount,
+                        totalAmount: exp.amount,
+                        note: exp.note,
+                      });
+                    });
+
+                    // Sort by date (newest first)
+                    allPayments.sort((a, b) => (a.date < b.date ? 1 : -1));
+
+                    // Filter by search term if applicable
+                    const filtered = allPayments.filter((p) => {
+                      if (!searchTerm) return true;
+                      const search = searchTerm.toLowerCase();
+                      return (
+                        p.memberName?.toLowerCase().includes(search) ||
+                        p.memberId?.toLowerCase().includes(search) ||
+                        p.item?.toLowerCase().includes(search) ||
+                        p.type.toLowerCase().includes(search)
+                      );
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                            No payments found
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return filtered.map((payment) => (
+                      <tr key={payment.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">{formatDate(payment.date)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              payment.type === 'Loan Payment'
+                                ? 'bg-info/20 text-info'
+                                : payment.type === 'Fine Payment'
+                                ? 'bg-warning/20 text-warning'
+                                : 'bg-danger/20 text-danger'
+                            }`}
+                          >
+                            {payment.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {payment.memberName ? (
+                            <div>
+                              <div className="font-medium text-gray-800">{payment.memberName}</div>
+                              <div className="text-xs text-gray-500">{payment.memberId}</div>
+                            </div>
+                          ) : payment.item ? (
+                            <div className="font-medium text-gray-800">{payment.item}</div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          {payment.principalPaid !== undefined ? (
+                            <span className="text-gray-800">{formatCurrency(payment.principalPaid)}</span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          {payment.interestPaid !== undefined ? (
+                            <span className="text-info font-semibold">{formatCurrency(payment.interestPaid)}</span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          {payment.fineAmount !== undefined ? (
+                            <span className="text-warning font-semibold">{formatCurrency(payment.fineAmount)}</span>
+                          ) : payment.expenditureAmount !== undefined ? (
+                            <span className="text-danger font-semibold">{formatCurrency(payment.expenditureAmount)}</span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <span className="font-bold text-gray-900">{formatCurrency(payment.totalAmount)}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-600">
+                            {payment.reason && (
+                              <div>
+                                <span className="font-medium">Reason:</span> {payment.reason}
+                              </div>
+                            )}
+                            {payment.details && (
+                              <div className="mt-1">{payment.details}</div>
+                            )}
+                            {payment.note && (
+                              <div className="mt-1">{payment.note}</div>
+                            )}
+                            {!payment.reason && !payment.details && !payment.note && (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+                <tfoot className="bg-gray-50">
+                  <tr>
+                    <td colSpan={3} className="px-6 py-4 font-semibold text-gray-800">
+                      Total
+                    </td>
+                    <td className="px-6 py-4 text-right font-semibold text-gray-800">
+                      {formatCurrency(
+                        payments.reduce((sum, p) => sum + p.principalPaid, 0)
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right font-semibold text-info">
+                      {formatCurrency(
+                        payments.reduce((sum, p) => sum + p.interestPaid, 0)
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right font-semibold text-warning">
+                      {formatCurrency(
+                        fines.reduce((sum, f) => sum + f.amount, 0) +
+                        expenditures.reduce((sum, e) => sum + e.amount, 0)
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-gray-900">
+                      {formatCurrency(
+                        payments.reduce((sum, p) => sum + p.principalPaid + p.interestPaid, 0) +
+                        fines.reduce((sum, f) => sum + f.amount, 0) +
+                        expenditures.reduce((sum, e) => sum + e.amount, 0)
+                      )}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
           {/* View Payment History Modal */}
           {viewingLoanId && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
