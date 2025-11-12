@@ -692,13 +692,11 @@ export default function PaymentsPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member/Item</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Principal Paid</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Interest Paid</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Fine/Expenditure</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
                     {isAdmin && (
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
                     )}
@@ -829,7 +827,7 @@ export default function PaymentsPage() {
                     if (filtered.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={isAdmin ? 9 : 8} className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={isAdmin ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
                             No payments found
                           </td>
                         </tr>
@@ -839,19 +837,6 @@ export default function PaymentsPage() {
                     return filtered.map((payment) => (
                       <tr key={payment.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">{formatDate(payment.date)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              payment.type === 'Loan Payment'
-                                ? 'bg-info/20 text-info'
-                                : payment.type === 'Fine Payment'
-                                ? 'bg-warning/20 text-warning'
-                                : 'bg-danger/20 text-danger'
-                            }`}
-                          >
-                            {payment.type}
-                          </span>
-                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {payment.memberName ? (
                             <div>
@@ -890,82 +875,9 @@ export default function PaymentsPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <span className="font-bold text-gray-900">{formatCurrency(payment.totalAmount)}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-600">
-                            {payment.reason && (
-                              <div>
-                                <span className="font-medium">Reason:</span> {payment.reason}
-                              </div>
-                            )}
-                            {payment.details && (
-                              <div className="mt-1">{payment.details}</div>
-                            )}
-                            {payment.note && (
-                              <div className="mt-1">{payment.note}</div>
-                            )}
-                            {!payment.reason && !payment.details && !payment.note && (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </div>
-                        </td>
                         {isAdmin && (
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
-                              {payment.type === 'Loan Payment' && payment.payment && (
-                                <>
-                                  <button
-                                    onClick={() => handleEdit(payment.payment!)}
-                                    className="p-2 text-warning hover:bg-warning/10 rounded-lg transition-colors"
-                                    title="Edit"
-                                  >
-                                    <Edit size={18} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDelete(payment.payment!)}
-                                    className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={18} />
-                                  </button>
-                                </>
-                              )}
-                              {payment.type === 'Fine Payment' && payment.fine && (
-                                <>
-                                  <button
-                                    onClick={() => handleEditFine(payment.fine!)}
-                                    className="p-2 text-warning hover:bg-warning/10 rounded-lg transition-colors"
-                                    title="Edit"
-                                  >
-                                    <Edit size={18} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteFine(payment.fine!)}
-                                    className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={18} />
-                                  </button>
-                                </>
-                              )}
-                              {payment.type === 'Expenditure' && payment.expenditure && (
-                                <>
-                                  <button
-                                    onClick={() => handleEditExpenditure(payment.expenditure!)}
-                                    className="p-2 text-warning hover:bg-warning/10 rounded-lg transition-colors"
-                                    title="Edit"
-                                  >
-                                    <Edit size={18} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteExpenditure(payment.expenditure!)}
-                                    className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={18} />
-                                  </button>
-                                </>
-                              )}
-
                               {/* REVIEW BUTTON - Fixed with correct toast usage */}
                               <button
                                 onClick={() => {
@@ -1006,32 +918,6 @@ export default function PaymentsPage() {
                     ));
                   })()}
                 </tbody>
-                <tfoot className="bg-gray-50">
-                  <tr>
-                    <td colSpan={3} className="px-6 py-4 font-semibold text-gray-800">Total</td>
-                    <td className="px-6 py-4 text-right font-semibold text-gray-800">
-                      {formatCurrency(payments.reduce((sum, p) => sum + p.principalPaid, 0))}
-                    </td>
-                    <td className="px-6 py-4 text-right font-semibold text-info">
-                      {formatCurrency(payments.reduce((sum, p) => sum + p.interestPaid, 0))}
-                    </td>
-                    <td className="px-6 py-4 text-right font-semibold text-warning">
-                      {formatCurrency(
-                        fines.reduce((sum, f) => sum + f.amount, 0) +
-                        expenditures.reduce((sum, e) => sum + e.amount, 0)
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right font-bold text-gray-900">
-                      {formatCurrency(
-                        payments.reduce((sum, p) => sum + p.principalPaid + p.interestPaid, 0) +
-                        fines.reduce((sum, f) => sum + f.amount, 0) +
-                        expenditures.reduce((sum, e) => sum + e.amount, 0)
-                      )}
-                    </td>
-                    <td></td>
-                    {isAdmin && <td></td>}
-                  </tr>
-                </tfoot>
               </table>
             </div>
           </div>
@@ -1083,30 +969,6 @@ export default function PaymentsPage() {
                                     <p className="text-sm text-gray-500 mt-1">{payment.remarks}</p>
                                   )}
                                 </div>
-                                {isAdmin && (
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => {
-                                        handleEdit(payment);
-                                        setViewingLoanId(null);
-                                      }}
-                                      className="p-2 text-warning hover:bg-warning/10 rounded-lg"
-                                    >
-                                      <Edit size={18} />
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        handleDelete(payment);
-                                        if (loanPayments.length === 1) {
-                                          setViewingLoanId(null);
-                                        }
-                                      }}
-                                      className="p-2 text-danger hover:bg-danger/10 rounded-lg"
-                                    >
-                                      <Trash2 size={18} />
-                                    </button>
-                                  </div>
-                                )}
                               </div>
                             ))
                           )}
