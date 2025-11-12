@@ -969,6 +969,30 @@ export default function PaymentsPage() {
                                     <p className="text-sm text-gray-500 mt-1">{payment.remarks}</p>
                                   )}
                                 </div>
+                                {isAdmin && (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => {
+                                        handleEdit(payment);
+                                        setViewingLoanId(null);
+                                      }}
+                                      className="p-2 text-warning hover:bg-warning/10 rounded-lg"
+                                    >
+                                      <Edit size={18} />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        handleDelete(payment);
+                                        if (loanPayments.length === 1) {
+                                          setViewingLoanId(null);
+                                        }
+                                      }}
+                                      className="p-2 text-danger hover:bg-danger/10 rounded-lg"
+                                    >
+                                      <Trash2 size={18} />
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             ))
                           )}
