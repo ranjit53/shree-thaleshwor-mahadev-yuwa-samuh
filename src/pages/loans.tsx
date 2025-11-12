@@ -365,24 +365,6 @@ export default function LoansPage() {
                               >
                                 <Eye size={18} />
                               </button>
-                              {isAdmin && (
-                                <>
-                                  <button
-                                    onClick={() => handleEdit(loan)}
-                                    className="p-2 text-warning hover:bg-warning/10 rounded-lg transition-colors"
-                                    title="Edit"
-                                  >
-                                    <Edit size={18} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDelete(loan)}
-                                    className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={18} />
-                                  </button>
-                                </>
-                              )}
                             </div>
                           </td>
                         </tr>
@@ -502,4 +484,3 @@ export default function LoansPage() {
     </ProtectedRoute>
   );
 }
-
