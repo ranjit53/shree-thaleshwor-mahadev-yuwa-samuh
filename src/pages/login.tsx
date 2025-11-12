@@ -42,9 +42,9 @@ export default function LoginPage() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Shree Thaleshwor Mahadev Yuwa Samuh
+            श्री थलेश्वर महादेव युवा समूह
           </h1>
-          <p className="text-gray-600">Mini Microfinance Management System</p>
+          <p className="text-gray-600"> 💕Welcome In Shree Thaleshwor Mahadev Yuwa Samuh💕 Management System </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -88,10 +88,13 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500">
-          <p>Default admin: admin / admin123</p>
+          <p> Developed By Ranjit Kumar Mahato </p>
+               <p> If Any Quere Contact </p>
+                  <p> Whatapps Num.: +977 9844588219 </p>
         </div>
       </div>
     </div>
   );
 }
+
 
