@@ -309,6 +309,8 @@ export default function SettingsPage() {
         readFile('data/savings.json'),
         readFile('data/loans.json'),
         readFile('data/payments.json'),
+        readFile('data/fines.json'),
+        readFile('data/expenditures.json'),
         readFile('data/settings.json'),
       ]);
 
@@ -319,6 +321,8 @@ export default function SettingsPage() {
         savings: savings || [],
         loans: loans || [],
         payments: payments || [],
+        fines: (await readFile('data/fines.json')) || [],
+        expenditures: (await readFile('data/expenditures.json')) || [],
         settings: settingsData || { users: [] },
       };
 
