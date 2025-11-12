@@ -461,19 +461,29 @@ export default function PaymentsPage() {
                 <button
                   onClick={async () => {
                     if (!isAdmin) return;
+                    if (!fineForm.memberId) {
+                      toast.error('Select a member for the fine');
+                      return;
+                    }
+                    const amount = parseFloat(fineForm.amount);
+                    if (!amount || amount <= 0) {
+                      toast.error('Enter a positive fine amount');
+                      return;
+                    }
                     try {
                       const list = fines || [];
                       const newItem: FinePayment = {
                         id: `F-${Date.now()}`,
                         memberId: fineForm.memberId,
                         date: fineForm.date,
-                        amount: parseFloat(fineForm.amount),
+                        amount,
                         reason: fineForm.reason,
                         note: fineForm.note || undefined,
                       };
                       const updated = [...list, newItem];
                       await writeFile('data/fines.json', updated);
                       setFines(updated);
+                      await loadData();
                       resetForm();
                     } catch (e: any) {
                       toast.error('Failed to add fine: ' + e.message);
@@ -542,18 +552,28 @@ export default function PaymentsPage() {
                 <button
                   onClick={async () => {
                     if (!isAdmin) return;
+                    const amount = parseFloat(expForm.amount);
+                    if (!expForm.item.trim()) {
+                      toast.error('Enter expenditure item');
+                      return;
+                    }
+                    if (!amount || amount <= 0) {
+                      toast.error('Enter a positive expenditure amount');
+                      return;
+                    }
                     try {
                       const list = expenditures || [];
                       const newItem: Expenditure = {
                         id: `E-${Date.now()}`,
                         date: expForm.date,
                         item: expForm.item,
-                        amount: parseFloat(expForm.amount),
+                        amount,
                         note: expForm.note || undefined,
                       };
                       const updated = [...list, newItem];
                       await writeFile('data/expenditures.json', updated);
                       setExpenditures(updated);
+                      await loadData();
                       resetForm();
                     } catch (e: any) {
                       toast.error('Failed to add expenditure: ' + e.message);
@@ -628,6 +648,11 @@ export default function PaymentsPage() {
               </table>
             </div>
           </div>
+        </div>
+      </Layout>
+    </ProtectedRoute>
+  );
+}
 
           {/* View Payment History Modal */}
           {viewingLoanId && (
@@ -706,9 +731,82 @@ export default function PaymentsPage() {
               </div>
             </div>
           )}
-        </div>
-      </Layout>
-    </ProtectedRoute>
-  );
-}
 
+          {/* Fine & Expenditure Records */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-800">Fine Payments</h3>
+                <span className="text-sm text-gray-500">Total: {formatCurrency(fines.reduce((sum, f) => sum + f.amount, 0))}</span>
+              </div>
+              {fines.length === 0 ? (
+                <p className="text-gray-500 text-center py-6">No fines recorded.</p>
+              ) : (
+                <div className="overflow-x-auto max-h-72">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600 uppercase">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Date</th>
+                        <th className="px-4 py-2 text-left">Member</th>
+                        <th className="px-4 py-2 text-right">Amount</th>
+                        <th className="px-4 py-2 text-left">Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {[...fines].sort((a, b) => (a.date < b.date ? 1 : -1)).map(fine => {
+                        const member = members.find(m => m.id === fine.memberId);
+                        return (
+                          <tr key={fine.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-2">{formatDate(fine.date)}</td>
+                            <td className="px-4 py-2">
+                              <div className="font-medium text-gray-800">{member?.name || fine.memberId}</div>
+                              <div className="text-xs text-gray-500">{fine.memberId}</div>
+                            </td>
+                            <td className="px-4 py-2 text-right text-danger font-semibold">
+                              {formatCurrency(fine.amount)}
+                            </td>
+                            <td className="px-4 py-2 text-gray-600">{fine.reason}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-800">Expenditures</h3>
+                <span className="text-sm text-gray-500">Total: {formatCurrency(expenditures.reduce((sum, e) => sum + e.amount, 0))}</span>
+              </div>
+              {expenditures.length === 0 ? (
+                <p className="text-gray-500 text-center py-6">No expenditures recorded.</p>
+              ) : (
+                <div className="overflow-x-auto max-h-72">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600 uppercase">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Date</th>
+                        <th className="px-4 py-2 text-left">Item</th>
+                        <th className="px-4 py-2 text-right">Amount</th>
+                        <th className="px-4 py-2 text-left">Note</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {[...expenditures].sort((a, b) => (a.date < b.date ? 1 : -1)).map(exp => (
+                        <tr key={exp.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-2">{formatDate(exp.date)}</td>
+                          <td className="px-4 py-2 text-gray-800 font-medium">{exp.item}</td>
+                          <td className="px-4 py-2 text-right text-danger font-semibold">
+                            {formatCurrency(exp.amount)}
+                          </td>
+                          <td className="px-4 py-2 text-gray-600">{exp.note || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
