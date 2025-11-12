@@ -38,6 +38,23 @@ export interface Payment {
   remarks?: string;
 }
 
+export interface FinePayment {
+  id: string;
+  memberId: string;
+  date: string;
+  amount: number;
+  reason: 'Saving Default' | 'Interest Default' | 'Other';
+  note?: string;
+}
+
+export interface Expenditure {
+  id: string;
+  date: string;
+  item: string; // e.g., DayBook, A4 Paper, Pen, Stamp, Inkpad, etc.
+  amount: number;
+  note?: string;
+}
+
 export interface Settings {
   users: Array<{
     userId: string;
@@ -53,6 +70,8 @@ export interface BackupData {
   savings: Saving[];
   loans: Loan[];
   payments: Payment[];
+  fines?: FinePayment[];
+  expenditures?: Expenditure[];
   settings: Settings;
 }
 
