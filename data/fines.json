@@ -5,5 +5,12 @@
     "date": "2025-11-12",
     "amount": 100,
     "reason": "Interest Default"
+  },
+  {
+    "id": "F-1762951453107",
+    "memberId": "M-0001",
+    "date": "2025-11-12",
+    "amount": 50,
+    "reason": "Saving Default"
   }
 ]
