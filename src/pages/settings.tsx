@@ -304,7 +304,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const [members, savings, loans, payments, settingsData] = await Promise.all([
+      const [members, savings, loans, payments, fines, expenditures, settingsData] = await Promise.all([
         readFile('data/members.json'),
         readFile('data/savings.json'),
         readFile('data/loans.json'),
@@ -321,8 +321,8 @@ export default function SettingsPage() {
         savings: savings || [],
         loans: loans || [],
         payments: payments || [],
-        fines: (await readFile('data/fines.json')) || [],
-        expenditures: (await readFile('data/expenditures.json')) || [],
+        fines: fines || [],
+        expenditures: expenditures || [],
         settings: settingsData || { users: [] },
       };
 
