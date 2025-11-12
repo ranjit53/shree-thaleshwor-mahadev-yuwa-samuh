@@ -3,12 +3,11 @@
  */
 
 import { useState, useEffect } from 'react';
-// FIXED: Removed duplicate 'ProtectedRoute' import - keep only named import below
 import { readFile, writeFile, listFiles } from '@/lib/api';
 import { hashPassword } from '@/lib/auth';
 import type { Settings, Member, Saving } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
-import ProtectedRoute from '@/components/ProtectedRoute'; // Keep this as default import
+import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import { UserPlus, Upload, Download, RotateCcw, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -73,6 +72,7 @@ export default function SettingsPage() {
       setBackups(files.filter(f => f.endsWith('.json')));
     } catch (error: any) {
       console.error('Failed to load backups:', error);
+      toast.error('Failed to load backups: ' + error.message);  // ← Added for debugging
     }
   };
   const toggleSelectAllMembers = (checked: boolean) => {
@@ -288,6 +288,7 @@ export default function SettingsPage() {
     }
   };
 
+  // ← FIXED: Auto-refresh after backup
   const handleBackup = async () => {
     if (!isAdmin) {
       toast.error('Only admins can create backups');
@@ -321,7 +322,7 @@ export default function SettingsPage() {
       await writeFile(filename, backupData);
       
       toast.success('Backup created successfully');
-      loadBackups();
+      await loadBackups();  // Auto-refresh list
     } catch (error: any) {
       toast.error('Failed to create backup: ' + error.message);
     }
@@ -619,7 +620,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Backup/Restore Tab */}
+          {/* Backup/Restore Tab - With Refresh Button */}
           {activeTab === 'backup' && (
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -676,13 +677,23 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                {/* Server Backups */}
+                {/* ← FIXED: Server Backups with Refresh */}
                 <div>
-                  <h4 className="text-md font-medium text-gray-700 mb-3">
-                    Or restore from server backups:
-                  </h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-md font-medium text-gray-700">
+                      Or restore from server backups:
+                    </h4>
+                    <button
+                      onClick={loadBackups}
+                      className="px-3 py-1 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 flex items-center gap-1"
+                      title="Refresh backup list"
+                    >
+                      <RotateCcw size={14} />
+                      Refresh
+                    </button>
+                  </div>
                   {backups.length === 0 ? (
-                    <p className="text-gray-500 italic">No server backups available yet. Create one above.</p>
+                    <p className="text-gray-500 italic">No server backups available yet. Create one above and refresh.</p>
                   ) : (
                     <div className="space-y-2">
                       {backups.map((backup) => (
