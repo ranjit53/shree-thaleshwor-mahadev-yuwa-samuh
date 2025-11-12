@@ -268,6 +268,24 @@ export default function PaymentsPage() {
     setShowExpForm(true);
   };
 
+  // Group payments by loan for display
+  const paymentsByLoan = new Map<string, Payment[]>();
+  loans.forEach(loan => {
+    const loanPayments = getLoanPayments(loan.id);
+    if (loanPayments.length > 0) {
+      paymentsByLoan.set(loan.id, loanPayments);
+    }
+  });
+
+  const filteredLoans = Array.from(paymentsByLoan.keys()).filter(loanId => {
+    const loan = loans.find(l => l.id === loanId);
+    const member = loan ? members.find(m => m.id === loan.memberId) : null;
+    return (
+      member?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      loanId.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
   if (loading) {
     return (
       <ProtectedRoute>
@@ -421,7 +439,7 @@ export default function PaymentsPage() {
                     <input
                       type="text"
                       value={formData.remarks}
-                      onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, remarks: (e.target as HTMLInputElement).value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info"
                     />
                   </div>
@@ -537,32 +555,32 @@ export default function PaymentsPage() {
                               }
                             : f
                         );
-                        toast.success('Fine updated successfully');
+                        toast.success('Fine payment updated successfully');
                       } else {
-                        const newId = `F-${Date.now()}`;
-                        updated = [...list, {
-                          id: newId,
+                        const newItem: FinePayment = {
+                          id: `F-${Date.now()}`,
                           memberId: fineForm.memberId,
                           date: fineForm.date,
                           amount,
                           reason: fineForm.reason,
                           note: fineForm.note || undefined,
-                        }];
-                        toast.success('Fine added successfully');
+                        };
+                        updated = [...list, newItem];
+                        toast.success('Fine payment added successfully');
                       }
                       await writeFile('data/fines.json', updated);
                       setFines(updated);
+                      await loadData();
                       resetForm();
-                    } catch (error: any) {
-                      toast.error('Failed to save fine: ' + error.message);
+                    } catch (e: any) {
+                      toast.error('Failed to save fine: ' + e.message);
                     }
                   }}
                   className="bg-warning text-white px-6 py-2 rounded-lg hover:bg-warning/90"
                 >
-                  {editingFine ? 'Update' : 'Add'} Fine
+                  {editingFine ? 'Update' : 'Save'} Fine
                 </button>
                 <button
-                  type="button"
                   onClick={resetForm}
                   className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
                 >
@@ -578,7 +596,7 @@ export default function PaymentsPage() {
               <h3 className="text-xl font-semibold mb-4">
                 {editingExpenditure ? 'Edit Expenditure' : 'Add Expenditure'}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                   <input
@@ -592,10 +610,10 @@ export default function PaymentsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Item</label>
                   <input
                     type="text"
+                    placeholder="DayBook, A4 Paper, Pen, Stamp, Inkpad, etc."
                     value={expForm.item}
                     onChange={(e) => setExpForm({ ...expForm, item: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
-                    placeholder="e.g. Tractor Repair"
                   />
                 </div>
                 <div>
@@ -609,7 +627,7 @@ export default function PaymentsPage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
                   />
                 </div>
-                <div>
+                <div className="md:col-span-3">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
                   <input
                     type="text"
@@ -623,13 +641,13 @@ export default function PaymentsPage() {
                 <button
                   onClick={async () => {
                     if (!isAdmin) return;
-                    if (!expForm.item) {
-                      toast.error('Enter item name');
+                    const amount = parseFloat(expForm.amount);
+                    if (!expForm.item.trim()) {
+                      toast.error('Enter expenditure item');
                       return;
                     }
-                    const amount = parseFloat(expForm.amount);
                     if (!amount || amount <= 0) {
-                      toast.error('Enter a positive amount');
+                      toast.error('Enter a positive expenditure amount');
                       return;
                     }
                     try {
@@ -649,29 +667,29 @@ export default function PaymentsPage() {
                         );
                         toast.success('Expenditure updated successfully');
                       } else {
-                        const newId = `E-${Date.now()}`;
-                        updated = [...list, {
-                          id: newId,
+                        const newItem: Expenditure = {
+                          id: `E-${Date.now()}`,
                           date: expForm.date,
                           item: expForm.item,
                           amount,
                           note: expForm.note || undefined,
-                        }];
+                        };
+                        updated = [...list, newItem];
                         toast.success('Expenditure added successfully');
                       }
                       await writeFile('data/expenditures.json', updated);
                       setExpenditures(updated);
+                      await loadData();
                       resetForm();
-                    } catch (error: any) {
-                      toast.error('Failed to save expenditure: ' + error.message);
+                    } catch (e: any) {
+                      toast.error('Failed to save expenditure: ' + e.message);
                     }
                   }}
                   className="bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90"
                 >
-                  {editingExpenditure ? 'Update' : 'Add'} Expenditure
+                  {editingExpenditure ? 'Update' : 'Save'} Expenditure
                 </button>
                 <button
-                  type="button"
                   onClick={resetForm}
                   className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
                 >
@@ -681,7 +699,7 @@ export default function PaymentsPage() {
             </div>
           )}
 
-          {/* All Payments Details Section – TYPE & DETAILS REMOVED */}
+          {/* All Payments Details Section */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-2xl font-bold text-gray-800">All Payment Details</h3>
@@ -692,11 +710,13 @@ export default function PaymentsPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member/Item</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Principal Paid</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Interest Paid</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Fine/Expenditure</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
                     {isAdmin && (
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
                     )}
@@ -775,7 +795,9 @@ export default function PaymentsPage() {
                     const groupedByMemberAndType = new Map<string, typeof allPayments>();
                     allPayments.forEach((payment) => {
                       const key = `${payment.memberId || payment.item || payment.id}_${payment.type}`;
-                      if (!groupedByMemberAndType.has(key)) groupedByMemberAndType.set(key, []);
+                      if (!groupedByMemberAndType.has(key)) {
+                        groupedByMemberAndType.set(key, []);
+                      }
                       groupedByMemberAndType.get(key)!.push(payment);
                     });
 
@@ -784,14 +806,14 @@ export default function PaymentsPage() {
                       if (memberPayments.length === 1) {
                         combinedPayments.push(memberPayments[0]);
                       } else {
-                        const first = memberPayments[0];
-                        const combined = {
-                          ...first,
-                          principalPaid: memberPayments.reduce((s, p) => s + (p.principalPaid || 0), 0) || undefined,
-                          interestPaid: memberPayments.reduce((s, p) => s + (p.interestPaid || 0), 0) || undefined,
-                          fineAmount: memberPayments.reduce((s, p) => s + (p.fineAmount || 0), 0) || undefined,
-                          expenditureAmount: memberPayments.reduce((s, p) => s + (p.expenditureAmount || 0), 0) || undefined,
-                          totalAmount: memberPayments.reduce((s, p) => s + p.totalAmount, 0),
+                        const firstPayment = memberPayments[0];
+                        const combined: typeof firstPayment = {
+                          ...firstPayment,
+                          principalPaid: memberPayments.reduce((sum, p) => sum + (p.principalPaid || 0), 0) || undefined,
+                          interestPaid: memberPayments.reduce((sum, p) => sum + (p.interestPaid || 0), 0) || undefined,
+                          fineAmount: memberPayments.reduce((sum, p) => sum + (p.fineAmount || 0), 0) || undefined,
+                          expenditureAmount: memberPayments.reduce((sum, p) => sum + (p.expenditureAmount || 0), 0) || undefined,
+                          totalAmount: memberPayments.reduce((sum, p) => sum + p.totalAmount, 0),
                           details: memberPayments.map(p => p.details).filter(Boolean).join('; ') || undefined,
                           note: memberPayments.map(p => p.note).filter(Boolean).join('; ') || undefined,
                           reason: memberPayments.map(p => p.reason).filter(Boolean).join(', ') || undefined,
@@ -805,24 +827,27 @@ export default function PaymentsPage() {
                     });
 
                     combinedPayments.sort((a, b) => {
-                      if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+                      if (a.date !== b.date) {
+                        return a.date < b.date ? 1 : -1;
+                      }
                       return (a.memberName || a.item || '').localeCompare(b.memberName || b.item || '');
                     });
 
                     const filtered = combinedPayments.filter((p) => {
                       if (!searchTerm) return true;
-                      const s = searchTerm.toLowerCase();
+                      const search = searchTerm.toLowerCase();
                       return (
-                        p.memberName?.toLowerCase().includes(s) ||
-                        p.memberId?.toLowerCase().includes(s) ||
-                        p.item?.toLowerCase().includes(s)
+                        p.memberName?.toLowerCase().includes(search) ||
+                        p.memberId?.toLowerCase().includes(search) ||
+                        p.item?.toLowerCase().includes(search) ||
+                        p.type.toLowerCase().includes(search)
                       );
                     });
 
                     if (filtered.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={isAdmin ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={isAdmin ? 9 : 8} className="px-6 py-8 text-center text-gray-500">
                             No payments found
                           </td>
                         </tr>
@@ -832,7 +857,19 @@ export default function PaymentsPage() {
                     return filtered.map((payment) => (
                       <tr key={payment.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">{formatDate(payment.date)}</td>
-
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              payment.type === 'Loan Payment'
+                                ? 'bg-info/20 text-info'
+                                : payment.type === 'Fine Payment'
+                                ? 'bg-warning/20 text-warning'
+                                : 'bg-danger/20 text-danger'
+                            }`}
+                          >
+                            {payment.type}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {payment.memberName ? (
                             <div>
@@ -845,36 +882,54 @@ export default function PaymentsPage() {
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          {payment.principalPaid !== undefined ? formatCurrency(payment.principalPaid) : '-'}
+                          {payment.principalPaid !== undefined ? (
+                            <span className="text-gray-800">{formatCurrency(payment.principalPaid)}</span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
                         </td>
-
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           {payment.interestPaid !== undefined ? (
                             <span className="text-info font-semibold">{formatCurrency(payment.interestPaid)}</span>
                           ) : (
-                            '-'
+                            <span className="text-gray-400">-</span>
                           )}
                         </td>
-
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           {payment.fineAmount !== undefined ? (
                             <span className="text-warning font-semibold">{formatCurrency(payment.fineAmount)}</span>
                           ) : payment.expenditureAmount !== undefined ? (
                             <span className="text-danger font-semibold">{formatCurrency(payment.expenditureAmount)}</span>
                           ) : (
-                            '-'
+                            <span className="text-gray-400">-</span>
                           )}
                         </td>
-
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <span className="font-bold text-gray-900">{formatCurrency(payment.totalAmount)}</span>
                         </td>
-
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-600">
+                            {payment.reason && (
+                              <div>
+                                <span className="font-medium">Reason:</span> {payment.reason}
+                              </div>
+                            )}
+                            {payment.details && (
+                              <div className="mt-1">{payment.details}</div>
+                            )}
+                            {payment.note && (
+                              <div className="mt-1">{payment.note}</div>
+                            )}
+                            {!payment.reason && !payment.details && !payment.note && (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </div>
+                        </td>
                         {isAdmin && (
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
+                              {/* Edit & Delete Buttons */}
                               {payment.type === 'Loan Payment' && payment.payment && (
                                 <>
                                   <button
@@ -929,6 +984,32 @@ export default function PaymentsPage() {
                                   </button>
                                 </>
                               )}
+
+                              {/* REVIEW BUTTON — NOW IN EVERY ROW */}
+                              <button
+                                onClick={() => {
+                                  if (payment.type === 'Loan Payment' && payment.loanId) {
+                                    setViewingLoanId(payment.loanId);
+                                  } else if (payment.type === 'Fine Payment' && payment.fine) {
+                                    toast.info(
+                                      `Fine – ${payment.memberName} (${payment.memberId})\n` +
+                                      `Amount: ${formatCurrency(payment.fine.amount)}\n` +
+                                      `Reason: ${payment.fine.reason}\n` +
+                                      `Note: ${payment.fine.note || '–'}`
+                                    );
+                                  } else if (payment.type === 'Expenditure' && payment.expenditure) {
+                                    toast.info(
+                                      `Expenditure – ${payment.item}\n` +
+                                      `Amount: ${formatCurrency(payment.expenditure.amount)}\n` +
+                                      `Note: ${payment.expenditure.note || '–'}`
+                                    );
+                                  }
+                                }}
+                                className="p-2 text-info hover:bg-info/10 rounded-lg transition-colors"
+                                title="Review"
+                              >
+                                <Eye size={18} />
+                              </button>
                             </div>
                           </td>
                         )}
@@ -936,31 +1017,35 @@ export default function PaymentsPage() {
                     ));
                   })()}
                 </tbody>
-
                 <tfoot className="bg-gray-50">
                   <tr>
-                    <td colSpan={2} className="px-6 py-4 font-semibold text-gray-800">
+                    <td colSpan={3} className="px-6 py-4 font-semibold text-gray-800">
                       Total
                     </td>
                     <td className="px-6 py-4 text-right font-semibold text-gray-800">
-                      {formatCurrency(payments.reduce((s, p) => s + p.principalPaid, 0))}
+                      {formatCurrency(
+                        payments.reduce((sum, p) => sum + p.principalPaid, 0)
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right font-semibold text-info">
-                      {formatCurrency(payments.reduce((s, p) => s + p.interestPaid, 0))}
+                      {formatCurrency(
+                        payments.reduce((sum, p) => sum + p.interestPaid, 0)
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right font-semibold text-warning">
                       {formatCurrency(
-                        fines.reduce((s, f) => s + f.amount, 0) +
-                          expenditures.reduce((s, e) => s + e.amount, 0)
+                        fines.reduce((sum, f) => sum + f.amount, 0) +
+                        expenditures.reduce((sum, e) => sum + e.amount, 0)
                       )}
                     </td>
                     <td className="px-6 py-4 text-right font-bold text-gray-900">
                       {formatCurrency(
-                        payments.reduce((s, p) => s + p.principalPaid + p.interestPaid, 0) +
-                          fines.reduce((s, f) => s + f.amount, 0) +
-                          expenditures.reduce((s, e) => s + e.amount, 0)
+                        payments.reduce((sum, p) => sum + p.principalPaid + p.interestPaid, 0) +
+                        fines.reduce((sum, f) => sum + f.amount, 0) +
+                        expenditures.reduce((sum, e) => sum + e.amount, 0)
                       )}
                     </td>
+                    <td></td>
                     {isAdmin && <td></td>}
                   </tr>
                 </tfoot>
@@ -979,7 +1064,7 @@ export default function PaymentsPage() {
                       onClick={() => setViewingLoanId(null)}
                       className="text-gray-500 hover:text-gray-700"
                     >
-                      X
+                      ✕
                     </button>
                   </div>
                   {(() => {
