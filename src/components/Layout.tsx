@@ -57,15 +57,16 @@ export default function Layout({ children }: LayoutProps) {
             <Link href="/" className="flex items-center gap-2">
               <Image
                 src="/logo.svg"
-                alt="श्री थलेश्वर महादेव युवा समूह"
+                alt="Shree Thaleshwor Mahadev Yuwa Samuh"
                 width={36}
                 height={36}
                 priority
               />
               <h1 className="text-xl font-bold text-gray-800">
-                श्री थलेश्वर महादेव युवा समूह
+                Shree Thaleshwor Mahadev Yuwa Samuh
               </h1>
             </Link>
+          </div>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
               <div className="text-sm font-medium text-gray-700">{user?.userId}</div>
@@ -136,8 +137,4 @@ export default function Layout({ children }: LayoutProps) {
     </div>
   );
 }
-
-
-
-
 
