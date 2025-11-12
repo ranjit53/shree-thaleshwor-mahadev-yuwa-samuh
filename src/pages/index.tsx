@@ -7,7 +7,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import { readFile } from '@/lib/api';
 import { formatCurrency, formatNumber } from '@/lib/utils';
-import type { Member, Saving, Loan, Payment } from '@/types';
+import type { Member, Saving, Loan, Payment, FinePayment, Expenditure } from '@/types';
 import {
   LineChart,
   Line,
@@ -40,6 +40,8 @@ export default function Dashboard() {
   const [pieData, setPieData] = useState<any[]>([]);
   const [savingDefaulters, setSavingDefaulters] = useState<Array<{ id: string; name: string }>>([]);
   const [interestDefaulters, setInterestDefaulters] = useState<Array<{ id: string; name: string }>>([]);
+  const [totalFine, setTotalFine] = useState(0);
+  const [totalExpenditure, setTotalExpenditure] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -49,16 +51,20 @@ export default function Dashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [membersRes, savingsRes, loansRes, paymentsRes] = await Promise.all([
+      const [membersRes, savingsRes, loansRes, paymentsRes, finesRes, expRes] = await Promise.all([
         readFile<Member[]>('data/members.json'),
         readFile<Saving[]>('data/savings.json'),
         readFile<Loan[]>('data/loans.json'),
         readFile<Payment[]>('data/payments.json'),
+        readFile<FinePayment[]>('data/fines.json'),
+        readFile<Expenditure[]>('data/expenditures.json'),
       ]);
       const members: Member[] = membersRes ?? [];
       const savings: Saving[] = savingsRes ?? [];
       const loans: Loan[] = loansRes ?? [];
       const payments: Payment[] = paymentsRes ?? [];
+      const fines: FinePayment[] = finesRes ?? [];
+      const expenditures: Expenditure[] = expRes ?? [];
 
       // Calculate statistics
       const totalMembers = members.length;
@@ -69,7 +75,9 @@ export default function Dashboard() {
         return sum + Math.max(0, l.principal - principalPaid);
       }, 0);
       const totalInterest = payments.reduce((sum, p) => sum + p.interestPaid, 0);
-      const availableBalance = totalSaving - totalLoan;
+      const totalFineComputed = fines.reduce((sum, f) => sum + f.amount, 0);
+      const totalExpenditureComputed = expenditures.reduce((sum, e) => sum + e.amount, 0);
+      const availableBalance = totalSaving - totalLoan - totalExpenditureComputed;
 
       setStats({
         totalMembers,
@@ -78,6 +86,8 @@ export default function Dashboard() {
         totalInterest,
         availableBalance,
       });
+      setTotalFine(totalFineComputed);
+      setTotalExpenditure(totalExpenditureComputed);
 
       // Calculate Monthly Defaulters with names
       const now = new Date();
@@ -223,6 +233,20 @@ export default function Dashboard() {
       value: formatCurrency(stats.totalInterest),
       icon: DollarSign,
       color: 'bg-info',
+      onClick: () => router.push('/payments'),
+    },
+    {
+      title: 'Total Fine Collected',
+      value: formatCurrency(totalFine),
+      icon: AlertTriangle,
+      color: 'bg-accent',
+      onClick: () => router.push('/payments'),
+    },
+    {
+      title: 'Total Expenditure',
+      value: formatCurrency(totalExpenditure),
+      icon: CreditCard,
+      color: 'bg-danger',
       onClick: () => router.push('/payments'),
     },
     {
