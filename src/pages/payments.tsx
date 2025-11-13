@@ -697,9 +697,7 @@ export default function PaymentsPage() {
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Interest Paid</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Fine/Expenditure</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Amount</th>
-                    {isAdmin && (
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
-                    )}
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -827,7 +825,7 @@ export default function PaymentsPage() {
                     if (filtered.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={isAdmin ? 7 : 6} className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                             No payments found
                           </td>
                         </tr>
@@ -875,45 +873,43 @@ export default function PaymentsPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <span className="font-bold text-gray-900">{formatCurrency(payment.totalAmount)}</span>
                         </td>
-                        {isAdmin && (
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center justify-center gap-2">
-                              {/* REVIEW BUTTON - Fixed with correct toast usage */}
-                              <button
-                                onClick={() => {
-                                  if (payment.type === 'Loan Payment' && payment.loanId) {
-                                    setViewingLoanId(payment.loanId);
-                                  } else if (payment.type === 'Fine Payment' && payment.fine) {
-                                    toast(
-                                      <div className="text-sm">
-                                        <strong>Fine</strong><br />
-                                        Member: {payment.memberName} ({payment.memberId})<br />
-                                        Amount: {formatCurrency(payment.fine.amount)}<br />
-                                        Reason: {payment.fine.reason}<br />
-                                        {payment.fine.note && <>Note: {payment.fine.note}</>}
-                                      </div>,
-                                      { icon: 'ℹ️', duration: 5000 }
-                                    );
-                                  } else if (payment.type === 'Expenditure' && payment.expenditure) {
-                                    toast(
-                                      <div className="text-sm">
-                                        <strong>Expenditure</strong><br />
-                                        Item: {payment.item}<br />
-                                        Amount: {formatCurrency(payment.expenditure.amount)}<br />
-                                        {payment.expenditure.note && <>Note: {payment.expenditure.note}</>}
-                                      </div>,
-                                      { icon: '📋', duration: 5000 }
-                                    );
-                                  }
-                                }}
-                                className="p-2 text-info hover:bg-info/10 rounded-lg transition-colors"
-                                title="Review"
-                              >
-                                <Eye size={18} />
-                              </button>
-                            </div>
-                          </td>
-                        )}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-2">
+                            {/* REVIEW BUTTON - Fixed with correct toast usage */}
+                            <button
+                              onClick={() => {
+                                if (payment.type === 'Loan Payment' && payment.loanId) {
+                                  setViewingLoanId(payment.loanId);
+                                } else if (payment.type === 'Fine Payment' && payment.fine) {
+                                  toast(
+                                    <div className="text-sm">
+                                      <strong>Fine</strong><br />
+                                      Member: {payment.memberName} ({payment.memberId})<br />
+                                      Amount: {formatCurrency(payment.fine.amount)}<br />
+                                      Reason: {payment.fine.reason}<br />
+                                      {payment.fine.note && <>Note: {payment.fine.note}</>}
+                                    </div>,
+                                    { icon: 'ℹ️', duration: 5000 }
+                                  );
+                                } else if (payment.type === 'Expenditure' && payment.expenditure) {
+                                  toast(
+                                    <div className="text-sm">
+                                      <strong>Expenditure</strong><br />
+                                      Item: {payment.item}<br />
+                                      Amount: {formatCurrency(payment.expenditure.amount)}<br />
+                                      {payment.expenditure.note && <>Note: {payment.expenditure.note}</>}
+                                    </div>,
+                                    { icon: '📋', duration: 5000 }
+                                  );
+                                }
+                              }}
+                              className="p-2 text-info hover:bg-info/10 rounded-lg transition-colors"
+                              title="Review"
+                            >
+                              <Eye size={18} />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ));
                   })()}
