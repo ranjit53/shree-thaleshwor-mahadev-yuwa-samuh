@@ -23,6 +23,12 @@
       "name": "Shiv",
       "password": "$2a$10$KzOv2e39M.B/eJGl1PW5E.fmaJZqA9b8nLU2QFhL0LfOsiN3nAS1u",
       "role": "Admin"
+    },
+    {
+      "userId": "Arjun",
+      "name": "Arjun",
+      "password": "$2a$10$oXZs3acVbwGNKdrwF5FQPOYU.cB5rsgwOLf2STqa2t4M67dZSsxaa",
+      "role": "Admin"
     }
   ]
 }
