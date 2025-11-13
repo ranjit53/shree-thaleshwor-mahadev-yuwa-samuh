@@ -426,6 +426,14 @@ export default function LoansPage() {
                               <label className="text-sm font-medium text-gray-500">Term</label>
                               <p className="text-lg">{loan.termMonths} months</p>
                             </div>
+
+                            {/* ←←← NEW FIELD ADDED HERE */}
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Start Date</label>
+                              <p className="text-lg">{formatDate(loan.startDate)}</p>
+                            </div>
+                            {/* ←←← END OF NEW FIELD */}
+
                             {loan.purpose && (
                               <div className="col-span-2">
                                 <label className="text-sm font-medium text-gray-500">Purpose</label>
