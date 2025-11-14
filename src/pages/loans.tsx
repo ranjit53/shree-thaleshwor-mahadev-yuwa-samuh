@@ -12,10 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-type ExtendedMember = Member & { active: boolean };
-
 export default function LoansPage() {
-  const [members, setMembers] = useState<ExtendedMember[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,11 +43,7 @@ export default function LoansPage() {
         readFile<Loan[]>('data/loans.json'),
         readFile<Payment[]>('data/payments.json'),
       ]);
-      const extendedMembers = (membersData || []).map((m: Member) => ({ 
-        ...m, 
-        active: (m as any).active !== undefined ? (m as any).active : true 
-      })) as ExtendedMember[];
-      setMembers(extendedMembers);
+      setMembers(membersData || []);
       setLoans(loansData || []);
       setPayments(paymentsData || []);
     } catch (error: any) {
@@ -86,12 +80,6 @@ export default function LoansPage() {
     }
 
     try {
-      const member = members.find(m => m.id === formData.memberId);
-      if (!member?.active) {
-        toast.error('Inactive members cannot take loans.');
-        return;
-      }
-
       const updatedLoans = [...loans];
       
       if (editingLoan) {
@@ -247,7 +235,7 @@ export default function LoansPage() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
                     >
                       <option value="">Select Member</option>
-                      {members.filter(m => m.active).map(m => (
+                      {members.map(m => (
                         <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
                       ))}
                     </select>
