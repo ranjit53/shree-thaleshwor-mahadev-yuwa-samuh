@@ -9,7 +9,7 @@ import { readFile, writeFile } from '@/lib/api';
 import { formatDate, generateMemberId } from '@/lib/utils';
 import type { Member } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function MembersPage() {
@@ -35,7 +35,7 @@ export default function MembersPage() {
   const loadMembers = async () => {
     try {
       const data = await readFile<Member[]>('data/members.json');
-      setMembers(data || []);
+      setMembers((data || []).map((m: Member) => ({ ...m, active: (m as any).active !== undefined ? (m as any).active : true })) as Member[]);
     } catch (error: any) {
       toast.error('Failed to load members: ' + error.message);
     } finally {
@@ -68,6 +68,7 @@ export default function MembersPage() {
         updatedMembers.push({
           id: newId,
           ...formData,
+          active: true,
         });
         toast.success('Member added successfully');
       }
@@ -98,6 +99,31 @@ export default function MembersPage() {
       setViewingMember(null);
     } catch (error: any) {
       toast.error('Failed to delete member: ' + error.message);
+    }
+  };
+
+  const handleToggleActive = async (member: Member, newActive: boolean) => {
+    if (!isAdmin) {
+      toast.error('Only admins can modify status');
+      return;
+    }
+
+    if (newActive === (member as any).active) {
+      toast.info('Status is already set');
+      return;
+    }
+
+    try {
+      const updatedMembers = [...members];
+      const index = updatedMembers.findIndex(m => m.id === member.id);
+      const updatedMember = { ...member, active: newActive };
+      updatedMembers[index] = updatedMember;
+      await writeFile('data/members.json', updatedMembers);
+      setMembers(updatedMembers);
+      setViewingMember(updatedMember);
+      toast.success(`Member ${newActive ? 'activated' : 'deactivated'} successfully`);
+    } catch (error: any) {
+      toast.error(`Failed to update status: ${error.message}`);
     }
   };
 
@@ -330,9 +356,15 @@ export default function MembersPage() {
                       <label className="text-sm font-medium text-gray-500">Address</label>
                       <p className="text-lg">{viewingMember.address || '-'}</p>
                     </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Status</label>
+                      <p className={`text-lg font-medium ${(viewingMember as any).active ? 'text-green-600' : 'text-red-600'}`}>
+                        {(viewingMember as any).active ? 'Active' : 'Inactive'}
+                      </p>
+                    </div>
                   </div>
                   {isAdmin && (
-                    <div className="flex gap-2 mt-6">
+                    <div className="flex flex-col sm:flex-row gap-2 mt-6">
                       <button
                         onClick={() => {
                           handleEdit(viewingMember);
@@ -346,6 +378,30 @@ export default function MembersPage() {
                         className="flex-1 bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger/90"
                       >
                         Delete
+                      </button>
+                      <button
+                        onClick={() => handleToggleActive(viewingMember, true)}
+                        disabled={(viewingMember as any).active}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                          (viewingMember as any).active
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-green-600 text-white hover:bg-green-700'
+                        }`}
+                      >
+                        <CheckCircle size={16} />
+                        Activate
+                      </button>
+                      <button
+                        onClick={() => handleToggleActive(viewingMember, false)}
+                        disabled={!((viewingMember as any).active)}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                          !((viewingMember as any).active)
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-red-600 text-white hover:bg-red-500'
+                        }`}
+                      >
+                        <XCircle size={16} />
+                        Deactivate
                       </button>
                     </div>
                   )}
