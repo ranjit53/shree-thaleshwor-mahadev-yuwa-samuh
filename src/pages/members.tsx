@@ -12,12 +12,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+type ExtendedMember = Member & { active: boolean };
+
 export default function MembersPage() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<ExtendedMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [viewingMember, setViewingMember] = useState<Member | null>(null);
+  const [editingMember, setEditingMember] = useState<ExtendedMember | null>(null);
+  const [viewingMember, setViewingMember] = useState<ExtendedMember | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { isAdmin } = useAuth();
 
@@ -35,7 +37,11 @@ export default function MembersPage() {
   const loadMembers = async () => {
     try {
       const data = await readFile<Member[]>('data/members.json');
-      setMembers((data || []).map((m: Member) => ({ ...m, active: (m as any).active !== undefined ? (m as any).active : true })) as Member[]);
+      const extendedMembers = (data || []).map((m: Member) => ({ 
+        ...m, 
+        active: (m as any).active !== undefined ? (m as any).active : true 
+      })) as ExtendedMember[];
+      setMembers(extendedMembers);
     } catch (error: any) {
       toast.error('Failed to load members: ' + error.message);
     } finally {
@@ -57,19 +63,21 @@ export default function MembersPage() {
       if (editingMember) {
         // Update existing
         const index = updatedMembers.findIndex(m => m.id === editingMember.id);
-        updatedMembers[index] = {
+        const updatedMember = {
           ...editingMember,
           ...formData,
-        };
+        } as ExtendedMember;
+        updatedMembers[index] = updatedMember;
         toast.success('Member updated successfully');
       } else {
         // Add new
         const newId = generateMemberId(updatedMembers.map(m => m.id));
-        updatedMembers.push({
+        const newMember = {
           id: newId,
           ...formData,
           active: true,
-        });
+        } as ExtendedMember;
+        updatedMembers.push(newMember);
         toast.success('Member added successfully');
       }
 
@@ -81,7 +89,7 @@ export default function MembersPage() {
     }
   };
 
-  const handleDelete = async (member: Member) => {
+  const handleDelete = async (member: ExtendedMember) => {
     if (!isAdmin) {
       toast.error('Only admins can delete members');
       return;
@@ -102,13 +110,13 @@ export default function MembersPage() {
     }
   };
 
-  const handleToggleActive = async (member: Member, newActive: boolean) => {
+  const handleToggleActive = async (member: ExtendedMember, newActive: boolean) => {
     if (!isAdmin) {
       toast.error('Only admins can modify status');
       return;
     }
 
-    if (newActive === (member as any).active) {
+    if (newActive === member.active) {
       toast.info('Status is already set');
       return;
     }
@@ -116,7 +124,7 @@ export default function MembersPage() {
     try {
       const updatedMembers = [...members];
       const index = updatedMembers.findIndex(m => m.id === member.id);
-      const updatedMember = { ...member, active: newActive };
+      const updatedMember: ExtendedMember = { ...member, active: newActive };
       updatedMembers[index] = updatedMember;
       await writeFile('data/members.json', updatedMembers);
       setMembers(updatedMembers);
@@ -139,7 +147,7 @@ export default function MembersPage() {
     setViewingMember(null);
   };
 
-  const handleEdit = (member: Member) => {
+  const handleEdit = (member: ExtendedMember) => {
     setEditingMember(member);
     setFormData({
       name: member.name,
@@ -358,8 +366,8 @@ export default function MembersPage() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Status</label>
-                      <p className={`text-lg font-medium ${(viewingMember as any).active ? 'text-green-600' : 'text-red-600'}`}>
-                        {(viewingMember as any).active ? 'Active' : 'Inactive'}
+                      <p className={`text-lg font-medium ${viewingMember.active ? 'text-green-600' : 'text-red-600'}`}>
+                        {viewingMember.active ? 'Active' : 'Inactive'}
                       </p>
                     </div>
                   </div>
@@ -381,9 +389,9 @@ export default function MembersPage() {
                       </button>
                       <button
                         onClick={() => handleToggleActive(viewingMember, true)}
-                        disabled={(viewingMember as any).active}
+                        disabled={viewingMember.active}
                         className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                          (viewingMember as any).active
+                          viewingMember.active
                             ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                             : 'bg-green-600 text-white hover:bg-green-700'
                         }`}
@@ -393,9 +401,9 @@ export default function MembersPage() {
                       </button>
                       <button
                         onClick={() => handleToggleActive(viewingMember, false)}
-                        disabled={!((viewingMember as any).active)}
+                        disabled={!viewingMember.active}
                         className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                          !((viewingMember as any).active)
+                          !viewingMember.active
                             ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                             : 'bg-red-600 text-white hover:bg-red-500'
                         }`}
