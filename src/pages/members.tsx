@@ -9,17 +9,15 @@ import { readFile, writeFile } from '@/lib/api';
 import { formatDate, generateMemberId } from '@/lib/utils';
 import type { Member } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, Search, Edit, Trash2, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-type ExtendedMember = Member & { active: boolean };
-
 export default function MembersPage() {
-  const [members, setMembers] = useState<ExtendedMember[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingMember, setEditingMember] = useState<ExtendedMember | null>(null);
-  const [viewingMember, setViewingMember] = useState<ExtendedMember | null>(null);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [viewingMember, setViewingMember] = useState<Member | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { isAdmin } = useAuth();
 
@@ -37,11 +35,7 @@ export default function MembersPage() {
   const loadMembers = async () => {
     try {
       const data = await readFile<Member[]>('data/members.json');
-      const extendedMembers = (data || []).map((m: Member) => ({ 
-        ...m, 
-        active: (m as any).active !== undefined ? (m as any).active : true 
-      })) as ExtendedMember[];
-      setMembers(extendedMembers);
+      setMembers(data || []);
     } catch (error: any) {
       toast.error('Failed to load members: ' + error.message);
     } finally {
@@ -63,21 +57,18 @@ export default function MembersPage() {
       if (editingMember) {
         // Update existing
         const index = updatedMembers.findIndex(m => m.id === editingMember.id);
-        const updatedMember = {
+        updatedMembers[index] = {
           ...editingMember,
           ...formData,
-        } as ExtendedMember;
-        updatedMembers[index] = updatedMember;
+        };
         toast.success('Member updated successfully');
       } else {
         // Add new
         const newId = generateMemberId(updatedMembers.map(m => m.id));
-        const newMember = {
+        updatedMembers.push({
           id: newId,
           ...formData,
-          active: true,
-        } as ExtendedMember;
-        updatedMembers.push(newMember);
+        });
         toast.success('Member added successfully');
       }
 
@@ -89,7 +80,7 @@ export default function MembersPage() {
     }
   };
 
-  const handleDelete = async (member: ExtendedMember) => {
+  const handleDelete = async (member: Member) => {
     if (!isAdmin) {
       toast.error('Only admins can delete members');
       return;
@@ -110,31 +101,6 @@ export default function MembersPage() {
     }
   };
 
-  const handleToggleActive = async (member: ExtendedMember, newActive: boolean) => {
-    if (!isAdmin) {
-      toast.error('Only admins can modify status');
-      return;
-    }
-
-    if (newActive === member.active) {
-      toast('Status is already set');
-      return;
-    }
-
-    try {
-      const updatedMembers = [...members];
-      const index = updatedMembers.findIndex(m => m.id === member.id);
-      const updatedMember: ExtendedMember = { ...member, active: newActive };
-      updatedMembers[index] = updatedMember;
-      await writeFile('data/members.json', updatedMembers);
-      setMembers(updatedMembers);
-      setViewingMember(updatedMember);
-      toast.success(`Member ${newActive ? 'activated' : 'deactivated'} successfully`);
-    } catch (error: any) {
-      toast.error(`Failed to update status: ${error.message}`);
-    }
-  };
-
   const resetForm = () => {
     setFormData({
       name: '',
@@ -147,7 +113,7 @@ export default function MembersPage() {
     setViewingMember(null);
   };
 
-  const handleEdit = (member: ExtendedMember) => {
+  const handleEdit = (member: Member) => {
     setEditingMember(member);
     setFormData({
       name: member.name,
@@ -314,7 +280,7 @@ export default function MembersPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => setViewingMember(member)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-2 text-info hover:bg-info/10 rounded-lg transition-colors"
                               title="Review"
                             >
                               <Eye size={18} />
@@ -364,52 +330,22 @@ export default function MembersPage() {
                       <label className="text-sm font-medium text-gray-500">Address</label>
                       <p className="text-lg">{viewingMember.address || '-'}</p>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Status</label>
-                      <p className={`text-lg font-medium ${viewingMember.active ? 'text-green-600' : 'text-red-600'}`}>
-                        {viewingMember.active ? 'Active' : 'Inactive'}
-                      </p>
-                    </div>
                   </div>
                   {isAdmin && (
-                    <div className="grid grid-cols-2 gap-2 mt-6">
+                    <div className="flex gap-2 mt-6">
                       <button
                         onClick={() => {
                           handleEdit(viewingMember);
                         }}
-                        className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700"
+                        className="flex-1 bg-warning text-white px-4 py-2 rounded-lg hover:bg-warning/90"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(viewingMember)}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                        className="flex-1 bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger/90"
                       >
                         Delete
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(viewingMember, true)}
-                        disabled={viewingMember.active}
-                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                          viewingMember.active
-                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                            : 'bg-green-600 text-white hover:bg-green-700'
-                        }`}
-                      >
-                        <CheckCircle size={16} />
-                        Activate
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(viewingMember, false)}
-                        disabled={!viewingMember.active}
-                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                          !viewingMember.active
-                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                            : 'bg-red-600 text-white hover:bg-red-700'
-                        }`}
-                      >
-                        <XCircle size={16} />
-                        Deactivate
                       </button>
                     </div>
                   )}
