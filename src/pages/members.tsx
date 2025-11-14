@@ -117,7 +117,7 @@ export default function MembersPage() {
     }
 
     if (newActive === member.active) {
-      toast.info('Status is already set');
+      toast('Status is already set');
       return;
     }
 
@@ -314,7 +314,7 @@ export default function MembersPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => setViewingMember(member)}
-                              className="p-2 text-info hover:bg-info/10 rounded-lg transition-colors"
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Review"
                             >
                               <Eye size={18} />
@@ -372,25 +372,25 @@ export default function MembersPage() {
                     </div>
                   </div>
                   {isAdmin && (
-                    <div className="flex flex-col sm:flex-row gap-2 mt-6">
+                    <div className="grid grid-cols-2 gap-2 mt-6">
                       <button
                         onClick={() => {
                           handleEdit(viewingMember);
                         }}
-                        className="flex-1 bg-warning text-white px-4 py-2 rounded-lg hover:bg-warning/90"
+                        className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(viewingMember)}
-                        className="flex-1 bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger/90"
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
                       >
                         Delete
                       </button>
                       <button
                         onClick={() => handleToggleActive(viewingMember, true)}
                         disabled={viewingMember.active}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                           viewingMember.active
                             ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                             : 'bg-green-600 text-white hover:bg-green-700'
@@ -402,10 +402,10 @@ export default function MembersPage() {
                       <button
                         onClick={() => handleToggleActive(viewingMember, false)}
                         disabled={!viewingMember.active}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                           !viewingMember.active
                             ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                            : 'bg-red-600 text-white hover:bg-red-500'
+                            : 'bg-red-600 text-white hover:bg-red-700'
                         }`}
                       >
                         <XCircle size={16} />
