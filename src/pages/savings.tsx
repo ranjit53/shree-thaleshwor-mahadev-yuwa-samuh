@@ -12,10 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-type ExtendedMember = Member & { active: boolean };
-
 export default function SavingsPage() {
-  const [members, setMembers] = useState<ExtendedMember[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [savings, setSavings] = useState<Saving[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -41,11 +39,7 @@ export default function SavingsPage() {
         readFile<Member[]>('data/members.json'),
         readFile<Saving[]>('data/savings.json'),
       ]);
-      const extendedMembers = (membersData || []).map((m: Member) => ({ 
-        ...m, 
-        active: (m as any).active !== undefined ? (m as any).active : true 
-      })) as ExtendedMember[];
-      setMembers(extendedMembers);
+      setMembers(membersData || []);
       setSavings(savingsData || []);
     } catch (error: any) {
       toast.error('Failed to load data: ' + error.message);
@@ -71,12 +65,6 @@ export default function SavingsPage() {
     }
 
     try {
-      const member = members.find(m => m.id === formData.memberId);
-      if (!member?.active) {
-        toast.error('Inactive members cannot add savings.');
-        return;
-      }
-
       const updatedSavings = [...savings];
       
       if (editingSaving) {
@@ -225,7 +213,7 @@ export default function SavingsPage() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success"
                     >
                       <option value="">Select Member</option>
-                      {members.filter(m => m.active).map(m => (
+                      {members.map(m => (
                         <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
                       ))}
                     </select>
