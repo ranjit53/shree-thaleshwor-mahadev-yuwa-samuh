@@ -12,10 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-type ExtendedMember = Member & { active: boolean };
-
 export default function PaymentsPage() {
-  const [members, setMembers] = useState<ExtendedMember[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,11 +63,7 @@ export default function PaymentsPage() {
         readFile<FinePayment[]>('data/fines.json'),
         readFile<Expenditure[]>('data/expenditures.json'),
       ]);
-      const extendedMembers = (membersData || []).map((m: Member) => ({ 
-        ...m, 
-        active: (m as any).active !== undefined ? (m as any).active : true 
-      })) as ExtendedMember[];
-      setMembers(extendedMembers);
+      setMembers(membersData || []);
       setLoans(loansData || []);
       setPayments(paymentsData || []);
       setFines(finesData || []);
@@ -124,12 +118,6 @@ export default function PaymentsPage() {
       const loan = loans.find(l => l.id === formData.loanId);
       if (!loan) {
         toast.error('Loan not found');
-        return;
-      }
-
-      const member = members.find(m => m.id === loan.memberId);
-      if (!member?.active) {
-        toast.error('Inactive members cannot make payments.');
         return;
       }
 
@@ -367,7 +355,6 @@ export default function PaymentsPage() {
                       <option value="">Select Loan</option>
                       {loans.map(loan => {
                         const member = members.find(m => m.id === loan.memberId);
-                        if (!member?.active) return null;
                         const outstanding = getOutstanding(loan);
                         return (
                           <option key={loan.id} value={loan.id}>
@@ -474,7 +461,7 @@ export default function PaymentsPage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
                   >
                     <option value="">Select Member</option>
-                    {members.filter(m => m.active).map(m => (
+                    {members.map(m => (
                       <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
                     ))}
                   </select>
@@ -527,11 +514,6 @@ export default function PaymentsPage() {
                     if (!isAdmin) return;
                     if (!fineForm.memberId) {
                       toast.error('Select a member for the fine');
-                      return;
-                    }
-                    const member = members.find(m => m.id === fineForm.memberId);
-                    if (!member?.active) {
-                      toast.error('Inactive members cannot be fined.');
                       return;
                     }
                     const amount = parseFloat(fineForm.amount);
@@ -596,7 +578,7 @@ export default function PaymentsPage() {
               <h3 className="text-xl font-semibold mb-4">
                 {editingExpenditure ? 'Edit Expenditure' : 'Add Expenditure'}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                   <input
@@ -610,6 +592,7 @@ export default function PaymentsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Item</label>
                   <input
                     type="text"
+                    placeholder="DayBook, A4 Paper, Pen, Stamp, Inkpad, etc."
                     value={expForm.item}
                     onChange={(e) => setExpForm({ ...expForm, item: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
