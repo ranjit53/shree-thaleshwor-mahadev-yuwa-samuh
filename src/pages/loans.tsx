@@ -426,14 +426,10 @@ export default function LoansPage() {
                               <label className="text-sm font-medium text-gray-500">Term</label>
                               <p className="text-lg">{loan.termMonths} months</p>
                             </div>
-
-                            {/* ←←← NEW FIELD ADDED HERE */}
                             <div>
                               <label className="text-sm font-medium text-gray-500">Start Date</label>
                               <p className="text-lg">{formatDate(loan.startDate)}</p>
                             </div>
-                            {/* ←←← END OF NEW FIELD */}
-
                             {loan.purpose && (
                               <div className="col-span-2">
                                 <label className="text-sm font-medium text-gray-500">Purpose</label>
@@ -468,14 +464,16 @@ export default function LoansPage() {
                               onClick={() => {
                                 handleEdit(loan);
                               }}
-                              className="flex-1 bg-warning text-white px-4 py-2 rounded-lg hover:bg-warning/90"
+                              className="flex-1 bg-warning text-white px-4 py-2 rounded-lg hover:bg-warning/90 flex items-center justify-center gap-2"
                             >
+                              <Edit size={16} />
                               Edit
                             </button>
                             <button
                               onClick={() => handleDelete(loan)}
-                              className="flex-1 bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger/90"
+                              className="flex-1 bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger/90 flex items-center justify-center gap-2"
                             >
+                              <Trash2 size={16} />
                               Delete
                             </button>
                           </div>
