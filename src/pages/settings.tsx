@@ -415,37 +415,37 @@ export default function SettingsPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="space-y-6">
-          <h2 className="text-3xl font-bold text-gray-800">Settings</h2>
+        <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Settings</h2>
 
           {/* Tabs */}
-          <div className="flex gap-2 border-b border-gray-200">
+          <div className="flex gap-2 border-b border-gray-200 overflow-x-auto -webkit-overflow-scrolling-touch">
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 font-medium transition-colors ${
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${
                 activeTab === 'users'
                   ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-600 hover:text-gray-800'
+                  : 'text-gray-600 hover:text-gray-800 active:text-gray-900'
               }`}
             >
               Users
             </button>
             <button
               onClick={() => setActiveTab('bulk')}
-              className={`px-4 py-2 font-medium transition-colors ${
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${
                 activeTab === 'bulk'
                   ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-600 hover:text-gray-800'
+                  : 'text-gray-600 hover:text-gray-800 active:text-gray-900'
               }`}
             >
               Bulk Saving
             </button>
             <button
               onClick={() => setActiveTab('backup')}
-              className={`px-4 py-2 font-medium transition-colors ${
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${
                 activeTab === 'backup'
                   ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-600 hover:text-gray-800'
+                  : 'text-gray-600 hover:text-gray-800 active:text-gray-900'
               }`}
             >
               Backup/Restore
@@ -455,8 +455,8 @@ export default function SettingsPage() {
           {/* Users Tab */}
           {activeTab === 'users' && (
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
                   <UserPlus size={24} />
                   Add New User
                 </h3>
@@ -471,7 +471,7 @@ export default function SettingsPage() {
                         required
                         value={userForm.userId}
                         onChange={(e) => setUserForm({ ...userForm, userId: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
                       />
                     </div>
                     <div>
@@ -483,7 +483,7 @@ export default function SettingsPage() {
                         required
                         value={userForm.name}
                         onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
                       />
                     </div>
                     <div>
@@ -495,7 +495,7 @@ export default function SettingsPage() {
                         required
                         value={userForm.password}
                         onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
                       />
                     </div>
                     <div>
@@ -506,7 +506,7 @@ export default function SettingsPage() {
                         required
                         value={userForm.role}
                         onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'Admin' | 'Viewer' })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
                       >
                         <option value="Viewer">Viewer</option>
                         <option value="Admin">Admin</option>
@@ -515,15 +515,15 @@ export default function SettingsPage() {
                   </div>
                   <button
                     type="submit"
-                    className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90"
+                    className="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 active:bg-primary/80 touch-manipulation font-medium"
                   >
                     Add User
                   </button>
                 </form>
               </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-xl font-semibold mb-4">Existing Users</h3>
+              <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4">Existing Users</h3>
                 <div className="space-y-2">
                   {settings?.users.map((user) => (
                     <div key={user.userId} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -533,7 +533,7 @@ export default function SettingsPage() {
                       </div>
                       <button
                         onClick={() => handleDeleteUser(user.userId)}
-                        className="px-4 py-2 bg-danger text-white rounded-lg hover:bg-danger/90"
+                        className="px-4 py-2.5 bg-danger text-white rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
                       >
                         Delete
                       </button>
@@ -547,8 +547,8 @@ export default function SettingsPage() {
           {/* Bulk Saving Tab */}
           {activeTab === 'bulk' && (
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
                   <Upload size={24} />
                   Bulk Saving (same amount to selected members)
                 </h3>
@@ -580,7 +580,7 @@ export default function SettingsPage() {
                   <div className="flex items-end">
                     <button
                       onClick={applyBulkFixedSavings}
-                      className="w-full bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90"
+                      className="w-full bg-success text-white px-6 py-2.5 rounded-lg hover:bg-success/90 active:bg-success/80 touch-manipulation font-medium"
                     >
                       Apply to Selected ({selectedMemberIds.size})
                     </button>
@@ -623,8 +623,8 @@ export default function SettingsPage() {
           {/* Backup/Restore Tab - With Refresh Button */}
           {activeTab === 'backup' && (
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
                   <Download size={24} />
                   Create Backup
                 </h3>
@@ -633,15 +633,15 @@ export default function SettingsPage() {
                 </p>
                 <button
                   onClick={handleBackup}
-                  className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90"
+                  className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 active:bg-primary/80 touch-manipulation font-medium"
                 >
                   <Download size={20} />
                   Create Backup Now
                 </button>
               </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
                   <RotateCcw size={24} />
                   Restore from Backup
                 </h3>
@@ -685,7 +685,7 @@ export default function SettingsPage() {
                     </h4>
                     <button
                       onClick={loadBackups}
-                      className="px-3 py-1 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 flex items-center gap-1"
+                      className="px-3 py-1.5 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 active:bg-gray-400 flex items-center gap-1 touch-manipulation"
                       title="Refresh backup list"
                     >
                       <RotateCcw size={14} />
@@ -705,7 +705,7 @@ export default function SettingsPage() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => downloadBackup(backup)}
-                              className="px-3 py-1.5 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 flex items-center gap-1"
+                              className="px-3 py-1.5 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 active:bg-gray-400 flex items-center gap-1 touch-manipulation"
                               title="Download"
                             >
                               <Download size={14} />
@@ -713,7 +713,7 @@ export default function SettingsPage() {
                             </button>
                             <button
                               onClick={() => handleRestore(backup)}
-                              className="px-4 py-1.5 text-xs bg-warning text-white rounded hover:bg-warning/90"
+                              className="px-4 py-1.5 text-xs bg-warning text-white rounded hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
                             >
                               Restore
                             </button>
