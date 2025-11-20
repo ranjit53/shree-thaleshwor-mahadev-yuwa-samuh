@@ -23,16 +23,4 @@
     "startDate": "2025-11-11",
     "termMonths": 6
   },
-  {
-    "loanId": "LOAN_4579057a",
-    "memberId": "TEST_MEMBER_001",
-    "principalAmount": 50000.0,
-    "interestRate": 10.0,
-    "startDate": "2025-11-20",
-    "termMonths": 12,
-    "purpose": "व्यापार विस्तार",
-    "status": "Active",
-    "outstandingBalance": 50000.0,
-    "createdAt": "2025-11-20T13:38:44.140273"
-  }
 ]
