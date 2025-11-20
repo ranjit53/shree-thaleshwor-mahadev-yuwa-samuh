@@ -273,11 +273,11 @@ export default function Dashboard() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="space-y-6">
-          <h2 className="text-3xl font-bold text-gray-800">Dashboard</h2>
+        <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Dashboard</h2>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-3 sm:gap-4">
             {statCards.map((card, index) => {
               const Icon = card.icon;
               return (
@@ -285,69 +285,74 @@ export default function Dashboard() {
                   key={index}
                   onClick={card.onClick}
                   className={`
-                    ${card.color} text-white p-6 rounded-xl shadow-lg
-                    transform transition-all hover:scale-105 hover:shadow-xl cursor-pointer
+                    ${card.color} text-white p-4 sm:p-6 rounded-xl shadow-lg
+                    transform transition-all active:scale-95 hover:scale-105 hover:shadow-xl cursor-pointer
+                    touch-manipulation min-h-[120px] sm:min-h-[140px]
                   `}
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <Icon size={32} className="opacity-80" />
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <Icon size={28} className="sm:w-8 sm:h-8 opacity-80" />
                   </div>
-                  <div className="text-sm font-medium opacity-90 mb-1">{card.title}</div>
-                  <div className="text-2xl font-bold">{card.value}</div>
+                  <div className="text-xs sm:text-sm font-medium opacity-90 mb-1">{card.title}</div>
+                  <div className="text-xl sm:text-2xl font-bold break-words">{card.value}</div>
                 </div>
               );
             })}
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Line Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Monthly Trends</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={lineData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Legend />
-                  <Line type="monotone" dataKey="saving" stroke="#10b981" strokeWidth={2} name="Saving" />
-                  <Line type="monotone" dataKey="loan" stroke="#f59e0b" strokeWidth={2} name="Loan" />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg w-full overflow-x-auto">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Monthly Trends</h3>
+              <div className="w-full" style={{ minWidth: '300px' }}>
+                <ResponsiveContainer width="100%" height={250} minHeight={250}>
+                  <LineChart data={lineData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" angle={-45} textAnchor="end" height={80} />
+                    <YAxis />
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                    <Legend />
+                    <Line type="monotone" dataKey="saving" stroke="#10b981" strokeWidth={2} name="Saving" />
+                    <Line type="monotone" dataKey="loan" stroke="#f59e0b" strokeWidth={2} name="Loan" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
             {/* Pie Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Loan Distribution</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg w-full overflow-x-auto">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Loan Distribution</h3>
+              <div className="w-full" style={{ minWidth: '300px' }}>
+                <ResponsiveContainer width="100%" height={250} minHeight={250}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
           {/* Defaulters Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Saving Defaulters */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <UserX size={24} className="text-danger" />
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <UserX size={20} className="sm:w-6 sm:h-6 text-danger" />
                 Saving Defaulters ({savingDefaulters.length})
               </h3>
               {savingDefaulters.length === 0 ? (
@@ -357,12 +362,12 @@ export default function Dashboard() {
                   {savingDefaulters.map((defaulter) => (
                     <div
                       key={defaulter.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 active:bg-gray-200 cursor-pointer touch-manipulation"
                       onClick={() => router.push(`/savings`)}
                     >
-                      <div>
-                        <p className="font-medium text-gray-800">{defaulter.name}</p>
-                        <p className="text-sm text-gray-500">{defaulter.id}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-800 truncate">{defaulter.name}</p>
+                        <p className="text-sm text-gray-500 truncate">{defaulter.id}</p>
                       </div>
                     </div>
                   ))}
@@ -371,9 +376,9 @@ export default function Dashboard() {
             </div>
 
             {/* Interest Defaulters */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <AlertTriangle size={24} className="text-warning" />
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <AlertTriangle size={20} className="sm:w-6 sm:h-6 text-warning" />
                 Interest Defaulters ({interestDefaulters.length})
               </h3>
               {interestDefaulters.length === 0 ? (
@@ -383,12 +388,12 @@ export default function Dashboard() {
                   {interestDefaulters.map((defaulter) => (
                     <div
                       key={defaulter.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 active:bg-gray-200 cursor-pointer touch-manipulation"
                       onClick={() => router.push(`/payments`)}
                     >
-                      <div>
-                        <p className="font-medium text-gray-800">{defaulter.name}</p>
-                        <p className="text-sm text-gray-500">{defaulter.id}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-800 truncate">{defaulter.name}</p>
+                        <p className="text-sm text-gray-500 truncate">{defaulter.id}</p>
                       </div>
                     </div>
                   ))}
