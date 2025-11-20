@@ -147,14 +147,14 @@ export default function MembersPage() {
       <Layout>
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-3xl font-bold text-gray-800">Members</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Members</h2>
             {isAdmin && (
               <button
                 onClick={() => {
                   resetForm();
                   setShowAddForm(true);
                 }}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary/90 active:bg-primary/80 transition-colors touch-manipulation font-medium w-full sm:w-auto justify-center"
               >
                 <Plus size={20} />
                 Add Member
@@ -170,14 +170,14 @@ export default function MembersPage() {
               placeholder="Search by name, ID, or phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent touch-manipulation text-base"
             />
           </div>
 
           {/* Add/Edit Form */}
           {(showAddForm || editingMember) && isAdmin && (
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4">
                 {editingMember ? 'Edit Member' : 'Add New Member'}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -191,7 +191,7 @@ export default function MembersPage() {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
                     />
                   </div>
                   <div>
@@ -203,7 +203,7 @@ export default function MembersPage() {
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
                     />
                   </div>
                   <div>
@@ -215,7 +215,7 @@ export default function MembersPage() {
                       required
                       value={formData.joinDate}
                       onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
                     />
                   </div>
                   <div>
@@ -224,21 +224,21 @@ export default function MembersPage() {
                       type="text"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
                     />
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     type="submit"
-                    className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90"
+                    className="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 active:bg-primary/80 touch-manipulation font-medium"
                   >
                     {editingMember ? 'Update' : 'Add'} Member
                   </button>
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
+                    className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-300 active:bg-gray-400 touch-manipulation font-medium"
                   >
                     Cancel
                   </button>
@@ -249,39 +249,40 @@ export default function MembersPage() {
 
           {/* Members Table */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="table-container overflow-x-auto -webkit-overflow-scrolling-touch">
+              <table className="w-full min-w-[640px]">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Join Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member ID</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Join Date</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredMembers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={6} className="px-4 sm:px-6 py-8 text-center text-gray-500">
                         No members found
                       </td>
                     </tr>
                   ) : (
                     filteredMembers.map((member) => (
                       <tr key={member.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap font-medium">{member.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{member.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{member.phone}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{formatDate(member.joinDate)}</td>
-                        <td className="px-6 py-4">{member.address || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap font-medium text-sm">{member.id}</td>
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">{member.name}</td>
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">{member.phone}</td>
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">{formatDate(member.joinDate)}</td>
+                        <td className="px-4 sm:px-6 py-4 text-sm max-w-[200px] truncate">{member.address || '-'}</td>
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                           <div className="flex gap-2">
                             <button
                               onClick={() => setViewingMember(member)}
-                              className="p-2 text-info hover:bg-info/10 rounded-lg transition-colors"
+                              className="p-2 text-info hover:bg-info/10 active:bg-info/20 rounded-lg transition-colors touch-manipulation"
                               title="Review"
+                              aria-label="View member details"
                             >
                               <Eye size={18} />
                             </button>
@@ -297,53 +298,54 @@ export default function MembersPage() {
 
           {/* View/Edit Modal */}
           {viewingMember && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+              <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto my-4">
+                <div className="p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-2xl font-bold text-gray-800">Member Details</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Member Details</h3>
                     <button
                       onClick={() => setViewingMember(null)}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-gray-500 hover:text-gray-700 active:text-gray-900 p-2 touch-manipulation"
+                      aria-label="Close"
                     >
-                      ✕
+                      <span className="text-2xl">✕</span>
                     </button>
                   </div>
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-500">Member ID</label>
-                      <p className="text-lg font-semibold">{viewingMember.id}</p>
+                      <p className="text-base sm:text-lg font-semibold break-words">{viewingMember.id}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Name</label>
-                      <p className="text-lg">{viewingMember.name}</p>
+                      <p className="text-base sm:text-lg break-words">{viewingMember.name}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Phone</label>
-                      <p className="text-lg">{viewingMember.phone}</p>
+                      <p className="text-base sm:text-lg break-words">{viewingMember.phone}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Join Date</label>
-                      <p className="text-lg">{formatDate(viewingMember.joinDate)}</p>
+                      <p className="text-base sm:text-lg">{formatDate(viewingMember.joinDate)}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Address</label>
-                      <p className="text-lg">{viewingMember.address || '-'}</p>
+                      <p className="text-base sm:text-lg break-words">{viewingMember.address || '-'}</p>
                     </div>
                   </div>
                   {isAdmin && (
-                    <div className="flex gap-2 mt-6">
+                    <div className="flex flex-col sm:flex-row gap-2 mt-6">
                       <button
                         onClick={() => {
                           handleEdit(viewingMember);
                         }}
-                        className="flex-1 bg-warning text-white px-4 py-2 rounded-lg hover:bg-warning/90"
+                        className="flex-1 bg-warning text-white px-4 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(viewingMember)}
-                        className="flex-1 bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger/90"
+                        className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
                       >
                         Delete
                       </button>
