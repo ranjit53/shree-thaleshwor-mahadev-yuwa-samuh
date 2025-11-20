@@ -167,7 +167,7 @@ export default function LoansPage() {
   const filteredLoans = loans.filter(l => {
     const member = members.find(m => m.id === l.memberId);
     return (
-      member?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (member?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       l.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
