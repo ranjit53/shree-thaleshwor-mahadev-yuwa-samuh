@@ -283,9 +283,9 @@ export default function PaymentsPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-3xl font-bold text-gray-800">Payments</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Payments</h2>
             {isAdmin && (
               <div className="flex flex-wrap gap-2">
                 <button
@@ -330,14 +330,14 @@ export default function PaymentsPage() {
               placeholder="Search by member name or loan ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info focus:border-transparent touch-manipulation text-base"
             />
           </div>
 
           {/* Add/Edit Form */}
           {(showAddForm || editingPayment) && isAdmin && (
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4">
                 {editingPayment ? 'Edit Payment' : 'Add New Payment'}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -350,7 +350,7 @@ export default function PaymentsPage() {
                       required
                       value={formData.loanId}
                       onChange={(e) => handleLoanSelect(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info touch-manipulation text-base"
                     >
                       <option value="">Select Loan</option>
                       {loans.map(loan => {
@@ -373,7 +373,7 @@ export default function PaymentsPage() {
                       required
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info touch-manipulation text-base"
                     />
                   </div>
                   <div>
@@ -385,7 +385,7 @@ export default function PaymentsPage() {
                       step="0.01"
                       readOnly
                       value={formData.interestPaid}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100 touch-manipulation text-base"
                     />
                   </div>
                   <div>
@@ -399,7 +399,7 @@ export default function PaymentsPage() {
                       required
                       value={formData.principalPaid}
                       onChange={(e) => setFormData({ ...formData, principalPaid: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info touch-manipulation text-base"
                     />
                   </div>
                   <div>
@@ -413,7 +413,7 @@ export default function PaymentsPage() {
                       required
                       value={formData.interestPaid}
                       onChange={(e) => setFormData({ ...formData, interestPaid: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info touch-manipulation text-base"
                     />
                   </div>
                   <div>
@@ -422,21 +422,21 @@ export default function PaymentsPage() {
                       type="text"
                       value={formData.remarks}
                       onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info touch-manipulation text-base"
                     />
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     type="submit"
-                    className="bg-info text-white px-6 py-2 rounded-lg hover:bg-info/90"
+                    className="bg-info text-white px-6 py-2.5 rounded-lg hover:bg-info/90 active:bg-info/80 touch-manipulation font-medium"
                   >
                     {editingPayment ? 'Update' : 'Add'} Payment
                   </button>
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
+                    className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-300 active:bg-gray-400 touch-manipulation font-medium"
                   >
                     Cancel
                   </button>
@@ -447,8 +447,8 @@ export default function PaymentsPage() {
 
           {/* Add Fine Form */}
           {showFineForm && isAdmin && (
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4">
                 {editingFine ? 'Edit Fine Payment' : 'Add Fine Payment'}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -458,7 +458,7 @@ export default function PaymentsPage() {
                     required
                     value={fineForm.memberId}
                     onChange={(e) => setFineForm({ ...fineForm, memberId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning touch-manipulation text-base"
                   >
                     <option value="">Select Member</option>
                     {members.map(m => (
@@ -472,7 +472,7 @@ export default function PaymentsPage() {
                     type="date"
                     value={fineForm.date}
                     onChange={(e) => setFineForm({ ...fineForm, date: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning touch-manipulation text-base"
                   />
                 </div>
                 <div>
@@ -483,7 +483,7 @@ export default function PaymentsPage() {
                     step="0.01"
                     value={fineForm.amount}
                     onChange={(e) => setFineForm({ ...fineForm, amount: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning touch-manipulation text-base"
                   />
                 </div>
                 <div>
@@ -491,7 +491,7 @@ export default function PaymentsPage() {
                   <select
                     value={fineForm.reason}
                     onChange={(e) => setFineForm({ ...fineForm, reason: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning touch-manipulation text-base"
                   >
                     <option>Saving Default</option>
                     <option>Interest Default</option>
@@ -504,11 +504,11 @@ export default function PaymentsPage() {
                     type="text"
                     value={fineForm.note}
                     onChange={(e) => setFineForm({ ...fineForm, note: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning touch-manipulation text-base"
                   />
                 </div>
               </div>
-              <div className="flex gap-2 mt-4">
+              <div className="flex flex-col sm:flex-row gap-2 mt-4">
                 <button
                   onClick={async () => {
                     if (!isAdmin) return;
@@ -558,7 +558,7 @@ export default function PaymentsPage() {
                       toast.error('Failed to save fine: ' + e.message);
                     }
                   }}
-                  className="bg-warning text-white px-6 py-2 rounded-lg hover:bg-warning/90"
+                  className="bg-warning text-white px-6 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
                 >
                   {editingFine ? 'Update' : 'Save'} Fine
                 </button>
@@ -574,8 +574,8 @@ export default function PaymentsPage() {
 
           {/* Add Expenditure Form */}
           {showExpForm && isAdmin && (
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4">
                 {editingExpenditure ? 'Edit Expenditure' : 'Add Expenditure'}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -585,7 +585,7 @@ export default function PaymentsPage() {
                     type="date"
                     value={expForm.date}
                     onChange={(e) => setExpForm({ ...expForm, date: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger touch-manipulation text-base"
                   />
                 </div>
                 <div>
@@ -595,7 +595,7 @@ export default function PaymentsPage() {
                     placeholder="DayBook, A4 Paper, Pen, Stamp, Inkpad, etc."
                     value={expForm.item}
                     onChange={(e) => setExpForm({ ...expForm, item: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger touch-manipulation text-base"
                   />
                 </div>
                 <div>
@@ -606,7 +606,7 @@ export default function PaymentsPage() {
                     step="0.01"
                     value={expForm.amount}
                     onChange={(e) => setExpForm({ ...expForm, amount: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger touch-manipulation text-base"
                   />
                 </div>
                 <div className="md:col-span-3">
@@ -615,11 +615,11 @@ export default function PaymentsPage() {
                     type="text"
                     value={expForm.note}
                     onChange={(e) => setExpForm({ ...expForm, note: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-danger touch-manipulation text-base"
                   />
                 </div>
               </div>
-              <div className="flex gap-2 mt-4">
+              <div className="flex flex-col sm:flex-row gap-2 mt-4">
                 <button
                   onClick={async () => {
                     if (!isAdmin) return;
@@ -667,7 +667,7 @@ export default function PaymentsPage() {
                       toast.error('Failed to save expenditure: ' + e.message);
                     }
                   }}
-                  className="bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger/90"
+                  className="bg-danger text-white px-6 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
                 >
                   {editingExpenditure ? 'Update' : 'Save'} Expenditure
                 </button>
@@ -683,21 +683,21 @@ export default function PaymentsPage() {
 
           {/* All Payments Details Section */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-2xl font-bold text-gray-800">All Payment Details</h3>
+            <div className="p-4 sm:p-6 border-b border-gray-200">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">All Payment Details</h3>
               <p className="text-sm text-gray-600 mt-1">Complete list of all payments including loan interest, fines, and expenditures</p>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="table-container overflow-x-auto -webkit-overflow-scrolling-touch">
+              <table className="w-full min-w-[800px]">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member/Item</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Principal Paid</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Interest Paid</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Fine/Expenditure</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Amount</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member/Item</th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Principal Paid</th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Interest Paid</th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Fine/Expenditure</th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Amount</th>
+                    <th className="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -825,7 +825,7 @@ export default function PaymentsPage() {
                     if (filtered.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500">
                             No payments found
                           </td>
                         </tr>
@@ -834,8 +834,8 @@ export default function PaymentsPage() {
 
                     return filtered.map((payment) => (
                       <tr key={payment.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">{formatDate(payment.date)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">{formatDate(payment.date)}</td>
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                           {payment.memberName ? (
                             <div>
                               <div className="font-medium text-gray-800">{payment.memberName}</div>
@@ -847,21 +847,21 @@ export default function PaymentsPage() {
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm">
                           {payment.principalPaid !== undefined ? (
                             <span className="text-gray-800">{formatCurrency(payment.principalPaid)}</span>
                           ) : (
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm">
                           {payment.interestPaid !== undefined ? (
                             <span className="text-info font-semibold">{formatCurrency(payment.interestPaid)}</span>
                           ) : (
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm">
                           {payment.fineAmount !== undefined ? (
                             <span className="text-warning font-semibold">{formatCurrency(payment.fineAmount)}</span>
                           ) : payment.expenditureAmount !== undefined ? (
@@ -870,10 +870,10 @@ export default function PaymentsPage() {
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm">
                           <span className="font-bold text-gray-900">{formatCurrency(payment.totalAmount)}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
                             {/* REVIEW BUTTON - Fixed with correct toast usage */}
                             <button
@@ -903,7 +903,7 @@ export default function PaymentsPage() {
                                   );
                                 }
                               }}
-                              className="p-2 text-info hover:bg-info/10 rounded-lg transition-colors"
+                              className="p-2 text-info hover:bg-info/10 active:bg-info/20 rounded-lg transition-colors touch-manipulation"
                               title="Review"
                             >
                               <Eye size={18} />
@@ -972,7 +972,7 @@ export default function PaymentsPage() {
                                         handleEdit(payment);
                                         setViewingLoanId(null);
                                       }}
-                                      className="p-2 text-warning hover:bg-warning/10 rounded-lg"
+                                      className="p-2 text-warning hover:bg-warning/10 active:bg-warning/20 rounded-lg touch-manipulation"
                                     >
                                       <Edit size={18} />
                                     </button>
@@ -983,7 +983,7 @@ export default function PaymentsPage() {
                                           setViewingLoanId(null);
                                         }
                                       }}
-                                      className="p-2 text-danger hover:bg-danger/10 rounded-lg"
+                                      className="p-2 text-danger hover:bg-danger/10 active:bg-danger/20 rounded-lg touch-manipulation"
                                     >
                                       <Trash2 size={18} />
                                     </button>
