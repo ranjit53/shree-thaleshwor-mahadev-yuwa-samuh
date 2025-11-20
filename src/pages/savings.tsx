@@ -165,16 +165,16 @@ export default function SavingsPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-3xl font-bold text-gray-800">Savings</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Savings</h2>
             {isAdmin && (
               <button
                 onClick={() => {
                   resetForm();
                   setShowAddForm(true);
                 }}
-                className="flex items-center gap-2 bg-success text-white px-4 py-2 rounded-lg hover:bg-success/90 transition-colors"
+                className="flex items-center gap-2 bg-success text-white px-4 py-2.5 rounded-lg hover:bg-success/90 active:bg-success/80 transition-colors touch-manipulation font-medium w-full sm:w-auto justify-center"
               >
                 <Plus size={20} />
                 Add Saving
@@ -190,14 +190,14 @@ export default function SavingsPage() {
               placeholder="Search by member name or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success focus:border-transparent touch-manipulation text-base"
             />
           </div>
 
           {/* Add/Edit Form */}
           {(showAddForm || editingSaving) && isAdmin && (
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4">
                 {editingSaving ? 'Edit Saving' : 'Add New Saving'}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -210,7 +210,7 @@ export default function SavingsPage() {
                       required
                       value={formData.memberId}
                       onChange={(e) => setFormData({ ...formData, memberId: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success touch-manipulation text-base"
                     >
                       <option value="">Select Member</option>
                       {members.map(m => (
@@ -229,7 +229,7 @@ export default function SavingsPage() {
                       required
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success touch-manipulation text-base"
                     />
                   </div>
                   <div>
@@ -241,7 +241,7 @@ export default function SavingsPage() {
                       required
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success touch-manipulation text-base"
                     />
                   </div>
                   <div>
@@ -250,21 +250,21 @@ export default function SavingsPage() {
                       type="text"
                       value={formData.remarks}
                       onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success touch-manipulation text-base"
                     />
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     type="submit"
-                    className="bg-success text-white px-6 py-2 rounded-lg hover:bg-success/90"
+                    className="bg-success text-white px-6 py-2.5 rounded-lg hover:bg-success/90 active:bg-success/80 touch-manipulation font-medium"
                   >
                     {editingSaving ? 'Update' : 'Add'} Saving
                   </button>
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
+                    className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-300 active:bg-gray-400 touch-manipulation font-medium"
                   >
                     Cancel
                   </button>
@@ -275,20 +275,20 @@ export default function SavingsPage() {
 
           {/* Savings Table */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="table-container overflow-x-auto -webkit-overflow-scrolling-touch">
+              <table className="w-full min-w-[500px]">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Saving</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member ID</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member Name</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Saving</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredMembers.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={4} className="px-4 sm:px-6 py-8 text-center text-gray-500">
                         No members found
                       </td>
                     </tr>
@@ -297,16 +297,17 @@ export default function SavingsPage() {
                       const totalSaving = memberSavingsMap.get(member.id) || 0;
                       return (
                         <tr key={member.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap font-medium">{member.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{member.name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap font-semibold text-success">
+                          <td className="px-4 sm:px-6 py-4 whitespace-nowrap font-medium text-sm">{member.id}</td>
+                          <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">{member.name}</td>
+                          <td className="px-4 sm:px-6 py-4 whitespace-nowrap font-semibold text-success text-sm">
                             {formatCurrency(totalSaving)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                             <button
                               onClick={() => setViewingMemberId(member.id)}
-                              className="p-2 text-info hover:bg-info/10 rounded-lg transition-colors"
+                              className="p-2 text-info hover:bg-info/10 active:bg-info/20 rounded-lg transition-colors touch-manipulation"
                               title="Review"
+                              aria-label="View savings details"
                             >
                               <Eye size={18} />
                             </button>
