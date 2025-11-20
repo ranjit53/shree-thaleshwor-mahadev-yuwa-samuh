@@ -390,13 +390,5 @@
     "amount": 1000,
     "date": "2025-11-11",
     "remarks": "Bulk fixed saving"
-  },
-  {
-    "savingId": "SAV_2a180a7c",
-    "memberId": "TEST_MEMBER_001",
-    "amount": 5000.0,
-    "date": "2025-11-20",
-    "month": "2025-11",
-    "createdAt": "2025-11-20T13:38:43.199204"
   }
 ]
