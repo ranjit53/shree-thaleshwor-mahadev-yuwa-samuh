@@ -24,5 +24,14 @@
     "date": "2025-11-11",
     "principalPaid": 0,
     "interestPaid": 340
+  },
+  {
+    "paymentId": "PAY_4809d5cc",
+    "loanId": "EXISTING_LOAN_001",
+    "principalAmount": 5000.0,
+    "interestAmount": 500.0,
+    "totalAmount": 5500.0,
+    "date": "2025-11-20",
+    "createdAt": "2025-11-20T13:38:45.801567"
   }
 ]
