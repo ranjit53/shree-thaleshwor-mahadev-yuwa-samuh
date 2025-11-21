@@ -6,18 +6,23 @@ import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import { readFile, writeFile } from '@/lib/api';
-import { formatDate, generateMemberId } from '@/lib/utils';
-import type { Member } from '@/types';
+import { formatDate, generateMemberId, formatCurrency, calculateOutstandingPrincipal, calculateMonthlyInterest } from '@/lib/utils';
+import type { Member, Saving, Loan, Payment, FinePayment } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
+  const [savings, setSavings] = useState<Saving[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [fines, setFines] = useState<FinePayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [viewingMember, setViewingMember] = useState<Member | null>(null);
+  const [activeTab, setActiveTab] = useState<'savings' | 'loans' | 'payments' | 'fines'>('savings');
   const [searchTerm, setSearchTerm] = useState('');
   const { isAdmin } = useAuth();
 
@@ -29,18 +34,64 @@ export default function MembersPage() {
   });
 
   useEffect(() => {
-    loadMembers();
+    loadData();
   }, []);
 
-  const loadMembers = async () => {
+  const loadData = async () => {
     try {
-      const data = await readFile<Member[]>('data/members.json');
-      setMembers(data || []);
+      const [membersData, savingsData, loansData, paymentsData, finesData] = await Promise.all([
+        readFile<Member[]>('data/members.json'),
+        readFile<Saving[]>('data/savings.json'),
+        readFile<Loan[]>('data/loans.json'),
+        readFile<Payment[]>('data/payments.json'),
+        readFile<FinePayment[]>('data/fines.json'),
+      ]);
+      setMembers(membersData || []);
+      setSavings(savingsData || []);
+      setLoans(loansData || []);
+      setPayments(paymentsData || []);
+      setFines(finesData || []);
     } catch (error: any) {
-      toast.error('Failed to load members: ' + error.message);
+      toast.error('Failed to load data: ' + error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getMemberSavings = (memberId: string): Saving[] => {
+    return savings.filter((s: Saving) => s.memberId === memberId);
+  };
+
+  const getMemberLoans = (memberId: string): Loan[] => {
+    return loans.filter((l: Loan) => l.memberId === memberId);
+  };
+
+  const getMemberPayments = (memberId: string): Payment[] => {
+    const memberLoans = getMemberLoans(memberId);
+    const loanIds = memberLoans.map((l: Loan) => l.id);
+    return payments.filter((p: Payment) => loanIds.includes(p.loanId));
+  };
+
+  const getMemberFines = (memberId: string): FinePayment[] => {
+    return fines.filter((f: FinePayment) => f.memberId === memberId);
+  };
+
+  const getLoanPayments = (loanId: string): Payment[] => {
+    return payments.filter((p: Payment) => p.loanId === loanId);
+  };
+
+  const getOutstanding = (loan: Loan): number => {
+    const loanPayments = getLoanPayments(loan.id);
+    return calculateOutstandingPrincipal(
+      loan.principal,
+      loan.interestRate,
+      loan.termMonths,
+      loanPayments.map((p: Payment) => ({
+        principalPaid: p.principalPaid,
+        interestPaid: p.interestPaid,
+        date: p.date,
+      }))
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,6 +126,7 @@ export default function MembersPage() {
       await writeFile('data/members.json', updatedMembers);
       setMembers(updatedMembers);
       resetForm();
+      await loadData();
     } catch (error: any) {
       toast.error('Failed to save member: ' + error.message);
     }
@@ -96,6 +148,7 @@ export default function MembersPage() {
       setMembers(updatedMembers);
       toast.success('Member deleted successfully');
       setViewingMember(null);
+      await loadData();
     } catch (error: any) {
       toast.error('Failed to delete member: ' + error.message);
     }
@@ -124,7 +177,12 @@ export default function MembersPage() {
     setViewingMember(null);
   };
 
-  const filteredMembers = members.filter(m =>
+  const handleViewMember = (member: Member) => {
+    setViewingMember(member);
+    setActiveTab('savings');
+  };
+
+  const filteredMembers = members.filter((m: Member) =>
     m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.phone.includes(searchTerm)
@@ -279,7 +337,7 @@ export default function MembersPage() {
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                           <div className="flex gap-2">
                             <button
-                              onClick={() => setViewingMember(member)}
+                              onClick={() => handleViewMember(member)}
                               className="p-2 text-info hover:bg-info/10 active:bg-info/20 rounded-lg transition-colors touch-manipulation"
                               title="Review"
                               aria-label="View member details"
@@ -299,10 +357,10 @@ export default function MembersPage() {
           {/* View/Edit Modal */}
           {viewingMember && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-              <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto my-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto my-4">
                 <div className="p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Member Details</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Member Review - {viewingMember.name}</h3>
                     <button
                       onClick={() => setViewingMember(null)}
                       className="text-gray-500 hover:text-gray-700 active:text-gray-900 p-2 touch-manipulation"
@@ -311,30 +369,251 @@ export default function MembersPage() {
                       <span className="text-2xl">✕</span>
                     </button>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Member ID</label>
-                      <p className="text-base sm:text-lg font-semibold break-words">{viewingMember.id}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Name</label>
-                      <p className="text-base sm:text-lg break-words">{viewingMember.name}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Phone</label>
-                      <p className="text-base sm:text-lg break-words">{viewingMember.phone}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Join Date</label>
-                      <p className="text-base sm:text-lg">{formatDate(viewingMember.joinDate)}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Address</label>
-                      <p className="text-base sm:text-lg break-words">{viewingMember.address || '-'}</p>
+
+                  {/* Member Basic Info */}
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Member ID</label>
+                        <p className="text-base font-semibold break-words">{viewingMember.id}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Name</label>
+                        <p className="text-base break-words">{viewingMember.name}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Phone</label>
+                        <p className="text-base break-words">{viewingMember.phone}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Join Date</label>
+                        <p className="text-base">{formatDate(viewingMember.joinDate)}</p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="text-sm font-medium text-gray-500">Address</label>
+                        <p className="text-base break-words">{viewingMember.address || '-'}</p>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Tabs */}
+                  <div className="border-b border-gray-200 mb-4">
+                    <nav className="flex space-x-4 overflow-x-auto">
+                      <button
+                        onClick={() => setActiveTab('savings')}
+                        className={`px-4 py-2 font-medium text-sm whitespace-nowrap border-b-2 transition-colors ${
+                          activeTab === 'savings'
+                            ? 'border-success text-success'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        Savings ({getMemberSavings(viewingMember.id).length})
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('loans')}
+                        className={`px-4 py-2 font-medium text-sm whitespace-nowrap border-b-2 transition-colors ${
+                          activeTab === 'loans'
+                            ? 'border-warning text-warning'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        Loans ({getMemberLoans(viewingMember.id).length})
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('payments')}
+                        className={`px-4 py-2 font-medium text-sm whitespace-nowrap border-b-2 transition-colors ${
+                          activeTab === 'payments'
+                            ? 'border-info text-info'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        Payments ({getMemberPayments(viewingMember.id).length})
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('fines')}
+                        className={`px-4 py-2 font-medium text-sm whitespace-nowrap border-b-2 transition-colors ${
+                          activeTab === 'fines'
+                            ? 'border-danger text-danger'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        Fines ({getMemberFines(viewingMember.id).length})
+                      </button>
+                    </nav>
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="min-h-[300px]">
+                    {/* Savings Tab */}
+                    {activeTab === 'savings' && (
+                      <div>
+                        <div className="mb-4 flex justify-between items-center">
+                          <h4 className="text-lg font-semibold text-gray-800">Saving Transactions</h4>
+                          <p className="text-sm text-gray-600">
+                            Total: <span className="font-bold text-success">{formatCurrency(getMemberSavings(viewingMember.id).reduce((sum: number, s: Saving) => sum + s.amount, 0))}</span>
+                          </p>
+                        </div>
+                        {getMemberSavings(viewingMember.id).length === 0 ? (
+                          <p className="text-gray-500 text-center py-8">No saving transactions</p>
+                        ) : (
+                          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                            {getMemberSavings(viewingMember.id).map((saving: Saving) => (
+                              <div key={saving.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                  <p className="font-semibold text-success">{formatCurrency(saving.amount)}</p>
+                                  <p className="text-sm text-gray-500">{formatDate(saving.date)}</p>
+                                  {saving.remarks && <p className="text-sm text-gray-600 mt-1">{saving.remarks}</p>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Loans Tab */}
+                    {activeTab === 'loans' && (
+                      <div>
+                        <h4 className="text-lg font-semibold text-gray-800 mb-4">Loan Details</h4>
+                        {getMemberLoans(viewingMember.id).length === 0 ? (
+                          <p className="text-gray-500 text-center py-8">No loans</p>
+                        ) : (
+                          <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                            {getMemberLoans(viewingMember.id).map((loan: Loan) => {
+                              const outstanding = getOutstanding(loan);
+                              const monthlyInterest = calculateMonthlyInterest(outstanding, loan.interestRate);
+                              const loanPayments = getLoanPayments(loan.id);
+                              return (
+                                <div key={loan.id} className="p-4 bg-gray-50 rounded-lg">
+                                  <div className="grid grid-cols-2 gap-4 mb-3">
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-500">Loan ID</label>
+                                      <p className="font-semibold">{loan.id}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-500">Principal</label>
+                                      <p className="font-semibold">{formatCurrency(loan.principal)}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-500">Interest Rate</label>
+                                      <p>{loan.interestRate}% per year</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-500">Outstanding</label>
+                                      <p className="font-semibold text-warning">{formatCurrency(outstanding)}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-500">Monthly Interest</label>
+                                      <p>{formatCurrency(monthlyInterest)}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-500">Term</label>
+                                      <p>{loan.termMonths} months</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-500">Start Date</label>
+                                      <p>{formatDate(loan.startDate)}</p>
+                                    </div>
+                                    {loan.purpose && (
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-500">Purpose</label>
+                                        <p>{loan.purpose}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="mt-3 pt-3 border-t border-gray-200">
+                                    <p className="text-sm font-medium text-gray-600 mb-2">Payment History ({loanPayments.length})</p>
+                                    {loanPayments.length === 0 ? (
+                                      <p className="text-sm text-gray-500">No payments yet</p>
+                                    ) : (
+                                      <div className="space-y-1">
+                                        {loanPayments.map((payment: Payment) => (
+                                          <div key={payment.id} className="text-sm bg-white p-2 rounded">
+                                            <span className="font-medium">{formatDate(payment.date)}</span> - 
+                                            Principal: {formatCurrency(payment.principalPaid)} | 
+                                            Interest: {formatCurrency(payment.interestPaid)}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Payments Tab */}
+                    {activeTab === 'payments' && (
+                      <div>
+                        <h4 className="text-lg font-semibold text-gray-800 mb-4">Loan Payment History</h4>
+                        {getMemberPayments(viewingMember.id).length === 0 ? (
+                          <p className="text-gray-500 text-center py-8">No payments</p>
+                        ) : (
+                          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                            {getMemberPayments(viewingMember.id).map((payment: Payment) => {
+                              const loan = loans.find((l: Loan) => l.id === payment.loanId);
+                              return (
+                                <div key={payment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                  <div>
+                                    <p className="font-semibold">{formatDate(payment.date)}</p>
+                                    <p className="text-sm text-gray-600">
+                                      Loan: {loan?.id || payment.loanId}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      Principal: {formatCurrency(payment.principalPaid)} | 
+                                      Interest: {formatCurrency(payment.interestPaid)}
+                                    </p>
+                                    {payment.remarks && (
+                                      <p className="text-sm text-gray-500 mt-1">{payment.remarks}</p>
+                                    )}
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-bold text-info">
+                                      {formatCurrency(payment.principalPaid + payment.interestPaid)}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Fines Tab */}
+                    {activeTab === 'fines' && (
+                      <div>
+                        <div className="mb-4 flex justify-between items-center">
+                          <h4 className="text-lg font-semibold text-gray-800">Fine Payments</h4>
+                          <p className="text-sm text-gray-600">
+                            Total: <span className="font-bold text-danger">{formatCurrency(getMemberFines(viewingMember.id).reduce((sum: number, f: FinePayment) => sum + f.amount, 0))}</span>
+                          </p>
+                        </div>
+                        {getMemberFines(viewingMember.id).length === 0 ? (
+                          <p className="text-gray-500 text-center py-8">No fines</p>
+                        ) : (
+                          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                            {getMemberFines(viewingMember.id).map((fine: FinePayment) => (
+                              <div key={fine.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                  <p className="font-semibold text-danger">{formatCurrency(fine.amount)}</p>
+                                  <p className="text-sm text-gray-500">{formatDate(fine.date)}</p>
+                                  <p className="text-sm text-gray-600 mt-1">Reason: {fine.reason}</p>
+                                  {fine.note && <p className="text-sm text-gray-600 mt-1">Note: {fine.note}</p>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {isAdmin && (
-                    <div className="flex flex-col sm:flex-row gap-2 mt-6">
+                    <div className="flex flex-col sm:flex-row gap-2 mt-6 pt-4 border-t border-gray-200">
                       <button
                         onClick={() => {
                           handleEdit(viewingMember);
