@@ -774,38 +774,41 @@ export default function PaymentsPage() {
                       });
                     });
 
-                    const groupedByMemberAndType = new Map<string, typeof allPayments>();
+                    const combinedPayments: typeof allPayments = [];
+                    const loanGroups = new Map<string, typeof allPayments>();
+
                     allPayments.forEach((payment) => {
-                      const key = `${payment.memberId || payment.item || payment.id}_${payment.type}`;
-                      if (!groupedByMemberAndType.has(key)) {
-                        groupedByMemberAndType.set(key, []);
+                      if (payment.type !== 'Loan Payment') {
+                        combinedPayments.push(payment);
+                        return;
                       }
-                      groupedByMemberAndType.get(key)!.push(payment);
+
+                      const key = `${payment.memberId || payment.loanId || payment.id}_${payment.type}`;
+                      if (!loanGroups.has(key)) {
+                        loanGroups.set(key, []);
+                      }
+                      loanGroups.get(key)!.push(payment);
                     });
 
-                    const combinedPayments: typeof allPayments = [];
-                    groupedByMemberAndType.forEach((memberPayments) => {
+                    loanGroups.forEach((memberPayments) => {
                       if (memberPayments.length === 1) {
                         combinedPayments.push(memberPayments[0]);
-                      } else {
-                        const firstPayment = memberPayments[0];
-                        const combined: typeof firstPayment = {
-                          ...firstPayment,
-                          principalPaid: memberPayments.reduce((sum, p) => sum + (p.principalPaid || 0), 0) || undefined,
-                          interestPaid: memberPayments.reduce((sum, p) => sum + (p.interestPaid || 0), 0) || undefined,
-                          fineAmount: memberPayments.reduce((sum, p) => sum + (p.fineAmount || 0), 0) || undefined,
-                          expenditureAmount: memberPayments.reduce((sum, p) => sum + (p.expenditureAmount || 0), 0) || undefined,
-                          totalAmount: memberPayments.reduce((sum, p) => sum + p.totalAmount, 0),
-                          details: memberPayments.map(p => p.details).filter(Boolean).join('; ') || undefined,
-                          note: memberPayments.map(p => p.note).filter(Boolean).join('; ') || undefined,
-                          reason: memberPayments.map(p => p.reason).filter(Boolean).join(', ') || undefined,
-                          date: memberPayments.sort((a, b) => (a.date < b.date ? 1 : -1))[0].date,
-                          payment: memberPayments.find(p => p.payment)?.payment,
-                          fine: memberPayments.find(p => p.fine)?.fine,
-                          expenditure: memberPayments.find(p => p.expenditure)?.expenditure,
-                        };
-                        combinedPayments.push(combined);
+                        return;
                       }
+
+                      const firstPayment = memberPayments[0];
+                      const combinedLoanPayment: typeof firstPayment = {
+                        ...firstPayment,
+                        principalPaid: memberPayments.reduce((sum, p) => sum + (p.principalPaid || 0), 0) || undefined,
+                        interestPaid: memberPayments.reduce((sum, p) => sum + (p.interestPaid || 0), 0) || undefined,
+                        totalAmount: memberPayments.reduce((sum, p) => sum + p.totalAmount, 0),
+                        details: memberPayments.map(p => p.details).filter(Boolean).join('; ') || undefined,
+                        note: memberPayments.map(p => p.note).filter(Boolean).join('; ') || undefined,
+                        date: memberPayments.sort((a, b) => (a.date < b.date ? 1 : -1))[0].date,
+                        payment: memberPayments[0].payment,
+                      };
+
+                      combinedPayments.push(combinedLoanPayment);
                     });
 
                     combinedPayments.sort((a, b) => {
