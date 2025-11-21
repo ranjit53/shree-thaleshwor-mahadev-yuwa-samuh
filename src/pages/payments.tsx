@@ -20,7 +20,7 @@ export default function PaymentsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [viewingLoanId, setViewingLoanId] = useState<string | null>(null);
-  const [viewingFine, setViewingFine] = useState<FinePayment | null>(null);
+  const [viewingFineMemberId, setViewingFineMemberId] = useState<string | null>(null);
   const [viewingExpenditure, setViewingExpenditure] = useState<Expenditure | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { isAdmin } = useAuth();
@@ -189,11 +189,11 @@ export default function PaymentsPage() {
     setShowAddForm(false);
     setEditingPayment(null);
     setViewingLoanId(null);
+    setViewingFineMemberId(null);
     setShowFineForm(false);
     setShowExpForm(false);
     setEditingFine(null);
     setEditingExpenditure(null);
-    setViewingFine(null);
     setViewingExpenditure(null);
   };
 
@@ -223,6 +223,9 @@ export default function PaymentsPage() {
       const updatedFines = fines.filter(f => f.id !== fine.id);
       await writeFile('data/fines.json', updatedFines);
       setFines(updatedFines);
+      if (viewingFineMemberId && updatedFines.filter(f => f.memberId === viewingFineMemberId).length === 0) {
+        setViewingFineMemberId(null);
+      }
       toast.success('Fine payment deleted successfully');
     } catch (error: any) {
       toast.error('Failed to delete fine: ' + error.message);
@@ -239,6 +242,7 @@ export default function PaymentsPage() {
       note: fine.note || '',
     });
     setShowFineForm(true);
+    setViewingFineMemberId(null);
   };
 
   const handleDeleteExpenditure = async (exp: Expenditure) => {
@@ -776,39 +780,65 @@ export default function PaymentsPage() {
 
                     const combinedPayments: typeof allPayments = [];
                     const loanGroups = new Map<string, typeof allPayments>();
+                    const fineGroups = new Map<string, typeof allPayments>();
 
                     allPayments.forEach((payment) => {
-                      if (payment.type !== 'Loan Payment') {
+                      if (payment.type === 'Loan Payment') {
+                        const key = `${payment.loanId}_${payment.type}`;
+                        if (!loanGroups.has(key)) {
+                          loanGroups.set(key, []);
+                        }
+                        loanGroups.get(key)!.push(payment);
+                      } else if (payment.type === 'Fine Payment') {
+                        const key = payment.memberId!;
+                        if (!fineGroups.has(key)) {
+                          fineGroups.set(key, []);
+                        }
+                        fineGroups.get(key)!.push(payment);
+                      } else {
                         combinedPayments.push(payment);
-                        return;
                       }
-
-                      const key = `${payment.memberId || payment.loanId || payment.id}_${payment.type}`;
-                      if (!loanGroups.has(key)) {
-                        loanGroups.set(key, []);
-                      }
-                      loanGroups.get(key)!.push(payment);
                     });
 
-                    loanGroups.forEach((memberPayments) => {
-                      if (memberPayments.length === 1) {
-                        combinedPayments.push(memberPayments[0]);
+                    loanGroups.forEach((loanPayments) => {
+                      if (loanPayments.length === 1) {
+                        combinedPayments.push(loanPayments[0]);
                         return;
                       }
 
-                      const firstPayment = memberPayments[0];
+                      const firstPayment = loanPayments[0];
                       const combinedLoanPayment: typeof firstPayment = {
                         ...firstPayment,
-                        principalPaid: memberPayments.reduce((sum, p) => sum + (p.principalPaid || 0), 0) || undefined,
-                        interestPaid: memberPayments.reduce((sum, p) => sum + (p.interestPaid || 0), 0) || undefined,
-                        totalAmount: memberPayments.reduce((sum, p) => sum + p.totalAmount, 0),
-                        details: memberPayments.map(p => p.details).filter(Boolean).join('; ') || undefined,
-                        note: memberPayments.map(p => p.note).filter(Boolean).join('; ') || undefined,
-                        date: memberPayments.sort((a, b) => (a.date < b.date ? 1 : -1))[0].date,
-                        payment: memberPayments[0].payment,
+                        principalPaid: loanPayments.reduce((sum, p) => sum + (p.principalPaid || 0), 0) || undefined,
+                        interestPaid: loanPayments.reduce((sum, p) => sum + (p.interestPaid || 0), 0) || undefined,
+                        totalAmount: loanPayments.reduce((sum, p) => sum + p.totalAmount, 0),
+                        details: loanPayments.map(p => p.details).filter(Boolean).join('; ') || undefined,
+                        date: loanPayments.sort((a, b) => (a.date < b.date ? 1 : -1))[0].date,
+                        loanId: firstPayment.loanId,
+                        payment: loanPayments[0].payment,
                       };
 
                       combinedPayments.push(combinedLoanPayment);
+                    });
+
+                    fineGroups.forEach((memberFines) => {
+                      if (memberFines.length === 1) {
+                        combinedPayments.push(memberFines[0]);
+                        return;
+                      }
+
+                      const firstFine = memberFines[0];
+                      const combinedFinePayment: typeof firstFine = {
+                        ...firstFine,
+                        fineAmount: memberFines.reduce((sum, p) => sum + (p.fineAmount || 0), 0),
+                        totalAmount: memberFines.reduce((sum, p) => sum + p.totalAmount, 0),
+                        reason: memberFines.map(p => p.reason).filter(Boolean).join('; ') || undefined,
+                        note: memberFines.map(p => p.note).filter(Boolean).join('; ') || undefined,
+                        date: memberFines.sort((a, b) => (a.date < b.date ? 1 : -1))[0].date,
+                        memberId: firstFine.memberId,
+                      };
+
+                      combinedPayments.push(combinedFinePayment);
                     });
 
                     combinedPayments.sort((a, b) => {
@@ -882,27 +912,20 @@ export default function PaymentsPage() {
                         </td>
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
-                            {/* REVIEW BUTTON - Fixed with correct toast usage */}
                             <button
                               onClick={() => {
+                                setViewingExpenditure(null);
+                                setViewingFineMemberId(null);
                                 if (payment.type === 'Loan Payment' && payment.loanId) {
-                                  setViewingExpenditure(null);
-                                  setViewingFine(null);
                                   setViewingLoanId(payment.loanId);
-                                } else if (payment.type === 'Fine Payment') {
-                                  const fine = payment.fine ?? fines.find((f) => f.id === payment.id);
-                                  if (fine) {
-                                    setViewingLoanId(null);
-                                    setViewingExpenditure(null);
-                                    setViewingFine(fine);
-                                  } else {
-                                    toast.error('Fine details not found');
-                                  }
+                                } else if (payment.type === 'Fine Payment' && payment.memberId) {
+                                  setViewingLoanId(null);
+                                  setViewingFineMemberId(payment.memberId);
                                 } else if (payment.type === 'Expenditure') {
                                   const expenditure = payment.expenditure ?? expenditures.find((e) => e.id === payment.id);
                                   if (expenditure) {
                                     setViewingLoanId(null);
-                                    setViewingFine(null);
+                                    setViewingFineMemberId(null);
                                     setViewingExpenditure(expenditure);
                                   } else {
                                     toast.error('Expenditure details not found');
@@ -1007,74 +1030,78 @@ export default function PaymentsPage() {
             </div>
           )}
 
-          {/* View Fine Details Modal */}
-          {viewingFine && (
+          {/* View Fine History Modal */}
+          {viewingFineMemberId && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-2xl font-bold text-gray-800">Fine Details</h3>
+                    <h3 className="text-2xl font-bold text-gray-800">Fine History</h3>
                     <button
-                      onClick={() => setViewingFine(null)}
+                      onClick={() => setViewingFineMemberId(null)}
                       className="text-gray-500 hover:text-gray-700"
                     >
                       ✕
                     </button>
                   </div>
                   {(() => {
-                    const member = members.find((m) => m.id === viewingFine.memberId);
+                    const member = members.find((m) => m.id === viewingFineMemberId);
+                    const memberFines = fines.filter((f) => f.memberId === viewingFineMemberId);
+
                     return (
                       <>
-                        <div className="space-y-3 mb-4">
-                          <div>
-                            <label className="text-sm font-medium text-gray-500">Member</label>
-                            <p className="text-lg font-semibold">
-                              {member?.name || 'Unknown'} ({viewingFine.memberId})
-                            </p>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Amount</label>
-                              <p className="text-lg font-semibold text-danger">{formatCurrency(viewingFine.amount)}</p>
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Date</label>
-                              <p className="text-lg">{formatDate(viewingFine.date)}</p>
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-gray-500">Reason</label>
-                            <p className="text-base">{viewingFine.reason}</p>
-                          </div>
-                          {viewingFine.note && (
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Note</label>
-                              <p className="text-base">{viewingFine.note}</p>
-                            </div>
+                        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                          <p className="font-semibold">
+                            {member?.name} ({viewingFineMemberId})
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          {memberFines.length === 0 ? (
+                            <p className="text-gray-500 text-center py-8">No fines yet</p>
+                          ) : (
+                            memberFines.map((fine) => (
+                              <div
+                                key={fine.id}
+                                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                              >
+                                <div>
+                                  <p className="font-semibold">{formatDate(fine.date)}</p>
+                                  <p className="text-sm text-gray-600">
+                                    Amount: {formatCurrency(fine.amount)}
+                                  </p>
+                                  <p className="text-sm text-gray-500">Reason: {fine.reason}</p>
+                                  {fine.note && (
+                                    <p className="text-sm text-gray-500 mt-1">Note: {fine.note}</p>
+                                  )}
+                                </div>
+                                {isAdmin && (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => {
+                                        handleEditFine(fine);
+                                        setViewingFineMemberId(null);
+                                      }}
+                                      className="p-2 text-warning hover:bg-warning/10 active:bg-warning/20 rounded-lg touch-manipulation"
+                                    >
+                                      <Edit size={18} />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        handleDeleteFine(fine);
+                                        if (memberFines.length === 1) {
+                                          setViewingFineMemberId(null);
+                                        }
+                                      }}
+                                      className="p-2 text-danger hover:bg-danger/10 active:bg-danger/20 rounded-lg touch-manipulation"
+                                    >
+                                      <Trash2 size={18} />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ))
                           )}
                         </div>
-                        {isAdmin && (
-                          <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
-                            <button
-                              onClick={() => {
-                                handleEditFine(viewingFine);
-                                setViewingFine(null);
-                              }}
-                              className="flex-1 bg-warning text-white px-4 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
-                            >
-                              Edit Fine
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleDeleteFine(viewingFine);
-                                setViewingFine(null);
-                              }}
-                              className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
-                            >
-                              Delete Fine
-                            </button>
-                          </div>
-                        )}
                       </>
                     );
                   })()}
