@@ -995,155 +995,155 @@ export default function PaymentsPage() {
                                     </button>
                                   </div>
                                 )}
-
-      {/* View Fine Details Modal */}
-      {viewingFine && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-2xl font-bold text-gray-800">Fine Details</h3>
-                <button
-                  onClick={() => setViewingFine(null)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-              {(() => {
-                const member = members.find((m) => m.id === viewingFine.memberId);
-                return (
-                  <>
-                    <div className="space-y-3 mb-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Member</label>
-                        <p className="text-lg font-semibold">
-                          {member?.name || 'Unknown'} ({viewingFine.memberId})
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Amount</label>
-                          <p className="text-lg font-semibold text-danger">{formatCurrency(viewingFine.amount)}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Date</label>
-                          <p className="text-lg">{formatDate(viewingFine.date)}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Reason</label>
-                        <p className="text-base">{viewingFine.reason}</p>
-                      </div>
-                      {viewingFine.note && (
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Note</label>
-                          <p className="text-base">{viewingFine.note}</p>
-                        </div>
-                      )}
-                    </div>
-                    {isAdmin && (
-                      <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
-                        <button
-                          onClick={() => {
-                            handleEditFine(viewingFine);
-                            setViewingFine(null);
-                          }}
-                          className="flex-1 bg-warning text-white px-4 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
-                        >
-                          Edit Fine
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleDeleteFine(viewingFine);
-                            setViewingFine(null);
-                          }}
-                          className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
-                        >
-                          Delete Fine
-                        </button>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* View Expenditure Details Modal */}
-      {viewingExpenditure && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-2xl font-bold text-gray-800">Expenditure Details</h3>
-                <button
-                  onClick={() => setViewingExpenditure(null)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-              {(() => {
-                return (
-                  <>
-                    <div className="space-y-3 mb-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Item</label>
-                          <p className="text-lg font-semibold">{viewingExpenditure.item}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Amount</label>
-                          <p className="text-lg font-semibold text-danger">{formatCurrency(viewingExpenditure.amount)}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Date</label>
-                          <p className="text-lg">{formatDate(viewingExpenditure.date)}</p>
-                        </div>
-                      </div>
-                      {viewingExpenditure.note && (
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">Note</label>
-                          <p className="text-base">{viewingExpenditure.note}</p>
-                        </div>
-                      )}
-                    </div>
-                    {isAdmin && (
-                      <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
-                        <button
-                          onClick={() => {
-                            handleEditExpenditure(viewingExpenditure);
-                            setViewingExpenditure(null);
-                          }}
-                          className="flex-1 bg-warning text-white px-4 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
-                        >
-                          Edit Expenditure
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleDeleteExpenditure(viewingExpenditure);
-                            setViewingExpenditure(null);
-                          }}
-                          className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
-                        >
-                          Delete Expenditure
-                        </button>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
                               </div>
                             ))
                           )}
                         </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* View Fine Details Modal */}
+          {viewingFine && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-2xl font-bold text-gray-800">Fine Details</h3>
+                    <button
+                      onClick={() => setViewingFine(null)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {(() => {
+                    const member = members.find((m) => m.id === viewingFine.memberId);
+                    return (
+                      <>
+                        <div className="space-y-3 mb-4">
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Member</label>
+                            <p className="text-lg font-semibold">
+                              {member?.name || 'Unknown'} ({viewingFine.memberId})
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Amount</label>
+                              <p className="text-lg font-semibold text-danger">{formatCurrency(viewingFine.amount)}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Date</label>
+                              <p className="text-lg">{formatDate(viewingFine.date)}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Reason</label>
+                            <p className="text-base">{viewingFine.reason}</p>
+                          </div>
+                          {viewingFine.note && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Note</label>
+                              <p className="text-base">{viewingFine.note}</p>
+                            </div>
+                          )}
+                        </div>
+                        {isAdmin && (
+                          <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
+                            <button
+                              onClick={() => {
+                                handleEditFine(viewingFine);
+                                setViewingFine(null);
+                              }}
+                              className="flex-1 bg-warning text-white px-4 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
+                            >
+                              Edit Fine
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleDeleteFine(viewingFine);
+                                setViewingFine(null);
+                              }}
+                              className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
+                            >
+                              Delete Fine
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* View Expenditure Details Modal */}
+          {viewingExpenditure && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-2xl font-bold text-gray-800">Expenditure Details</h3>
+                    <button
+                      onClick={() => setViewingExpenditure(null)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {(() => {
+                    return (
+                      <>
+                        <div className="space-y-3 mb-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Item</label>
+                              <p className="text-lg font-semibold">{viewingExpenditure.item}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Amount</label>
+                              <p className="text-lg font-semibold text-danger">{formatCurrency(viewingExpenditure.amount)}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Date</label>
+                              <p className="text-lg">{formatDate(viewingExpenditure.date)}</p>
+                            </div>
+                          </div>
+                          {viewingExpenditure.note && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Note</label>
+                              <p className="text-base">{viewingExpenditure.note}</p>
+                            </div>
+                          )}
+                        </div>
+                        {isAdmin && (
+                          <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
+                            <button
+                              onClick={() => {
+                                handleEditExpenditure(viewingExpenditure);
+                                setViewingExpenditure(null);
+                              }}
+                              className="flex-1 bg-warning text-white px-4 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
+                            >
+                              Edit Expenditure
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleDeleteExpenditure(viewingExpenditure);
+                                setViewingExpenditure(null);
+                              }}
+                              className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
+                            >
+                              Delete Expenditure
+                            </button>
+                          </div>
+                        )}
                       </>
                     );
                   })()}
