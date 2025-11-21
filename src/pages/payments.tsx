@@ -20,6 +20,8 @@ export default function PaymentsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [viewingLoanId, setViewingLoanId] = useState<string | null>(null);
+  const [viewingFineId, setViewingFineId] = useState<string | null>(null);
+  const [viewingExpenditureId, setViewingExpenditureId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { isAdmin } = useAuth();
   const [showFineForm, setShowFineForm] = useState(false);
@@ -191,6 +193,8 @@ export default function PaymentsPage() {
     setShowExpForm(false);
     setEditingFine(null);
     setEditingExpenditure(null);
+    setViewingFineId(null);
+    setViewingExpenditureId(null);
   };
 
   const handleEdit = (payment: Payment) => {
@@ -881,26 +885,9 @@ export default function PaymentsPage() {
                                 if (payment.type === 'Loan Payment' && payment.loanId) {
                                   setViewingLoanId(payment.loanId);
                                 } else if (payment.type === 'Fine Payment' && payment.fine) {
-                                  toast(
-                                    <div className="text-sm">
-                                      <strong>Fine</strong><br />
-                                      Member: {payment.memberName} ({payment.memberId})<br />
-                                      Amount: {formatCurrency(payment.fine.amount)}<br />
-                                      Reason: {payment.fine.reason}<br />
-                                      {payment.fine.note && <>Note: {payment.fine.note}</>}
-                                    </div>,
-                                    { icon: 'ℹ️', duration: 5000 }
-                                  );
+                                  setViewingFineId(payment.fine.id);
                                 } else if (payment.type === 'Expenditure' && payment.expenditure) {
-                                  toast(
-                                    <div className="text-sm">
-                                      <strong>Expenditure</strong><br />
-                                      Item: {payment.item}<br />
-                                      Amount: {formatCurrency(payment.expenditure.amount)}<br />
-                                      {payment.expenditure.note && <>Note: {payment.expenditure.note}</>}
-                                    </div>,
-                                    { icon: '📋', duration: 5000 }
-                                  );
+                                  setViewingExpenditureId(payment.expenditure.id);
                                 }
                               }}
                               className="p-2 text-info hover:bg-info/10 active:bg-info/20 rounded-lg transition-colors touch-manipulation"
@@ -989,6 +976,155 @@ export default function PaymentsPage() {
                                     </button>
                                   </div>
                                 )}
+
+      {/* View Fine Details Modal */}
+      {viewingFineId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-2xl font-bold text-gray-800">Fine Details</h3>
+                <button
+                  onClick={() => setViewingFineId(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              {(() => {
+                const fine = fines.find((f) => f.id === viewingFineId);
+                if (!fine) return null;
+                const member = members.find((m) => m.id === fine.memberId);
+                return (
+                  <>
+                    <div className="space-y-3 mb-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Member</label>
+                        <p className="text-lg font-semibold">
+                          {member?.name || 'Unknown'} ({fine.memberId})
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Amount</label>
+                          <p className="text-lg font-semibold text-danger">{formatCurrency(fine.amount)}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Date</label>
+                          <p className="text-lg">{formatDate(fine.date)}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Reason</label>
+                        <p className="text-base">{fine.reason}</p>
+                      </div>
+                      {fine.note && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Note</label>
+                          <p className="text-base">{fine.note}</p>
+                        </div>
+                      )}
+                    </div>
+                    {isAdmin && (
+                      <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
+                        <button
+                          onClick={() => {
+                            handleEditFine(fine);
+                            setViewingFineId(null);
+                          }}
+                          className="flex-1 bg-warning text-white px-4 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
+                        >
+                          Edit Fine
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleDeleteFine(fine);
+                            setViewingFineId(null);
+                          }}
+                          className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
+                        >
+                          Delete Fine
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Expenditure Details Modal */}
+      {viewingExpenditureId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-2xl font-bold text-gray-800">Expenditure Details</h3>
+                <button
+                  onClick={() => setViewingExpenditureId(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              {(() => {
+                const expenditure = expenditures.find((e) => e.id === viewingExpenditureId);
+                if (!expenditure) return null;
+                return (
+                  <>
+                    <div className="space-y-3 mb-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Item</label>
+                          <p className="text-lg font-semibold">{expenditure.item}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Amount</label>
+                          <p className="text-lg font-semibold text-danger">{formatCurrency(expenditure.amount)}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Date</label>
+                          <p className="text-lg">{formatDate(expenditure.date)}</p>
+                        </div>
+                      </div>
+                      {expenditure.note && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Note</label>
+                          <p className="text-base">{expenditure.note}</p>
+                        </div>
+                      )}
+                    </div>
+                    {isAdmin && (
+                      <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
+                        <button
+                          onClick={() => {
+                            handleEditExpenditure(expenditure);
+                            setViewingExpenditureId(null);
+                          }}
+                          className="flex-1 bg-warning text-white px-4 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
+                        >
+                          Edit Expenditure
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleDeleteExpenditure(expenditure);
+                            setViewingExpenditureId(null);
+                          }}
+                          className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
+                        >
+                          Delete Expenditure
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
                               </div>
                             ))
                           )}
