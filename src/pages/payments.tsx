@@ -883,11 +883,17 @@ export default function PaymentsPage() {
                             <button
                               onClick={() => {
                                 if (payment.type === 'Loan Payment' && payment.loanId) {
+                                  setViewingExpenditureId(null);
+                                  setViewingFineId(null);
                                   setViewingLoanId(payment.loanId);
-                                } else if (payment.type === 'Fine Payment' && payment.fine) {
-                                  setViewingFineId(payment.fine.id);
-                                } else if (payment.type === 'Expenditure' && payment.expenditure) {
-                                  setViewingExpenditureId(payment.expenditure.id);
+                                } else if (payment.type === 'Fine Payment') {
+                                  setViewingLoanId(null);
+                                  setViewingExpenditureId(null);
+                                  setViewingFineId(payment.id);
+                                } else if (payment.type === 'Expenditure') {
+                                  setViewingLoanId(null);
+                                  setViewingFineId(null);
+                                  setViewingExpenditureId(payment.id);
                                 }
                               }}
                               className="p-2 text-info hover:bg-info/10 active:bg-info/20 rounded-lg transition-colors touch-manipulation"
