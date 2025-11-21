@@ -20,8 +20,8 @@ export default function PaymentsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [viewingLoanId, setViewingLoanId] = useState<string | null>(null);
-  const [viewingFineId, setViewingFineId] = useState<string | null>(null);
-  const [viewingExpenditureId, setViewingExpenditureId] = useState<string | null>(null);
+  const [viewingFine, setViewingFine] = useState<FinePayment | null>(null);
+  const [viewingExpenditure, setViewingExpenditure] = useState<Expenditure | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { isAdmin } = useAuth();
   const [showFineForm, setShowFineForm] = useState(false);
@@ -193,8 +193,8 @@ export default function PaymentsPage() {
     setShowExpForm(false);
     setEditingFine(null);
     setEditingExpenditure(null);
-    setViewingFineId(null);
-    setViewingExpenditureId(null);
+    setViewingFine(null);
+    setViewingExpenditure(null);
   };
 
   const handleEdit = (payment: Payment) => {
@@ -883,17 +883,27 @@ export default function PaymentsPage() {
                             <button
                               onClick={() => {
                                 if (payment.type === 'Loan Payment' && payment.loanId) {
-                                  setViewingExpenditureId(null);
-                                  setViewingFineId(null);
+                                  setViewingExpenditure(null);
+                                  setViewingFine(null);
                                   setViewingLoanId(payment.loanId);
                                 } else if (payment.type === 'Fine Payment') {
-                                  setViewingLoanId(null);
-                                  setViewingExpenditureId(null);
-                                  setViewingFineId(payment.id);
+                                  const fine = payment.fine ?? fines.find((f) => f.id === payment.id);
+                                  if (fine) {
+                                    setViewingLoanId(null);
+                                    setViewingExpenditure(null);
+                                    setViewingFine(fine);
+                                  } else {
+                                    toast.error('Fine details not found');
+                                  }
                                 } else if (payment.type === 'Expenditure') {
-                                  setViewingLoanId(null);
-                                  setViewingFineId(null);
-                                  setViewingExpenditureId(payment.id);
+                                  const expenditure = payment.expenditure ?? expenditures.find((e) => e.id === payment.id);
+                                  if (expenditure) {
+                                    setViewingLoanId(null);
+                                    setViewingFine(null);
+                                    setViewingExpenditure(expenditure);
+                                  } else {
+                                    toast.error('Expenditure details not found');
+                                  }
                                 }
                               }}
                               className="p-2 text-info hover:bg-info/10 active:bg-info/20 rounded-lg transition-colors touch-manipulation"
@@ -984,50 +994,48 @@ export default function PaymentsPage() {
                                 )}
 
       {/* View Fine Details Modal */}
-      {viewingFineId && (
+      {viewingFine && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-2xl font-bold text-gray-800">Fine Details</h3>
                 <button
-                  onClick={() => setViewingFineId(null)}
+                  onClick={() => setViewingFine(null)}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   ✕
                 </button>
               </div>
               {(() => {
-                const fine = fines.find((f) => f.id === viewingFineId);
-                if (!fine) return null;
-                const member = members.find((m) => m.id === fine.memberId);
+                const member = members.find((m) => m.id === viewingFine.memberId);
                 return (
                   <>
                     <div className="space-y-3 mb-4">
                       <div>
                         <label className="text-sm font-medium text-gray-500">Member</label>
                         <p className="text-lg font-semibold">
-                          {member?.name || 'Unknown'} ({fine.memberId})
+                          {member?.name || 'Unknown'} ({viewingFine.memberId})
                         </p>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="text-sm font-medium text-gray-500">Amount</label>
-                          <p className="text-lg font-semibold text-danger">{formatCurrency(fine.amount)}</p>
+                          <p className="text-lg font-semibold text-danger">{formatCurrency(viewingFine.amount)}</p>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-500">Date</label>
-                          <p className="text-lg">{formatDate(fine.date)}</p>
+                          <p className="text-lg">{formatDate(viewingFine.date)}</p>
                         </div>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">Reason</label>
-                        <p className="text-base">{fine.reason}</p>
+                        <p className="text-base">{viewingFine.reason}</p>
                       </div>
-                      {fine.note && (
+                      {viewingFine.note && (
                         <div>
                           <label className="text-sm font-medium text-gray-500">Note</label>
-                          <p className="text-base">{fine.note}</p>
+                          <p className="text-base">{viewingFine.note}</p>
                         </div>
                       )}
                     </div>
@@ -1035,8 +1043,8 @@ export default function PaymentsPage() {
                       <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
                         <button
                           onClick={() => {
-                            handleEditFine(fine);
-                            setViewingFineId(null);
+                            handleEditFine(viewingFine);
+                            setViewingFine(null);
                           }}
                           className="flex-1 bg-warning text-white px-4 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
                         >
@@ -1044,8 +1052,8 @@ export default function PaymentsPage() {
                         </button>
                         <button
                           onClick={() => {
-                            handleDeleteFine(fine);
-                            setViewingFineId(null);
+                            handleDeleteFine(viewingFine);
+                            setViewingFine(null);
                           }}
                           className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
                         >
@@ -1062,43 +1070,41 @@ export default function PaymentsPage() {
       )}
 
       {/* View Expenditure Details Modal */}
-      {viewingExpenditureId && (
+      {viewingExpenditure && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-2xl font-bold text-gray-800">Expenditure Details</h3>
                 <button
-                  onClick={() => setViewingExpenditureId(null)}
+                  onClick={() => setViewingExpenditure(null)}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   ✕
                 </button>
               </div>
               {(() => {
-                const expenditure = expenditures.find((e) => e.id === viewingExpenditureId);
-                if (!expenditure) return null;
                 return (
                   <>
                     <div className="space-y-3 mb-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="text-sm font-medium text-gray-500">Item</label>
-                          <p className="text-lg font-semibold">{expenditure.item}</p>
+                          <p className="text-lg font-semibold">{viewingExpenditure.item}</p>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-500">Amount</label>
-                          <p className="text-lg font-semibold text-danger">{formatCurrency(expenditure.amount)}</p>
+                          <p className="text-lg font-semibold text-danger">{formatCurrency(viewingExpenditure.amount)}</p>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-500">Date</label>
-                          <p className="text-lg">{formatDate(expenditure.date)}</p>
+                          <p className="text-lg">{formatDate(viewingExpenditure.date)}</p>
                         </div>
                       </div>
-                      {expenditure.note && (
+                      {viewingExpenditure.note && (
                         <div>
                           <label className="text-sm font-medium text-gray-500">Note</label>
-                          <p className="text-base">{expenditure.note}</p>
+                          <p className="text-base">{viewingExpenditure.note}</p>
                         </div>
                       )}
                     </div>
@@ -1106,8 +1112,8 @@ export default function PaymentsPage() {
                       <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
                         <button
                           onClick={() => {
-                            handleEditExpenditure(expenditure);
-                            setViewingExpenditureId(null);
+                            handleEditExpenditure(viewingExpenditure);
+                            setViewingExpenditure(null);
                           }}
                           className="flex-1 bg-warning text-white px-4 py-2.5 rounded-lg hover:bg-warning/90 active:bg-warning/80 touch-manipulation font-medium"
                         >
@@ -1115,8 +1121,8 @@ export default function PaymentsPage() {
                         </button>
                         <button
                           onClick={() => {
-                            handleDeleteExpenditure(expenditure);
-                            setViewingExpenditureId(null);
+                            handleDeleteExpenditure(viewingExpenditure);
+                            setViewingExpenditure(null);
                           }}
                           className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
                         >
