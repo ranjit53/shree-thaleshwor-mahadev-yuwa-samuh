@@ -71,49 +71,6 @@ export default function LoansPage() {
     );
   };
 
-  // Helper: Safe status access with fallback (avoids TS error)
-  const getLoanStatus = (loan: Loan): 'active' | 'closed' => {
-    const outstanding = getOutstanding(loan);
-    const currentStatus = (loan as any).status as 'active' | 'closed' | undefined;
-    return currentStatus === 'closed' || outstanding <= 0 ? 'closed' : 'active';
-  };
-
-  // Update loan statuses (auto-close if <=0)
-  const updateLoanStatuses = async () => {
-    if (!isAdmin) return;
-
-    const updatedLoans = loans.map(loan => {
-      const status = getLoanStatus(loan);
-      const currentStatus = (loan as any).status as 'active' | 'closed' | undefined;
-      if (currentStatus !== status) {
-        return {
-          ...loan,
-          status,
-        } as Loan;
-      }
-      return loan;
-    });
-
-    try {
-      await writeFile('data/loans.json', updatedLoans);
-      setLoans(updatedLoans);
-      const closedLoans = updatedLoans.filter((l: any) => l.status === 'closed');
-      if (closedLoans.length > 0) {
-        toast.success(`${closedLoans.length} loan(s) automatically closed due to zero outstanding balance.`);
-      }
-    } catch (error: any) {
-      toast.error('Failed to update loan statuses: ' + error.message);
-    }
-  };
-
-  // Auto-run after load
-  useEffect(() => {
-    if (!loading && loans.length > 0) {
-      const timer = setTimeout(() => updateLoanStatuses(), 100);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, loans, payments, isAdmin]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -135,12 +92,11 @@ export default function LoansPage() {
           startDate: formData.startDate,
           termMonths: parseInt(formData.termMonths),
           purpose: formData.purpose || undefined,
-          status: 'active',  // Safe cast
-        } as Loan;
+        };
         toast.success('Loan updated successfully');
       } else {
         const newId = `L-${Date.now()}`;
-        const newLoan = {
+        updatedLoans.push({
           id: newId,
           memberId: formData.memberId,
           principal: parseFloat(formData.principal),
@@ -148,9 +104,7 @@ export default function LoansPage() {
           startDate: formData.startDate,
           termMonths: parseInt(formData.termMonths),
           purpose: formData.purpose || undefined,
-          status: 'active',
-        } as Loan;
-        updatedLoans.push(newLoan);
+        });
         toast.success('Loan added successfully');
       }
 
@@ -210,20 +164,12 @@ export default function LoansPage() {
     setViewingLoanId(null);
   };
 
-  // Updated: Filter all loans (active + closed) matching search, no status restriction
   const filteredLoans = loans.filter(l => {
     const member = members.find(m => m.id === l.memberId);
     return (
       (member?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       l.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }).sort((a, b) => {
-    // Sort: Active first, then closed (so closed appear "in down line")
-    const statusA = getLoanStatus(a);
-    const statusB = getLoanStatus(b);
-    if (statusA === 'active' && statusB === 'closed') return -1;
-    if (statusA === 'closed' && statusB === 'active') return 1;
-    return 0;
   });
 
   if (loading) {
@@ -258,6 +204,7 @@ export default function LoansPage() {
             )}
           </div>
 
+          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
@@ -269,6 +216,7 @@ export default function LoansPage() {
             />
           </div>
 
+          {/* Add/Edit Form */}
           {(showAddForm || editingLoan) && isAdmin && (
             <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
               <h3 className="text-lg sm:text-xl font-semibold mb-4">
@@ -374,6 +322,7 @@ export default function LoansPage() {
             </div>
           )}
 
+          {/* Loans Table */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="table-container overflow-x-auto -webkit-overflow-scrolling-touch">
               <table className="w-full min-w-[700px]">
@@ -384,14 +333,13 @@ export default function LoansPage() {
                     <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Principal</th>
                     <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Interest Rate</th>
                     <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Outstanding</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredLoans.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                      <td colSpan={6} className="px-4 sm:px-6 py-8 text-center text-gray-500">
                         No loans found
                       </td>
                     </tr>
@@ -399,8 +347,6 @@ export default function LoansPage() {
                     filteredLoans.map((loan) => {
                       const member = members.find(m => m.id === loan.memberId);
                       const outstanding = getOutstanding(loan);
-                      const status = getLoanStatus(loan);
-                      const isClosed = status === 'closed';
                       return (
                         <tr key={loan.id} className="hover:bg-gray-50">
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap font-medium text-sm">{loan.memberId}</td>
@@ -410,23 +356,13 @@ export default function LoansPage() {
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap font-semibold text-sm">
                             {formatCurrency(outstanding)}
                           </td>
-                          <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              isClosed ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'
-                            }`}>
-                              {status.charAt(0).toUpperCase() + status.slice(1)}
-                            </span>
-                          </td>
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setViewingLoanId(loan.id)}
-                                className={`p-2 rounded-lg transition-colors touch-manipulation ${
-                                  isClosed ? 'text-gray-400 cursor-not-allowed' : 'text-info hover:bg-info/10 active:bg-info/20'
-                                }`}
-                                title={isClosed ? "Closed loan details" : "Review"}
+                                className="p-2 text-info hover:bg-info/10 active:bg-info/20 rounded-lg transition-colors touch-manipulation"
+                                title="Review"
                                 aria-label="View loan details"
-                                disabled={isClosed}
                               >
                                 <Eye size={18} />
                               </button>
@@ -441,6 +377,7 @@ export default function LoansPage() {
             </div>
           </div>
 
+          {/* View Loan Details Modal */}
           {viewingLoanId && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -461,7 +398,6 @@ export default function LoansPage() {
                     const outstanding = getOutstanding(loan);
                     const monthlyInterest = calculateMonthlyInterest(outstanding, loan.interestRate);
                     const loanPayments = getLoanPayments(loan.id);
-                    const status = getLoanStatus(loan);
                     
                     return (
                       <>
@@ -482,16 +418,6 @@ export default function LoansPage() {
                             <div>
                               <label className="text-sm font-medium text-gray-500">Outstanding</label>
                               <p className="text-lg font-semibold text-warning">{formatCurrency(outstanding)}</p>
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Status</label>
-                              <p className="text-lg">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                                </span>
-                              </p>
                             </div>
                             <div>
                               <label className="text-sm font-medium text-gray-500">Monthly Interest</label>
@@ -539,24 +465,14 @@ export default function LoansPage() {
                               onClick={() => {
                                 handleEdit(loan);
                               }}
-                              className={`flex-1 px-4 py-2 rounded-lg flex items-center justify-center gap-2 ${
-                                status === 'active' 
-                                  ? 'bg-warning text-white hover:bg-warning/90' 
-                                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                              }`}
-                              disabled={status === 'closed'}
+                              className="flex-1 bg-warning text-white px-4 py-2 rounded-lg hover:bg-warning/90 flex items-center justify-center gap-2"
                             >
                               <Edit size={16} />
                               Edit
                             </button>
                             <button
                               onClick={() => handleDelete(loan)}
-                              className={`flex-1 px-4 py-2 rounded-lg flex items-center justify-center gap-2 ${
-                                status === 'active' 
-                                  ? 'bg-danger text-white hover:bg-danger/90' 
-                                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                              }`}
-                              disabled={status === 'closed'}
+                              className="flex-1 bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger/90 flex items-center justify-center gap-2"
                             >
                               <Trash2 size={16} />
                               Delete
