@@ -22,5 +22,14 @@
     "interestRate": 20,
     "startDate": "2025-11-11",
     "termMonths": 6
+  },
+  {
+    "id": "L-1765433932234",
+    "memberId": "M-0015",
+    "principal": 35970,
+    "interestRate": 20,
+    "startDate": "2025-12-11",
+    "termMonths": 6,
+    "purpose": "Home Loan"
   }
 ]
