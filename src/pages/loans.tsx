@@ -71,30 +71,30 @@ export default function LoansPage() {
     );
   };
 
-  // New function to update loan statuses based on outstanding balance
+  // Helper to get or compute status (uses optional chaining for undefined status)
+  const getLoanStatus = (loan: Loan): 'active' | 'closed' => {
+    const outstanding = getOutstanding(loan);
+    return loan.status === 'closed' || outstanding <= 0 ? 'closed' : 'active';
+  };
+
+  // New: Update loan statuses based on outstanding balance (auto-close if <=0)
   const updateLoanStatuses = async () => {
-    if (!isAdmin) return; // Only admins can update statuses
+    if (!isAdmin) return;
 
     const updatedLoans = loans.map(loan => {
-      const outstanding = getOutstanding(loan);
-      const newStatus = outstanding <= 0 ? 'closed' : 'active';
-      
-      // Assume Loan type now includes optional status: 'active' | 'closed'
-      // If status doesn't exist or differs, update it
-      if (loan.status !== newStatus) {
+      const status = getLoanStatus(loan);
+      if (loan.status !== status) {
         return {
           ...loan,
-          status: newStatus,
+          status,
         };
       }
       return loan;
     });
 
-    // Save updated loans to persist the status
     try {
       await writeFile('data/loans.json', updatedLoans);
       setLoans(updatedLoans);
-      // Optionally notify if any loans were closed
       const closedLoans = updatedLoans.filter(l => l.status === 'closed');
       if (closedLoans.length > 0) {
         toast.success(`${closedLoans.length} loan(s) automatically closed due to zero outstanding balance.`);
@@ -104,13 +104,13 @@ export default function LoansPage() {
     }
   };
 
-  // Call status update after data loads (with a small delay to ensure payments are set)
+  // New: Auto-run status update after data loads
   useEffect(() => {
-    if (!loading && loans.length > 0 && payments.length >= 0) {
+    if (!loading && loans.length > 0) {
       const timer = setTimeout(() => updateLoanStatuses(), 100);
       return () => clearTimeout(timer);
     }
-  }, [loading, loans, payments]);
+  }, [loading, loans, payments, isAdmin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,8 +133,7 @@ export default function LoansPage() {
           startDate: formData.startDate,
           termMonths: parseInt(formData.termMonths),
           purpose: formData.purpose || undefined,
-          // Ensure status is set to active on edit (will be re-evaluated on next load)
-          status: 'active' as const,
+          status: 'active',  // New: Start as active on edit
         };
         toast.success('Loan updated successfully');
       } else {
@@ -147,8 +146,7 @@ export default function LoansPage() {
           startDate: formData.startDate,
           termMonths: parseInt(formData.termMonths),
           purpose: formData.purpose || undefined,
-          // Set initial status to active
-          status: 'active' as const,
+          status: 'active',  // New: Start as active on add
         });
         toast.success('Loan added successfully');
       }
@@ -209,10 +207,10 @@ export default function LoansPage() {
     setViewingLoanId(null);
   };
 
+  // Updated: Filter to active loans only
   const filteredLoans = loans.filter(l => {
     const member = members.find(m => m.id === l.memberId);
-    // Only show active loans (status === 'active')
-    return l.status === 'active' &&
+    return getLoanStatus(l) === 'active' &&
       (
         (member?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         l.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -251,7 +249,7 @@ export default function LoansPage() {
             )}
           </div>
 
-          {/* Search */}
+          {/* Search - Updated placeholder */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
@@ -263,7 +261,7 @@ export default function LoansPage() {
             />
           </div>
 
-          {/* Add/Edit Form */}
+          {/* Add/Edit Form - Unchanged */}
           {(showAddForm || editingLoan) && isAdmin && (
             <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
               <h3 className="text-lg sm:text-xl font-semibold mb-4">
@@ -368,7 +366,8 @@ export default function LoansPage() {
               </form>
             </div>
           )}
-          {/* Loans Table */}
+
+          {/* Loans Table - Added Status column */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="table-container overflow-x-auto -webkit-overflow-scrolling-touch">
               <table className="w-full min-w-[700px]">
@@ -394,6 +393,7 @@ export default function LoansPage() {
                     filteredLoans.map((loan) => {
                       const member = members.find(m => m.id === loan.memberId);
                       const outstanding = getOutstanding(loan);
+                      const status = getLoanStatus(loan);
                       return (
                         <tr key={loan.id} className="hover:bg-gray-50">
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap font-medium text-sm">{loan.memberId}</td>
@@ -405,7 +405,7 @@ export default function LoansPage() {
                           </td>
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                             <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                              Active
+                              {status.charAt(0).toUpperCase() + status.slice(1)}
                             </span>
                           </td>
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
@@ -429,7 +429,7 @@ export default function LoansPage() {
             </div>
           </div>
 
-          {/* View Loan Details Modal */}
+          {/* View Loan Details Modal - Added Status display */}
           {viewingLoanId && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -450,6 +450,7 @@ export default function LoansPage() {
                     const outstanding = getOutstanding(loan);
                     const monthlyInterest = calculateMonthlyInterest(outstanding, loan.interestRate);
                     const loanPayments = getLoanPayments(loan.id);
+                    const status = getLoanStatus(loan);
                     
                     return (
                       <>
@@ -475,9 +476,9 @@ export default function LoansPage() {
                               <label className="text-sm font-medium text-gray-500">Status</label>
                               <p className="text-lg">
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  loan.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                  status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                                 }`}>
-                                  {loan.status}
+                                  {status.charAt(0).toUpperCase() + status.slice(1)}
                                 </span>
                               </p>
                             </div>
