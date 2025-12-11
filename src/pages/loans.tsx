@@ -210,13 +210,20 @@ export default function LoansPage() {
     setViewingLoanId(null);
   };
 
+  // Updated: Filter all loans (active + closed) matching search, no status restriction
   const filteredLoans = loans.filter(l => {
     const member = members.find(m => m.id === l.memberId);
-    return getLoanStatus(l) === 'active' &&
-      (
-        (member?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        l.id.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    return (
+      (member?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      l.id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }).sort((a, b) => {
+    // Sort: Active first, then closed (so closed appear "in down line")
+    const statusA = getLoanStatus(a);
+    const statusB = getLoanStatus(b);
+    if (statusA === 'active' && statusB === 'closed') return -1;
+    if (statusA === 'closed' && statusB === 'active') return 1;
+    return 0;
   });
 
   if (loading) {
@@ -255,7 +262,7 @@ export default function LoansPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search by member name or loan ID... (Active loans only)"
+              placeholder="Search by member name or loan ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning focus:border-transparent touch-manipulation text-base"
@@ -385,7 +392,7 @@ export default function LoansPage() {
                   {filteredLoans.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500">
-                        No active loans found
+                        No loans found
                       </td>
                     </tr>
                   ) : (
@@ -393,6 +400,7 @@ export default function LoansPage() {
                       const member = members.find(m => m.id === loan.memberId);
                       const outstanding = getOutstanding(loan);
                       const status = getLoanStatus(loan);
+                      const isClosed = status === 'closed';
                       return (
                         <tr key={loan.id} className="hover:bg-gray-50">
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap font-medium text-sm">{loan.memberId}</td>
@@ -403,7 +411,9 @@ export default function LoansPage() {
                             {formatCurrency(outstanding)}
                           </td>
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
-                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              isClosed ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'
+                            }`}>
                               {status.charAt(0).toUpperCase() + status.slice(1)}
                             </span>
                           </td>
@@ -411,9 +421,12 @@ export default function LoansPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setViewingLoanId(loan.id)}
-                                className="p-2 text-info hover:bg-info/10 active:bg-info/20 rounded-lg transition-colors touch-manipulation"
-                                title="Review"
+                                className={`p-2 rounded-lg transition-colors touch-manipulation ${
+                                  isClosed ? 'text-gray-400 cursor-not-allowed' : 'text-info hover:bg-info/10 active:bg-info/20'
+                                }`}
+                                title={isClosed ? "Closed loan details" : "Review"}
                                 aria-label="View loan details"
+                                disabled={isClosed}
                               >
                                 <Eye size={18} />
                               </button>
@@ -526,14 +539,24 @@ export default function LoansPage() {
                               onClick={() => {
                                 handleEdit(loan);
                               }}
-                              className="flex-1 bg-warning text-white px-4 py-2 rounded-lg hover:bg-warning/90 flex items-center justify-center gap-2"
+                              className={`flex-1 px-4 py-2 rounded-lg flex items-center justify-center gap-2 ${
+                                status === 'active' 
+                                  ? 'bg-warning text-white hover:bg-warning/90' 
+                                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              }`}
+                              disabled={status === 'closed'}
                             >
                               <Edit size={16} />
                               Edit
                             </button>
                             <button
                               onClick={() => handleDelete(loan)}
-                              className="flex-1 bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger/90 flex items-center justify-center gap-2"
+                              className={`flex-1 px-4 py-2 rounded-lg flex items-center justify-center gap-2 ${
+                                status === 'active' 
+                                  ? 'bg-danger text-white hover:bg-danger/90' 
+                                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              }`}
+                              disabled={status === 'closed'}
                             >
                               <Trash2 size={16} />
                               Delete
