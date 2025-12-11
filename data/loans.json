@@ -5,7 +5,8 @@
     "principal": 18000,
     "interestRate": 20,
     "startDate": "2025-09-10",
-    "termMonths": 6
+    "termMonths": 6,
+    "status": "closed"
   },
   {
     "id": "L-1762890590645",
@@ -13,7 +14,8 @@
     "principal": 20300,
     "interestRate": 20,
     "startDate": "2025-10-10",
-    "termMonths": 6
+    "termMonths": 6,
+    "status": "active"
   },
   {
     "id": "L-1763014929143",
@@ -21,7 +23,8 @@
     "principal": 19640,
     "interestRate": 20,
     "startDate": "2025-11-11",
-    "termMonths": 6
+    "termMonths": 6,
+    "status": "active"
   },
   {
     "id": "L-1765433932234",
@@ -30,6 +33,7 @@
     "interestRate": 20,
     "startDate": "2025-12-11",
     "termMonths": 6,
-    "purpose": "Home Loan"
+    "purpose": "Home Loan",
+    "status": "active"
   }
 ]
