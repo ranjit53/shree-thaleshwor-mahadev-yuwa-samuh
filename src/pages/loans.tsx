@@ -71,6 +71,47 @@ export default function LoansPage() {
     );
   };
 
+  // New function to update loan statuses based on outstanding balance
+  const updateLoanStatuses = async () => {
+    if (!isAdmin) return; // Only admins can update statuses
+
+    const updatedLoans = loans.map(loan => {
+      const outstanding = getOutstanding(loan);
+      const newStatus = outstanding <= 0 ? 'closed' : 'active';
+      
+      // Assume Loan type now includes optional status: 'active' | 'closed'
+      // If status doesn't exist or differs, update it
+      if (loan.status !== newStatus) {
+        return {
+          ...loan,
+          status: newStatus,
+        };
+      }
+      return loan;
+    });
+
+    // Save updated loans to persist the status
+    try {
+      await writeFile('data/loans.json', updatedLoans);
+      setLoans(updatedLoans);
+      // Optionally notify if any loans were closed
+      const closedLoans = updatedLoans.filter(l => l.status === 'closed');
+      if (closedLoans.length > 0) {
+        toast.success(`${closedLoans.length} loan(s) automatically closed due to zero outstanding balance.`);
+      }
+    } catch (error: any) {
+      toast.error('Failed to update loan statuses: ' + error.message);
+    }
+  };
+
+  // Call status update after data loads (with a small delay to ensure payments are set)
+  useEffect(() => {
+    if (!loading && loans.length > 0 && payments.length >= 0) {
+      const timer = setTimeout(() => updateLoanStatuses(), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, loans, payments]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -92,6 +133,8 @@ export default function LoansPage() {
           startDate: formData.startDate,
           termMonths: parseInt(formData.termMonths),
           purpose: formData.purpose || undefined,
+          // Ensure status is set to active on edit (will be re-evaluated on next load)
+          status: 'active' as const,
         };
         toast.success('Loan updated successfully');
       } else {
@@ -104,6 +147,8 @@ export default function LoansPage() {
           startDate: formData.startDate,
           termMonths: parseInt(formData.termMonths),
           purpose: formData.purpose || undefined,
+          // Set initial status to active
+          status: 'active' as const,
         });
         toast.success('Loan added successfully');
       }
@@ -166,10 +211,12 @@ export default function LoansPage() {
 
   const filteredLoans = loans.filter(l => {
     const member = members.find(m => m.id === l.memberId);
-    return (
-      (member?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Only show active loans (status === 'active')
+    return l.status === 'active' &&
+      (
+        (member?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        l.id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
   });
 
   if (loading) {
@@ -209,7 +256,7 @@ export default function LoansPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search by member name or loan ID..."
+              placeholder="Search by member name or loan ID... (Active loans only)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning focus:border-transparent touch-manipulation text-base"
@@ -321,7 +368,6 @@ export default function LoansPage() {
               </form>
             </div>
           )}
-
           {/* Loans Table */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="table-container overflow-x-auto -webkit-overflow-scrolling-touch">
@@ -333,14 +379,15 @@ export default function LoansPage() {
                     <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Principal</th>
                     <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Interest Rate</th>
                     <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Outstanding</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredLoans.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 sm:px-6 py-8 text-center text-gray-500">
-                        No loans found
+                      <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                        No active loans found
                       </td>
                     </tr>
                   ) : (
@@ -355,6 +402,11 @@ export default function LoansPage() {
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">{loan.interestRate}%</td>
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap font-semibold text-sm">
                             {formatCurrency(outstanding)}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
+                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                              Active
+                            </span>
                           </td>
                           <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                             <div className="flex gap-2">
@@ -418,6 +470,16 @@ export default function LoansPage() {
                             <div>
                               <label className="text-sm font-medium text-gray-500">Outstanding</label>
                               <p className="text-lg font-semibold text-warning">{formatCurrency(outstanding)}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Status</label>
+                              <p className="text-lg">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  loan.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {loan.status}
+                                </span>
+                              </p>
                             </div>
                             <div>
                               <label className="text-sm font-medium text-gray-500">Monthly Interest</label>
