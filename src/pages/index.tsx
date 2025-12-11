@@ -151,12 +151,12 @@ export default function Dashboard() {
       setInterestDefaulters(interestDefaulterList);
 
       // Prepare line chart data (monthly trends)
-      const monthlyData: { [key: string]: { saving: number; loan: number; month: string } } = {};
+      const monthlyData: { [key: string]: { saving: number; loan: number; fine: number; interest: number; expenditure: number; month: string } } = {};
       
       savings.forEach(s => {
         const month = new Date(s.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
         if (!monthlyData[month]) {
-          monthlyData[month] = { saving: 0, loan: 0, month };
+          monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, month };
         }
         monthlyData[month].saving += s.amount;
       });
@@ -164,9 +164,35 @@ export default function Dashboard() {
       loans.forEach(l => {
         const month = new Date(l.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
         if (!monthlyData[month]) {
-          monthlyData[month] = { saving: 0, loan: 0, month };
+          monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, month };
         }
         monthlyData[month].loan += l.principal;
+      });
+
+      fines.forEach(f => {
+        const month = new Date(f.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        if (!monthlyData[month]) {
+          monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, month };
+        }
+        monthlyData[month].fine += f.amount;
+      });
+
+      payments.forEach(p => {
+        if (p.interestPaid > 0) {
+          const month = new Date(p.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+          if (!monthlyData[month]) {
+            monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, month };
+          }
+          monthlyData[month].interest += p.interestPaid;
+        }
+      });
+
+      expenditures.forEach(e => {
+        const month = new Date(e.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        if (!monthlyData[month]) {
+          monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, month };
+        }
+        monthlyData[month].expenditure += e.amount;
       });
 
       const sortedMonths = Object.values(monthlyData).sort((a, b) => 
@@ -178,12 +204,17 @@ export default function Dashboard() {
       const loanByMember: { [key: string]: { name: string; value: number } } = {};
       
       loans.forEach(loan => {
-        const member = members.find(m => m.id === loan.memberId);
-        const memberName = member?.name || loan.memberId;
-        if (!loanByMember[loan.memberId]) {
-          loanByMember[loan.memberId] = { name: memberName, value: 0 };
+        const loanPayments = payments.filter(p => p.loanId === loan.id);
+        const principalPaid = loanPayments.reduce((sum, p) => sum + p.principalPaid, 0);
+        const outstanding = Math.max(0, loan.principal - principalPaid);
+        if (outstanding > 0) {
+          const member = members.find(m => m.id === loan.memberId);
+          const memberName = member?.name || loan.memberId;
+          if (!loanByMember[loan.memberId]) {
+            loanByMember[loan.memberId] = { name: memberName, value: 0 };
+          }
+          loanByMember[loan.memberId].value += outstanding;
         }
-        loanByMember[loan.memberId].value += loan.principal;
       });
 
       const pieDataArray = Object.values(loanByMember)
@@ -315,6 +346,9 @@ export default function Dashboard() {
                     <Legend />
                     <Line type="monotone" dataKey="saving" stroke="#10b981" strokeWidth={2} name="Saving" />
                     <Line type="monotone" dataKey="loan" stroke="#f59e0b" strokeWidth={2} name="Loan" />
+                    <Line type="monotone" dataKey="fine" stroke="#ef4444" strokeWidth={2} name="Fine" />
+                    <Line type="monotone" dataKey="interest" stroke="#3b82f6" strokeWidth={2} name="Interest" />
+                    <Line type="monotone" dataKey="expenditure" stroke="#6b7280" strokeWidth={2} name="Expenditure" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -406,4 +440,3 @@ export default function Dashboard() {
     </ProtectedRoute>
   );
 }
-
