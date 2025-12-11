@@ -26,6 +26,7 @@ export interface Loan {
   startDate: string;
   termMonths: number;
   purpose?: string;
+  status?: 'active' | 'closed';
 }
 
 export interface Payment {
@@ -74,4 +75,5 @@ export interface BackupData {
   expenditures?: Expenditure[];
   settings: Settings;
 }
+
 
