@@ -24,5 +24,14 @@
     "date": "2025-11-11",
     "principalPaid": 0,
     "interestPaid": 340
+  },
+  {
+    "id": "P-1765433520777",
+    "loanId": "L-1762890590645",
+    "memberId": "M-0001",
+    "date": "2025-12-11",
+    "principalPaid": 0,
+    "interestPaid": 340,
+    "remarks": "Intrest"
   }
 ]
