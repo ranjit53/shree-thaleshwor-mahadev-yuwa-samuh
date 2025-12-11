@@ -71,23 +71,25 @@ export default function LoansPage() {
     );
   };
 
-  // Helper to get or compute status (uses optional chaining for undefined status)
+  // Helper: Safe status access with fallback (avoids TS error)
   const getLoanStatus = (loan: Loan): 'active' | 'closed' => {
     const outstanding = getOutstanding(loan);
-    return loan.status === 'closed' || outstanding <= 0 ? 'closed' : 'active';
+    const currentStatus = (loan as any).status as 'active' | 'closed' | undefined;
+    return currentStatus === 'closed' || outstanding <= 0 ? 'closed' : 'active';
   };
 
-  // New: Update loan statuses based on outstanding balance (auto-close if <=0)
+  // Update loan statuses (auto-close if <=0)
   const updateLoanStatuses = async () => {
     if (!isAdmin) return;
 
     const updatedLoans = loans.map(loan => {
       const status = getLoanStatus(loan);
-      if (loan.status !== status) {
+      const currentStatus = (loan as any).status as 'active' | 'closed' | undefined;
+      if (currentStatus !== status) {
         return {
           ...loan,
           status,
-        };
+        } as Loan;
       }
       return loan;
     });
@@ -95,7 +97,7 @@ export default function LoansPage() {
     try {
       await writeFile('data/loans.json', updatedLoans);
       setLoans(updatedLoans);
-      const closedLoans = updatedLoans.filter(l => l.status === 'closed');
+      const closedLoans = updatedLoans.filter((l: any) => l.status === 'closed');
       if (closedLoans.length > 0) {
         toast.success(`${closedLoans.length} loan(s) automatically closed due to zero outstanding balance.`);
       }
@@ -104,7 +106,7 @@ export default function LoansPage() {
     }
   };
 
-  // New: Auto-run status update after data loads
+  // Auto-run after load
   useEffect(() => {
     if (!loading && loans.length > 0) {
       const timer = setTimeout(() => updateLoanStatuses(), 100);
@@ -133,12 +135,12 @@ export default function LoansPage() {
           startDate: formData.startDate,
           termMonths: parseInt(formData.termMonths),
           purpose: formData.purpose || undefined,
-          status: 'active',  // New: Start as active on edit
-        };
+          status: 'active',  // Safe cast
+        } as Loan;
         toast.success('Loan updated successfully');
       } else {
         const newId = `L-${Date.now()}`;
-        updatedLoans.push({
+        const newLoan = {
           id: newId,
           memberId: formData.memberId,
           principal: parseFloat(formData.principal),
@@ -146,8 +148,9 @@ export default function LoansPage() {
           startDate: formData.startDate,
           termMonths: parseInt(formData.termMonths),
           purpose: formData.purpose || undefined,
-          status: 'active',  // New: Start as active on add
-        });
+          status: 'active',
+        } as Loan;
+        updatedLoans.push(newLoan);
         toast.success('Loan added successfully');
       }
 
@@ -207,7 +210,6 @@ export default function LoansPage() {
     setViewingLoanId(null);
   };
 
-  // Updated: Filter to active loans only
   const filteredLoans = loans.filter(l => {
     const member = members.find(m => m.id === l.memberId);
     return getLoanStatus(l) === 'active' &&
@@ -249,7 +251,6 @@ export default function LoansPage() {
             )}
           </div>
 
-          {/* Search - Updated placeholder */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
@@ -261,7 +262,6 @@ export default function LoansPage() {
             />
           </div>
 
-          {/* Add/Edit Form - Unchanged */}
           {(showAddForm || editingLoan) && isAdmin && (
             <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
               <h3 className="text-lg sm:text-xl font-semibold mb-4">
@@ -367,7 +367,6 @@ export default function LoansPage() {
             </div>
           )}
 
-          {/* Loans Table - Added Status column */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="table-container overflow-x-auto -webkit-overflow-scrolling-touch">
               <table className="w-full min-w-[700px]">
@@ -429,7 +428,6 @@ export default function LoansPage() {
             </div>
           </div>
 
-          {/* View Loan Details Modal - Added Status display */}
           {viewingLoanId && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
