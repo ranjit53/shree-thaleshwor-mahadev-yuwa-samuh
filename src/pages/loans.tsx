@@ -78,14 +78,18 @@ export default function LoansPage() {
     return currentStatus === 'closed' || outstanding <= 0 ? 'closed' : 'active';
   };
 
-  // Update loan statuses (auto-close if <=0)
+  // Update loan statuses (auto-close if <=0) - Fixed: Toast only on actual new closures
   const updateLoanStatuses = async () => {
     if (!isAdmin) return;
 
+    let hasChanges = false;
+    let newlyClosedCount = 0;
     const updatedLoans = loans.map(loan => {
       const status = getLoanStatus(loan);
       const currentStatus = (loan as any).status as 'active' | 'closed' | undefined;
       if (currentStatus !== status) {
+        hasChanges = true;
+        if (status === 'closed') newlyClosedCount++;
         return {
           ...loan,
           status,
@@ -94,15 +98,20 @@ export default function LoansPage() {
       return loan;
     });
 
-    try {
-      await writeFile('data/loans.json', updatedLoans);
-      setLoans(updatedLoans);
-      const closedLoans = updatedLoans.filter((l: any) => l.status === 'closed');
-      if (closedLoans.length > 0) {
-        toast.success(`${closedLoans.length} loan(s) automatically closed due to zero outstanding balance.`);
+    // Only save if changes (optimization)
+    if (hasChanges) {
+      try {
+        await writeFile('data/loans.json', updatedLoans);
+        setLoans(updatedLoans);
+      } catch (error: any) {
+        toast.error('Failed to update loan statuses: ' + error.message);
+        return;
       }
-    } catch (error: any) {
-      toast.error('Failed to update loan statuses: ' + error.message);
+    }
+
+    // Toast only if newly closed (not on every load)
+    if (newlyClosedCount > 0) {
+      toast.success(`${newlyClosedCount} loan(s) automatically closed due to zero outstanding balance.`);
     }
   };
 
