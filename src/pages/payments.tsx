@@ -361,7 +361,7 @@ export default function PaymentsPage() {
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-info touch-manipulation text-base"
                     >
                       <option value="">Select Loan</option>
-                      {loans.map(loan => {
+                      {loans.filter(loan => loan.status !== 'closed' && getOutstanding(loan) >= 0).map(loan => {
                         const member = members.find(m => m.id === loan.memberId);
                         const outstanding = getOutstanding(loan);
                         return (
