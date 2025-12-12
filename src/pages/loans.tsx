@@ -430,12 +430,9 @@ export default function LoansPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setViewingLoanId(loan.id)}
-                                className={`p-2 rounded-lg transition-colors touch-manipulation ${
-                                  isClosed ? 'text-gray-400 cursor-not-allowed' : 'text-info hover:bg-info/10 active:bg-info/20'
-                                }`}
-                                title={isClosed ? "Closed loan details" : "Review"}
+                                className="p-2 rounded-lg transition-colors touch-manipulation text-info hover:bg-info/10 active:bg-info/20"
+                                title="View loan details"
                                 aria-label="View loan details"
-                                disabled={isClosed}
                               >
                                 <Eye size={18} />
                               </button>
