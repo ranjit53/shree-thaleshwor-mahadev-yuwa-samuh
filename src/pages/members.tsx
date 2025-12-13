@@ -31,6 +31,7 @@ export default function MembersPage() {
     phone: '',
     joinDate: new Date().toISOString().split('T')[0],
     address: '',
+    status: 'active' as 'active' | 'inactive',
   });
 
   useEffect(() => {
@@ -119,6 +120,7 @@ export default function MembersPage() {
         updatedMembers.push({
           id: newId,
           ...formData,
+          status: 'active',
         });
         toast.success('Member added successfully');
       }
@@ -160,6 +162,7 @@ export default function MembersPage() {
       phone: '',
       joinDate: new Date().toISOString().split('T')[0],
       address: '',
+      status: 'active',
     });
     setShowAddForm(false);
     setEditingMember(null);
@@ -173,6 +176,7 @@ export default function MembersPage() {
       phone: member.phone,
       joinDate: member.joinDate,
       address: member.address || '',
+      status: member.status || 'active',
     });
     setViewingMember(null);
   };
@@ -180,6 +184,29 @@ export default function MembersPage() {
   const handleViewMember = (member: Member) => {
     setViewingMember(member);
     setActiveTab('savings');
+  };
+
+  const handleToggleStatus = async (member: Member) => {
+    if (!isAdmin) {
+      toast.error('Only admins can change member status');
+      return;
+    }
+
+    try {
+      const updatedMembers = members.map(m => 
+        m.id === member.id 
+          ? { ...m, status: m.status === 'active' ? 'inactive' : 'active' }
+          : m
+      );
+      await writeFile('data/members.json', updatedMembers);
+      setMembers(updatedMembers);
+      toast.success(`Member status changed to ${member.status === 'active' ? 'inactive' : 'active'}`);
+      if (viewingMember?.id === member.id) {
+        setViewingMember(updatedMembers.find(m => m.id === member.id) || null);
+      }
+    } catch (error: any) {
+      toast.error('Failed to update status: ' + error.message);
+    }
   };
 
   const filteredMembers = members.filter((m: Member) =>
@@ -344,6 +371,20 @@ export default function MembersPage() {
                             >
                               <Eye size={18} />
                             </button>
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleToggleStatus(member)}
+                                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors touch-manipulation ${
+                                  member.status === 'active' || !member.status
+                                    ? 'bg-success/10 text-success hover:bg-success/20'
+                                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                }`}
+                                title={`Toggle status (currently ${member.status || 'active'})`}
+                                aria-label="Toggle member status"
+                              >
+                                {member.status === 'active' || !member.status ? 'Active' : 'Inactive'}
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
