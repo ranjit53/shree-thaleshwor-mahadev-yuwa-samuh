@@ -370,7 +370,7 @@ export default function SettingsPage() {
     }
   };
 
-  // Generate Report for selected year
+  // Enhanced Professional Member-wise Financial Report
   const generateReport = async (period: 'q1' | 'q2' | 'q3' | 'q4' | 'annual') => {
     setReportLoading(true);
     try {
@@ -383,7 +383,7 @@ export default function SettingsPage() {
         readFile<Expenditure[]>('data/expenditures.json'),
       ]);
 
-      const members = membersRes ?? [];
+      const members = (membersRes ?? []).sort((a, b) => a.name.localeCompare(b.name));
       const savings = savingsRes ?? [];
       const loans = loansRes ?? [];
       const payments = paymentsRes ?? [];
@@ -402,65 +402,175 @@ export default function SettingsPage() {
         endDate = new Date(year, quarter * 3 + 3, 0);
       }
 
-      const formatDate = (d: Date) => d.toISOString().split('T')[0];
+      const formatDate = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const formatCurrency = (amount: number) => `रु ${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
       const inPeriod = (dateStr: string) => {
         const d = new Date(dateStr);
         return d >= startDate && d <= endDate;
       };
 
+      // Filter data for the selected period
       const filteredSavings = savings.filter(s => inPeriod(s.date));
       const filteredLoans = loans.filter(l => inPeriod(l.startDate));
       const filteredPayments = payments.filter(p => inPeriod(p.date));
       const filteredFines = fines.filter(f => inPeriod(f.date));
       const filteredExpenditures = expenditures.filter(e => inPeriod(e.date));
 
-      const totalSavings = filteredSavings.reduce((sum, s) => sum + s.amount, 0);
-      const totalLoansIssued = filteredLoans.reduce((sum, l) => sum + l.principal, 0);
-      const totalPrincipalPaid = filteredPayments.reduce((sum, p) => sum + p.principalPaid, 0);
-      const totalInterest = filteredPayments.reduce((sum, p) => sum + p.interestPaid, 0);
-      const totalFines = filteredFines.reduce((sum, f) => sum + f.amount, 0);
-      const totalExpenditures = filteredExpenditures.reduce((sum, e) => sum + e.amount, 0);
+      // Overall totals
+      let totalSavings = 0, totalLoansIssued = 0, totalPrincipalPaid = 0, totalInterest = 0;
+      let totalFines = 0, totalExpenditures = 0;
+
+      // Member-wise data
+      const memberData: Array<{
+        member: Member;
+        savings: number;
+        loansIssued: number;
+        principalPaid: number;
+        interestPaid: number;
+        fines: number;
+        netContribution: number;
+      }> = [];
+
+      members.forEach(member => {
+        const memSavings = filteredSavings.filter(s => s.memberId === member.id).reduce((sum, s) => sum + s.amount, 0);
+        const memLoans = filteredLoans.filter(l => l.memberId === member.id).reduce((sum, l) => sum + l.principal, 0);
+        const memPayments = filteredPayments.filter(p => p.memberId === member.id);
+        const memPrincipalPaid = memPayments.reduce((sum, p) => sum + p.principalPaid, 0);
+        const memInterestPaid = memPayments.reduce((sum, p) => sum + p.interestPaid, 0);
+        const memFines = filteredFines.filter(f => f.memberId === member.id).reduce((sum, f) => sum + f.amount, 0);
+
+        totalSavings += memSavings;
+        totalLoansIssued += memLoans;
+        totalPrincipalPaid += memPrincipalPaid;
+        totalInterest += memInterestPaid;
+        totalFines += memFines;
+
+        memberData.push({
+          member,
+          savings: memSavings,
+          loansIssued: memLoans,
+          principalPaid: memPrincipalPaid,
+          interestPaid: memInterestPaid,
+          fines: memFines,
+          netContribution: memSavings + memInterestPaid + memFines - memLoans,
+        });
+      });
+
+      totalExpenditures = filteredExpenditures.reduce((sum, e) => sum + e.amount, 0);
       const outstandingLoans = totalLoansIssued - totalPrincipalPaid;
       const netBalance = totalSavings + totalInterest + totalFines - outstandingLoans - totalExpenditures;
 
       const doc = new jsPDF('p', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
-      const title = period === 'annual' ? `${year} Annual Financial Report` : `${year} ${period.toUpperCase()} Quarterly Report`;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let y = 20;
 
-      doc.setFontSize(20);
-      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+      // Header
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Financial Report', pageWidth / 2, y, { align: 'center' });
 
-      doc.setFontSize(12);
-      doc.text(`Period: ${formatDate(startDate)} to ${formatDate(endDate)}`, pageWidth / 2, 30, { align: 'center' });
-      doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 38, { align: 'center' });
-
-      let y = 50;
-      doc.setFontSize(14);
-      doc.text('Financial Summary', 14, y);
       y += 10;
+      doc.setFontSize(16);
+      const periodTitle = period === 'annual' 
+        ? `${year} Annual Report` 
+        : `${year} ${period.toUpperCase()} Quarterly Report`;
+      doc.text(periodTitle, pageWidth / 2, y, { align: 'center' });
+
+      y += 8;
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Period: ${formatDate(startDate)} – ${formatDate(endDate)}`, pageWidth / 2, y, { align: 'center' });
+      y += 6;
+      doc.text(`Generated on: ${new Date().toLocaleString('en-GB')}`, pageWidth / 2, y, { align: 'center' });
+
+      y += 15;
+
+      // Overall Financial Summary
+      doc.setFillColor(30, 64, 175);
+      doc.rect(14, y, pageWidth - 28, 10, 'F');
+      doc.setTextColor(255);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Overall Financial Summary', pageWidth / 2, y + 7, { align: 'center' });
+
+      y += 18;
 
       (doc as any).autoTable({
         startY: y,
-        head: [['Description', 'Amount (₹)']],
+        head: [['Description', 'Amount']],
         body: [
-          ['Total Savings Collected', totalSavings.toFixed(2)],
-          ['Total Loans Issued', totalLoansIssued.toFixed(2)],
-          ['Principal Repaid', totalPrincipalPaid.toFixed(2)],
-          ['Interest Collected', totalInterest.toFixed(2)],
-          ['Fines Collected', totalFines.toFixed(2)],
-          ['Total Expenditures', totalExpenditures.toFixed(2)],
-          ['Outstanding Loans', outstandingLoans.toFixed(2)],
-          ['Net Available Balance', netBalance.toFixed(2)],
+          ['Total Savings Collected', formatCurrency(totalSavings)],
+          ['Total Loans Issued', formatCurrency(totalLoansIssued)],
+          ['Principal Repaid', formatCurrency(totalPrincipalPaid)],
+          ['Interest Collected', formatCurrency(totalInterest)],
+          ['Fines Collected', formatCurrency(totalFines)],
+          ['Total Expenditures', formatCurrency(totalExpenditures)],
+          ['Outstanding Loans', formatCurrency(outstandingLoans)],
+          ['Net Available Balance', formatCurrency(netBalance)],
         ],
         theme: 'grid',
-        headStyles: { fillColor: [59, 130, 246] },
+        headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 11, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 10 },
+        columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right', fontStyle: 'bold' } },
+        margin: { left: 14, right: 14 },
       });
 
-      const filename = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      y = (doc as any).lastAutoTable.finalY + 20;
+
+      // Member-wise Detailed Report
+      if (y > pageHeight - 40) doc.addPage();
+      doc.setFillColor(30, 64, 175);
+      doc.rect(14, y, pageWidth - 28, 10, 'F');
+      doc.setTextColor(255);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Member-wise Financial Details', pageWidth / 2, y + 7, { align: 'center' });
+
+      y += 18;
+
+      (doc as any).autoTable({
+        startY: y,
+        head: [['Member Name (ID)', 'Savings', 'Loans Issued', 'Principal Paid', 'Interest Paid', 'Fines Paid', 'Net Contribution']],
+        body: memberData.map(m => [
+          `${m.member.name} (${m.member.id})`,
+          formatCurrency(m.savings),
+          formatCurrency(m.loansIssued),
+          formatCurrency(m.principalPaid),
+          formatCurrency(m.interestPaid),
+          formatCurrency(m.fines),
+          formatCurrency(m.netContribution),
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 10, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 9 },
+        alternateRowStyles: { fillColor: [240, 249, 255] },
+        columnStyles: {
+          0: { cellWidth: 50, fontStyle: 'bold' },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'right' },
+          5: { halign: 'right' },
+          6: { halign: 'right', fontStyle: 'bold' },
+        },
+        margin: { left: 14, right: 14 },
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 15;
+
+      // Footer
+      doc.setFontSize(10);
+      doc.setTextColor(128);
+      doc.text('Generated by Savings & Loan Management System', pageWidth / 2, pageHeight - 15, { align: 'center' });
+
+      const filename = `${periodTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Detailed_Report.pdf`;
       doc.save(filename);
 
-      toast.success('Report downloaded successfully!');
+      toast.success('Detailed member-wise report downloaded successfully!');
     } catch (error: any) {
       toast.error('Failed to generate report: ' + error.message);
     } finally {
