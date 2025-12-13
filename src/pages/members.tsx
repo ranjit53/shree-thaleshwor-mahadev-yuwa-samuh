@@ -12,8 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-// ADDED: Local types to extend Member and Form Data for the new isActive property
-// This resolves the TypeScript error by allowing the component to use 'isActive'
+// ADDED: Local types to extend Member and Form Data for the new isActive property.
+// This resolves the Type error: 'isActive' does not exist in type 'Member'.
 type LocalMember = Member & {
   isActive: boolean;
 }
@@ -23,29 +23,29 @@ type FormData = {
   phone: string;
   joinDate: string;
   address: string;
-  isActive: boolean;
+  isActive: boolean; // Added for form state
 }
 
 export default function MembersPage() {
-  const [members, setMembers] = useState<LocalMember[]>([]);
+  const [members, setMembers] = useState<LocalMember[]>([]); // Using LocalMember[]
   const [savings, setSavings] = useState<Saving[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [fines, setFines] = useState<FinePayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingMember, setEditingMember] = useState<LocalMember | null>(null);
-  const [viewingMember, setViewingMember] = useState<LocalMember | null>(null);
+  const [editingMember, setEditingMember] = useState<LocalMember | null>(null); // Using LocalMember
+  const [viewingMember, setViewingMember] = useState<LocalMember | null>(null); // Using LocalMember
   const [activeTab, setActiveTab] = useState<'savings' | 'loans' | 'payments' | 'fines'>('savings');
   const [searchTerm, setSearchTerm] = useState('');
   const { isAdmin } = useAuth();
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<FormData>({ // Using FormData type
     name: '',
     phone: '',
     joinDate: new Date().toISOString().split('T')[0],
     address: '',
-    isActive: true, // ADDED: Status for new members
+    isActive: true, // Initial state for new members
   });
 
   useEffect(() => {
@@ -55,13 +55,19 @@ export default function MembersPage() {
   const loadData = async () => {
     try {
       const [membersData, savingsData, loansData, paymentsData, finesData] = await Promise.all([
-        readFile<LocalMember[]>('data/members.json'), // CHANGED: Using LocalMember[]
+        readFile<LocalMember[]>('data/members.json'), // Use LocalMember[] for reading
         readFile<Saving[]>('data/savings.json'),
         readFile<Loan[]>('data/loans.json'),
         readFile<Payment[]>('data/payments.json'),
         readFile<FinePayment[]>('data/fines.json'),
       ]);
-      setMembers(membersData || []);
+      // Ensure data is loaded with isActive set (if missing in file, default to true)
+      const membersWithStatus = (membersData || []).map(m => ({
+        ...m,
+        isActive: m.isActive ?? true,
+      }));
+
+      setMembers(membersWithStatus);
       setSavings(savingsData || []);
       setLoans(loansData || []);
       setPayments(paymentsData || []);
@@ -126,7 +132,7 @@ export default function MembersPage() {
         updatedMembers[index] = {
           ...editingMember,
           ...formData,
-          isActive: formData.isActive, // ADDED: Ensure isActive is carried through update
+          isActive: formData.isActive, // Include isActive from formData
         };
         toast.success('Member updated successfully');
       } else {
@@ -135,8 +141,8 @@ export default function MembersPage() {
         updatedMembers.push({
           id: newId,
           ...formData,
-          isActive: formData.isActive ?? true, // ADDED: Ensure isActive is set for new member
-        } as LocalMember); // CAST: Use assertion to satisfy TypeScript locally
+          isActive: formData.isActive, // Include isActive from formData
+        });
         toast.success('Member added successfully');
       }
 
@@ -149,7 +155,7 @@ export default function MembersPage() {
     }
   };
 
-  const handleDelete = async (member: LocalMember) => {
+  const handleDelete = async (member: LocalMember) => { // Use LocalMember
     if (!isAdmin) {
       toast.error('Only admins can delete members');
       return;
@@ -187,7 +193,7 @@ export default function MembersPage() {
       // Update viewing member state to reflect the change immediately in the modal
       setViewingMember(updatedMembers.find(m => m.id === member.id) || null);
       toast.success(`Member ${member.name} is now ${!member.isActive ? 'Active' : 'Inactive'}`);
-      await loadData();
+      // No need to call loadData if setMembers and setViewingMember handle state locally
     } catch (error: any) {
       toast.error('Failed to update member status: ' + error.message);
     }
@@ -199,31 +205,31 @@ export default function MembersPage() {
       phone: '',
       joinDate: new Date().toISOString().split('T')[0],
       address: '',
-      isActive: true, // ADDED: Reset isActive state
+      isActive: true, // Reset isActive state
     });
     setShowAddForm(false);
     setEditingMember(null);
     setViewingMember(null);
   };
 
-  const handleEdit = (member: LocalMember) => {
+  const handleEdit = (member: LocalMember) => { // Use LocalMember
     setEditingMember(member);
     setFormData({
       name: member.name,
       phone: member.phone,
       joinDate: member.joinDate,
       address: member.address || '',
-      isActive: member.isActive ?? true, // ADDED: Load existing isActive status
+      isActive: member.isActive ?? true, // Load existing isActive status
     });
     setViewingMember(null);
   };
 
-  const handleViewMember = (member: LocalMember) => {
+  const handleViewMember = (member: LocalMember) => { // Use LocalMember
     setViewingMember(member);
     setActiveTab('savings');
   };
 
-  const filteredMembers = members.filter((m: LocalMember) =>
+  const filteredMembers = members.filter((m: LocalMember) => // Use LocalMember
     m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.phone.includes(searchTerm)
@@ -393,10 +399,10 @@ export default function MembersPage() {
                           {/* ADDED: Status Badge */}
                           <span 
                             className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              (member.isActive ?? true) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              member.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                             }`}
                           >
-                            {(member.isActive ?? true) ? 'Active' : 'Inactive'}
+                            {member.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </td>
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">{member.phone}</td>
@@ -460,8 +466,8 @@ export default function MembersPage() {
                       {/* ADDED: Status display in modal */}
                       <div>
                         <label className="text-sm font-medium text-gray-500">Status</label>
-                        <p className={`text-base font-bold ${viewingMember.isActive ?? true ? 'text-success' : 'text-danger'}`}>
-                          {viewingMember.isActive ?? true ? 'Active' : 'Inactive'}
+                        <p className={`text-base font-bold ${viewingMember.isActive ? 'text-success' : 'text-danger'}`}>
+                          {viewingMember.isActive ? 'Active' : 'Inactive'}
                         </p>
                       </div>
                       <div className="md:col-span-2">
@@ -694,13 +700,13 @@ export default function MembersPage() {
                       <button
                         onClick={() => handleToggleActive(viewingMember)}
                         className={`flex-1 px-4 py-2.5 rounded-lg touch-manipulation font-medium transition-colors text-white ${
-                          (viewingMember.isActive ?? true)
+                          viewingMember.isActive
                             ? 'bg-danger hover:bg-danger/90 active:bg-danger/80' // Deactivate (Red)
                             : 'bg-success hover:bg-success/90 active:bg-success/80' // Activate (Green)
                         }`}
-                        title={(viewingMember.isActive ?? true) ? 'Deactivate Member' : 'Activate Member'}
+                        title={viewingMember.isActive ? 'Deactivate Member' : 'Activate Member'}
                       >
-                        {(viewingMember.isActive ?? true) ? 'Deactivate Member' : 'Activate Member'}
+                        {viewingMember.isActive ? 'Deactivate Member' : 'Activate Member'}
                       </button>
 
                       <button
@@ -713,7 +719,7 @@ export default function MembersPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(viewingMember)}
-                        className="flex-1 bg-gray-500 text-white px-4 py-2.5 rounded-lg hover:bg-gray-600 active:bg-gray-700 touch-manipulation font-medium" // CHANGED: Delete button color to neutral gray
+                        className="flex-1 bg-gray-500 text-white px-4 py-2.5 rounded-lg hover:bg-gray-600 active:bg-gray-700 touch-manipulation font-medium"
                       >
                         Delete
                       </button>
