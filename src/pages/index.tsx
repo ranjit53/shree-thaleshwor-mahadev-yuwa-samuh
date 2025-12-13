@@ -56,7 +56,6 @@ export default function Dashboard() {
   const [lineData, setLineData] = useState<any[]>([]);
   const [pieData, setPieData] = useState<any[]>([]);
   const [savingDefaulters, setSavingDefaulters] = useState<SavingDefaulter[]>([]);
-  // UPDATED STATE TYPE
   const [interestDefaulters, setInterestDefaulters] = useState<InterestDefaulter[]>([]);
   const [totalFine, setTotalFine] = useState(0);
   const [totalExpenditure, setTotalExpenditure] = useState(0);
@@ -102,12 +101,19 @@ export default function Dashboard() {
       // Calculate statistics
       const totalMembers = members.length;
       const totalSaving = savings.reduce((sum, s) => sum + s.amount, 0);
+      
+      // FIX 1: Update calculateOutstandingPrincipal call to match new utils.ts signature
       const totalLoan = loans.reduce((sum, l) => {
-        // NOTE: calculateOutstandingPrincipal is imported from '@/lib/utils'
         const loanPayments = payments.filter(p => p.loanId === l.id);
-        const outstanding = calculateOutstandingPrincipal(l, loanPayments);
+        const outstanding = calculateOutstandingPrincipal(
+          l.principal, 
+          l.interestRate, 
+          l.termMonths, 
+          loanPayments
+        );
         return sum + outstanding;
       }, 0);
+      
       const totalInterest = payments.reduce((sum, p) => sum + p.interestPaid, 0);
       const totalFineComputed = fines.reduce((sum, f) => sum + f.amount, 0);
       const totalExpenditureComputed = expenditures.reduce((sum, e) => sum + e.amount, 0);
@@ -169,7 +175,7 @@ export default function Dashboard() {
       // =========================================================
       
       // =========================================================
-      // LOAN INTEREST DEFAULTERS LOGIC (UPDATED WITH DATE & PENDING MONTHS)
+      // LOAN INTEREST DEFAULTERS LOGIC
       // =========================================================
       
       const interestDefaulterMap = new Map<string, InterestDefaulter>();
@@ -181,7 +187,13 @@ export default function Dashboard() {
         }
 
         const loanPayments = payments.filter(p => p.loanId === loan.id);
-        const outstanding = calculateOutstandingPrincipal(loan, loanPayments);
+        // FIX 2: Update calculateOutstandingPrincipal call to match new utils.ts signature
+        const outstanding = calculateOutstandingPrincipal(
+          loan.principal, 
+          loan.interestRate, 
+          loan.termMonths, 
+          loanPayments
+        );
         
         // 2. Only check active loans
         if (outstanding <= 0) {
@@ -291,8 +303,15 @@ export default function Dashboard() {
       
       loans.forEach(loan => {
         const loanPayments = payments.filter(p => p.loanId === loan.id);
-        // NOTE: calculateOutstandingPrincipal is imported from '@/lib/utils'
-        const outstanding = calculateOutstandingPrincipal(loan, loanPayments);
+        
+        // FIX 3: Update calculateOutstandingPrincipal call to match new utils.ts signature
+        const outstanding = calculateOutstandingPrincipal(
+          loan.principal, 
+          loan.interestRate, 
+          loan.termMonths, 
+          loanPayments
+        );
+        
         if (outstanding > 0) {
           const member = members.find(m => m.id === loan.memberId);
           const memberName = member?.name || loan.memberId;
@@ -523,14 +542,12 @@ export default function Dashboard() {
                         <p className="font-medium text-gray-800 truncate">{defaulter.name}</p>
                         <p className="text-sm text-gray-500 truncate">
                           {defaulter.id}
-                          {/* UPDATED DISPLAY TO SHOW PENDING MONTHS */}
                           <span className="ml-2 text-warning font-semibold">
                             ({defaulter.pendingMonths} {defaulter.pendingMonths === 1 ? 'month' : 'months'} overdue)
                           </span>
                         </p>
                       </div>
                       <p className="text-sm text-gray-600">
-                        {/* UPDATED DISPLAY TO SHOW LAST INTEREST PAYMENT DATE (year, month, day) */}
                         Last Int. Pay: {formatDate(defaulter.lastPaymentDate)}
                       </p>
                     </div>
