@@ -12,8 +12,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+// ADDED: Local type to include the isActive property, mirroring members.tsx
+type LocalMember = Member & {
+  isActive: boolean;
+}
+
 export default function LoansPage() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<LocalMember[]>([]); // UPDATED to use LocalMember
   const [loans, setLoans] = useState<Loan[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,12 +43,20 @@ export default function LoansPage() {
 
   const loadData = async () => {
     try {
+      // CHANGED: Reading data as any[] to handle the extra isActive property from file
       const [membersData, loansData, paymentsData] = await Promise.all([
-        readFile<Member[]>('data/members.json'),
+        readFile<any[]>('data/members.json'),
         readFile<Loan[]>('data/loans.json'),
         readFile<Payment[]>('data/payments.json'),
       ]);
-      setMembers(membersData || []);
+
+      // ADDED: Logic to process isActive status, defaulting to true if not present
+      const membersWithStatus = (membersData || []).map(m => ({
+        ...m,
+        isActive: m.isActive ?? true,
+      })) as LocalMember[]; // Type cast to LocalMember[]
+
+      setMembers(membersWithStatus);
       setLoans(loansData || []);
       setPayments(paymentsData || []);
     } catch (error: any) {
@@ -296,11 +309,12 @@ export default function LoansPage() {
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning touch-manipulation text-base"
                     >
                       <option value="">Select Member</option>
+                      {/* FILTER ADDED HERE: Only show members where isActive is true */}
                       {members
-                        .filter(m => (m as any).status !== 'inactive') // <--- FILTER ADDED HERE
+                        .filter(m => m.isActive)
                         .map(m => (
-                        <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
-                      ))}
+                          <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
+                        ))}
                     </select>
                   </div>
                   <div>
