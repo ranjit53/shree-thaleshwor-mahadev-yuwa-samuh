@@ -375,7 +375,7 @@ export default function SettingsPage() {
   };
 
   // =========================================================
-  // UPDATED: FIXED ENGLISH PROFESSIONAL REPORT
+  // IMPROVED REPORT GENERATION (ID FIRST, SERIAL WISE, P&L)
   // =========================================================
   const generateReport = async (period: 'q1' | 'q2' | 'q3' | 'q4' | 'annual') => {
     setReportLoading(true);
@@ -389,7 +389,7 @@ export default function SettingsPage() {
         readFile<Expenditure[]>('data/expenditures.json'),
       ]);
 
-      // SORTED BY ID: M-0001, M-0002...
+      // 1. Sort members by Member ID numerically
       const members = (membersRes ?? []).sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
       const savings = savingsRes ?? [];
       const loans = loansRes ?? [];
@@ -409,7 +409,7 @@ export default function SettingsPage() {
         endDate = new Date(year, quarter * 3 + 3, 0);
       }
 
-      const formatDate = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
       const formatCurrency = (amount: number) => `Rs ${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
       const inPeriod = (dateStr: string) => {
@@ -464,6 +464,10 @@ export default function SettingsPage() {
       totalExpenditures = filteredExpenditures.reduce((sum, e) => sum + e.amount, 0);
       const outstandingLoans = totalLoansIssued - totalPrincipalPaid;
       const netBalance = totalSavings + totalInterest + totalFines - outstandingLoans - totalExpenditures;
+      
+      // Profit & Loss Calculations
+      const grossIncome = totalInterest + totalFines;
+      const netProfit = grossIncome - totalExpenditures;
 
       const doc = new jsPDF('p', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -485,65 +489,84 @@ export default function SettingsPage() {
       y += 8;
       doc.setFontSize(11);
       doc.setTextColor(100);
-      doc.text(`Period: ${formatDate(startDate)} – ${formatDate(endDate)}`, pageWidth / 2, y, { align: 'center' });
+      doc.text(`Period: ${formatDateStr(startDate)} - ${formatDateStr(endDate)}`, pageWidth / 2, y, { align: 'center' });
       y += 6;
       doc.text(`Generated on: ${new Date().toLocaleString('en-GB')}`, pageWidth / 2, y, { align: 'center' });
 
       y += 15;
 
-      // Overall Financial Summary
+      // Section 1: Balance Sheet Summary
       doc.setFillColor(30, 64, 175);
-      doc.rect(14, y, pageWidth - 28, 10, 'F');
+      doc.rect(14, y, pageWidth - 28, 8, 'F');
       doc.setTextColor(255);
-      doc.setFontSize(13);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Overall Financial Summary', pageWidth / 2, y + 7, { align: 'center' });
-
-      y += 18;
+      doc.setFontSize(11);
+      doc.text('Balance Summary', pageWidth / 2, y + 5.5, { align: 'center' });
+      y += 12;
 
       (doc as any).autoTable({
         startY: y,
-        head: [['Description', 'Amount']],
+        head: [['Account Description', 'Amount']],
         body: [
-          ['Total Savings Collected', formatCurrency(totalSavings)],
-          ['Total Loans Issued', formatCurrency(totalLoansIssued)],
-          ['Principal Repaid', formatCurrency(totalPrincipalPaid)],
-          ['Interest Collected', formatCurrency(totalInterest)],
-          ['Fines Collected', formatCurrency(totalFines)],
-          ['Total Expenditures', formatCurrency(totalExpenditures)],
-          ['Outstanding Loans', formatCurrency(outstandingLoans)],
-          ['Net Available Balance', formatCurrency(netBalance)],
+          ['Total Members Savings', formatCurrency(totalSavings)],
+          ['Total Outstanding Loans', formatCurrency(outstandingLoans)],
+          ['Net Available Cash Balance', formatCurrency(netBalance)],
         ],
         theme: 'grid',
-        headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 11, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 10, textColor: 0 },
-        columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right', fontStyle: 'bold' } },
+        headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 10, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 9, textColor: 0 },
+        columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } },
         margin: { left: 14, right: 14 },
       });
 
-      y = (doc as any).lastAutoTable.finalY + 20;
+      y = (doc as any).lastAutoTable.finalY + 10;
 
-      // Member-wise Detailed Report
-      if (y > pageHeight - 40) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.setFillColor(30, 64, 175);
-      doc.rect(14, y, pageWidth - 28, 10, 'F');
+      // Section 2: Profit & Loss Statement (New)
+      doc.setFillColor(5, 150, 105);
+      doc.rect(14, y, pageWidth - 28, 8, 'F');
       doc.setTextColor(255);
-      doc.setFontSize(13);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Member-wise Financial Details', pageWidth / 2, y + 7, { align: 'center' });
-
-      y += 18;
+      doc.setFontSize(11);
+      doc.text('Profit & Loss Statement', pageWidth / 2, y + 5.5, { align: 'center' });
+      y += 12;
 
       (doc as any).autoTable({
         startY: y,
-        // UPDATED: Added S.N. and placed ID before Name
+        head: [['Income & Expenditure Description', 'Amount']],
+        body: [
+          ['Interest Earned (+)', formatCurrency(totalInterest)],
+          ['Fines Collected (+)', formatCurrency(totalFines)],
+          ['Total Revenue', formatCurrency(grossIncome)],
+          ['Operating Expenses (-)', formatCurrency(totalExpenditures)],
+          [netProfit >= 0 ? 'NET PROFIT' : 'NET LOSS', formatCurrency(netProfit)],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [5, 150, 105], textColor: 255, fontSize: 10, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 9, textColor: 0 },
+        columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } },
+        margin: { left: 14, right: 14 },
+        didParseCell: function(data: any) {
+          if (data.section === 'body' && data.row.index === 4) {
+            data.cell.styles.fillColor = netProfit >= 0 ? [209, 250, 229] : [254, 226, 226];
+          }
+        }
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 15;
+
+      // Section 3: Member Details (Serial Wise, ID First)
+      if (y > pageHeight - 40) { doc.addPage(); y = 20; }
+      doc.setFillColor(30, 64, 175);
+      doc.rect(14, y, pageWidth - 28, 8, 'F');
+      doc.setTextColor(255);
+      doc.setFontSize(11);
+      doc.text('Member-wise Detailed Report', pageWidth / 2, y + 5.5, { align: 'center' });
+      y += 12;
+
+      (doc as any).autoTable({
+        startY: y,
         head: [['S.N.', 'ID', 'Member Name', 'Savings', 'Loans', 'P. Paid', 'Int. Paid', 'Fines', 'Net']],
         body: memberData.map((m, index) => [
-          index + 1,
-          m.member.id,
+          index + 1, // Sequential Serial Number
+          m.member.id, // ID first
           m.member.name,
           formatCurrency(m.savings),
           formatCurrency(m.loansIssued),
@@ -555,11 +578,10 @@ export default function SettingsPage() {
         theme: 'striped',
         headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 8, fontStyle: 'bold' },
         bodyStyles: { fontSize: 7, textColor: 0 },
-        alternateRowStyles: { fillColor: [240, 249, 255] },
         columnStyles: {
-          0: { cellWidth: 10, halign: 'center' }, // S.N.
-          1: { cellWidth: 18, fontStyle: 'bold' }, // ID
-          2: { cellWidth: 35 }, // Name
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 18, fontStyle: 'bold' },
+          2: { cellWidth: 35 },
           3: { halign: 'right', cellWidth: 20 },
           4: { halign: 'right', cellWidth: 20 },
           5: { halign: 'right', cellWidth: 20 },
@@ -568,19 +590,15 @@ export default function SettingsPage() {
           8: { halign: 'right', fontStyle: 'bold', cellWidth: 24 },
         },
         margin: { left: 14, right: 14 },
-        pageBreak: 'auto',
-        rowPageBreak: 'avoid',
       });
 
-      // Footer
       doc.setFontSize(10);
       doc.setTextColor(128);
-      doc.text('Generated by Shree Thaleshwor Mahadev Yuwa Samuh', pageWidth / 2, pageHeight - 15, { align: 'center' });
+      doc.text('Generated by Savings & Loan Management System', pageWidth / 2, pageHeight - 15, { align: 'center' });
 
-      const filename = `${periodTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Detailed_Report.pdf`;
+      const filename = `${periodTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Financial_Report.pdf`;
       doc.save(filename);
-
-      toast.success('Detailed member-wise report downloaded successfully!');
+      toast.success('Professional report downloaded!');
     } catch (error: any) {
       toast.error('Failed to generate report: ' + error.message);
     } finally {
@@ -619,100 +637,41 @@ export default function SettingsPage() {
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Settings</h2>
 
           {/* Tabs */}
-          <div className="flex gap-2 border-b border-gray-200 overflow-x-auto -webkit-overflow-scrolling-touch">
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'users' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
-            >
-              Users
-            </button>
-            <button
-              onClick={() => setActiveTab('bulk')}
-              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'bulk' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
-            >
-              Bulk Saving
-            </button>
-            <button
-              onClick={() => setActiveTab('backup')}
-              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'backup' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
-            >
-              Backup/Restore
-            </button>
-            <button
-              onClick={() => setActiveTab('reports')}
-              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'reports' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
-            >
-              Reports
-            </button>
+          <div className="flex gap-2 border-b border-gray-200 overflow-x-auto">
+            <button onClick={() => setActiveTab('users')} className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${activeTab === 'users' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800'}`}>Users</button>
+            <button onClick={() => setActiveTab('bulk')} className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${activeTab === 'bulk' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800'}`}>Bulk Saving</button>
+            <button onClick={() => setActiveTab('backup')} className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${activeTab === 'backup' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800'}`}>Backup/Restore</button>
+            <button onClick={() => setActiveTab('reports')} className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${activeTab === 'reports' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800'}`}>Reports</button>
           </div>
 
           {/* Users Tab */}
           {activeTab === 'users' && (
             <div className="space-y-6">
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
-                  <UserPlus size={24} />
-                  Add New User
-                </h3>
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2"><UserPlus size={24} />Add New User</h3>
                 <form onSubmit={handleAddUser} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        User ID <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={userForm.userId}
-                        onChange={(e) => setUserForm({ ...userForm, userId: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                      <input type="text" required value={userForm.userId} onChange={(e) => setUserForm({ ...userForm, userId: e.target.value })} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={userForm.name}
-                        onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                      <input type="text" required value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Password <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="password"
-                        required
-                        value={userForm.password}
-                        onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                      <input type="password" required value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Role <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        required
-                        value={userForm.role}
-                        onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'Admin' | 'Viewer' })}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
-                      >
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                      <select required value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'Admin' | 'Viewer' })} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary">
                         <option value="Viewer">Viewer</option>
                         <option value="Admin">Admin</option>
                       </select>
                     </div>
                   </div>
-                  <button
-                    type="submit"
-                    className="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 active:bg-primary/80 touch-manipulation font-medium"
-                  >
-                    Add User
-                  </button>
+                  <button type="submit" className="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 font-medium">Add User</button>
                 </form>
               </div>
 
@@ -720,22 +679,11 @@ export default function SettingsPage() {
                 <h3 className="text-lg sm:text-xl font-semibold mb-4">Existing Users</h3>
                 <div className="space-y-2">
                   {settings?.users.map((user) => (
-                    <div key={user.userId} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-semibold">{user.name} ({user.userId})</p>
-                        <p className="text-sm text-gray-600">Role: {user.role}</p>
-                      </div>
-                      <button
-                        onClick={() => handleDeleteUser(user.userId)}
-                        className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 active:bg-red-800 touch-manipulation font-medium"
-                      >
-                        Delete
-                      </button>
+                    <div key={user.userId} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                      <div><p className="font-semibold">{user.name} ({user.userId})</p><p className="text-sm text-gray-600">Role: {user.role}</p></div>
+                      <button onClick={() => handleDeleteUser(user.userId)} className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Delete</button>
                     </div>
                   ))}
-                  {(!settings?.users || settings.users.length === 0) && (
-                    <p className="text-gray-500 text-center py-8">No users yet.</p>
-                  )}
                 </div>
               </div>
             </div>
@@ -745,90 +693,40 @@ export default function SettingsPage() {
           {activeTab === 'bulk' && (
             <div className="space-y-6">
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Upload size={24} />
-                  Bulk Fixed Saving (Same Amount to Selected Members)
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2"><Upload size={24} />Bulk Fixed Saving</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Amount (per member) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={bulkFixedAmount}
-                      onChange={(e) => setBulkFixedAmount(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                    <input type="number" value={bulkFixedAmount} onChange={(e) => setBulkFixedAmount(e.target.value)} className="w-full px-4 py-2 border rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      value={bulkFixedDate}
-                      onChange={(e) => setBulkFixedDate(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" value={bulkFixedDate} onChange={(e) => setBulkFixedDate(e.target.value)} className="w-full px-4 py-2 border rounded-lg" />
                   </div>
                   <div className="flex items-end">
-                    <button
-                      onClick={applyBulkFixedSavings}
-                      className="w-full bg-green-600 text-white px-6 py-2.5 rounded-lg hover:bg-green-700 active:bg-green-800 touch-manipulation font-medium"
-                    >
-                      Apply to Selected ({selectedMemberIds.size})
-                    </button>
+                    <button onClick={applyBulkFixedSavings} className="w-full bg-green-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-green-700">Apply to Selected ({selectedMemberIds.size})</button>
                   </div>
                 </div>
                 <div className="border rounded-lg overflow-hidden">
                   <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b">
-                    <input
-                      id="select-all-members"
-                      type="checkbox"
-                      checked={selectAllMembers}
-                      onChange={(e) => toggleSelectAllMembers(e.target.checked)}
-                    />
-                    <label htmlFor="select-all-members" className="font-medium">
-                      Select all members
-                    </label>
-                    <span className="text-sm text-gray-500">({members.length} members)</span>
+                    <input id="select-all" type="checkbox" checked={selectAllMembers} onChange={(e) => toggleSelectAllMembers(e.target.checked)} />
+                    <label htmlFor="select-all" className="font-medium cursor-pointer">Select All Members ({members.length})</label>
                   </div>
-                  <div className="max-h-64 overflow-auto divide-y">
+                  <div className="max-h-72 overflow-auto divide-y">
                     {members.map((m) => (
                       <label key={m.id} className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50">
-                        <input
-                          type="checkbox"
-                          checked={selectedMemberIds.has(m.id)}
-                          onChange={(e) => toggleMember(m.id, e.target.checked)}
-                        />
-                        <span className="font-medium">{m.name}</span>
-                        <span className="text-sm text-gray-500">({m.id})</span>
+                        <input type="checkbox" checked={selectedMemberIds.has(m.id)} onChange={(e) => toggleMember(m.id, e.target.checked)} />
+                        <span className="font-medium text-gray-800">{m.name}</span><span className="text-sm text-gray-500">({m.id})</span>
                       </label>
                     ))}
-                    {members.length === 0 && (
-                      <div className="px-4 py-6 text-gray-500 text-center">No members available.</div>
-                    )}
                   </div>
                 </div>
               </div>
 
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold mb-4">Bulk Import via CSV/JSON</h3>
-                <textarea
-                  value={bulkData}
-                  onChange={(e) => setBulkData(e.target.value)}
-                  placeholder="Paste CSV (MemberId,Amount,Date) or JSON array"
-                  className="w-full h-48 px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm"
-                />
-                <button
-                  onClick={handleBulkSaving}
-                  className="mt-4 bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90"
-                >
-                  Import Savings
-                </button>
+                <h3 className="text-lg sm:text-xl font-semibold mb-4">Bulk Import (CSV/JSON)</h3>
+                <textarea value={bulkData} onChange={(e) => setBulkData(e.target.value)} placeholder="Format: MemberId,Amount,Date" className="w-full h-32 p-3 border rounded-lg font-mono text-sm" />
+                <button onClick={handleBulkSaving} className="mt-3 bg-primary text-white px-6 py-2 rounded-lg font-medium">Import Data</button>
               </div>
             </div>
           )}
@@ -837,100 +735,28 @@ export default function SettingsPage() {
           {activeTab === 'backup' && (
             <div className="space-y-6">
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Download size={24} />
-                  Create Backup
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Create a snapshot of all data files (members, savings, loans, payments, settings).
-                </p>
-                <button
-                  onClick={handleBackup}
-                  className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 active:bg-primary/80 touch-manipulation font-medium"
-                >
-                  <Download size={20} />
-                  Create Backup Now
-                </button>
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2"><Download size={24} />Data Backup</h3>
+                <button onClick={handleBackup} className="bg-primary text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2"><Save size={20}/>Create New Backup File</button>
               </div>
-
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
-                  <RotateCcw size={24} />
-                  Restore from Backup
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Select a backup file to restore. <strong className="text-red-600">This will overwrite all current data.</strong>
-                </p>
-
-                <div className="mb-8 p-5 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    Upload Backup File (from your computer)
-                  </label>
-                  <p className="text-xs text-gray-500 mb-3">
-                    Choose a previously downloaded <code className="bg-gray-200 px-1 rounded">backup-YYYYMMDD-HHMMSS.json</code> file
-                  </p>
-                  <input
-                    type="file"
-                    accept="application/json,.json"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      try {
-                        const text = await file.text();
-                        const data = JSON.parse(text);
-                        await handleRestoreFromObject(data);
-                      } catch (err: any) {
-                        toast.error('Invalid or corrupted backup file');
-                      } finally {
-                        if (e.currentTarget) e.currentTarget.value = '';
-                      }
-                    }}
-                    className="block w-full text-sm text-gray-700 file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
-                  />
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2"><RotateCcw size={24} />Restore Data</h3>
+                <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 mb-6 text-center">
+                   <input type="file" accept=".json" onChange={async (e) => {
+                      const file = e.target.files?.[0]; if (!file) return;
+                      const data = JSON.parse(await file.text()); handleRestoreFromObject(data);
+                    }} className="text-sm" />
                 </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-md font-medium text-gray-700">
-                      Or restore from server backups:
-                    </h4>
-                    <button
-                      onClick={loadBackups}
-                      className="px-3 py-1.5 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 flex items-center gap-1 touch-manipulation"
-                    >
-                      <RotateCcw size={14} />
-                      Refresh
-                    </button>
-                  </div>
-                  {backups.length === 0 ? (
-                    <p className="text-gray-500 italic">No server backups available yet. Create one above and refresh.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {backups.map((backup) => (
-                        <div
-                          key={backup}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border"
-                        >
-                          <code className="text-xs font-mono text-gray-700">{backup.replace('backups/', '')}</code>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => downloadBackup(backup)}
-                              className="px-3 py-1.5 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 flex items-center gap-1 touch-manipulation"
-                            >
-                              <Download size={14} />
-                              Download
-                            </button>
-                            <button
-                              onClick={() => handleRestore(backup)}
-                              className="px-4 py-1.5 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 touch-manipulation font-medium"
-                            >
-                              Restore
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-700">Recent Server Backups:</h4>
+                  {backups.map((b) => (
+                    <div key={b} className="flex items-center justify-between p-3 bg-white border rounded-lg">
+                      <span className="text-xs font-mono">{b.replace('backups/', '')}</span>
+                      <div className="flex gap-2">
+                         <button onClick={() => downloadBackup(b)} className="px-3 py-1 bg-gray-200 rounded text-xs">Download</button>
+                         <button onClick={() => handleRestore(b)} className="px-3 py-1 bg-orange-600 text-white rounded text-xs">Restore</button>
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
             </div>
@@ -939,56 +765,20 @@ export default function SettingsPage() {
           {/* Reports Tab */}
           {activeTab === 'reports' && (
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <FileText size={24} className="text-primary" />
-                  Download Financial Reports
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Select a year and generate PDF reports for quarterly or annual financial summary with member-wise details.
-                </p>
-
-                <div className="mb-8 max-w-xs">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Year
-                  </label>
-                  <input
-                    type="number"
-                    min="2000"
-                    max="2100"
-                    value={selectedReportYear}
-                    onChange={(e) => setSelectedReportYear(parseInt(e.target.value) || new Date().getFullYear())}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Current year: {new Date().getFullYear()}</p>
+              <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-primary">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-primary"><FileText size={24} />Professional Reports</h3>
+                <div className="mb-6 max-w-xs">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Report Year</label>
+                  <input type="number" value={selectedReportYear} onChange={(e) => setSelectedReportYear(parseInt(e.target.value))} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary" />
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                  <button onClick={() => generateReport('q1')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
-                    <Download size={20} />
-                    1st Quarter ({selectedReportYear} Jan–Mar)
-                  </button>
-                  <button onClick={() => generateReport('q2')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
-                    <Download size={20} />
-                    2nd Quarter ({selectedReportYear} Apr–Jun)
-                  </button>
-                  <button onClick={() => generateReport('q3')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
-                    <Download size={20} />
-                    3rd Quarter ({selectedReportYear} Jul–Sep)
-                  </button>
-                  <button onClick={() => generateReport('q4')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
-                    <Download size={20} />
-                    4th Quarter ({selectedReportYear} Oct–Dec)
-                  </button>
-                  <button onClick={() => generateReport('annual')} disabled={reportLoading} className="bg-green-600 text-white py-4 px-6 rounded-lg shadow hover:bg-green-700 disabled:opacity-60 flex items-center justify-center gap-2 font-medium md:col-span-2">
-                    <Download size={20} />
-                    Annual Report (Full Year {selectedReportYear})
-                  </button>
+                  <button onClick={() => generateReport('q1')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow-md hover:translate-y-[-2px] transition-transform flex items-center justify-center gap-2">1st Quarter (Jan-Mar)</button>
+                  <button onClick={() => generateReport('q2')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow-md hover:translate-y-[-2px] transition-transform flex items-center justify-center gap-2">2nd Quarter (Apr-Jun)</button>
+                  <button onClick={() => generateReport('q3')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow-md hover:translate-y-[-2px] transition-transform flex items-center justify-center gap-2">3rd Quarter (Jul-Sep)</button>
+                  <button onClick={() => generateReport('q4')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow-md hover:translate-y-[-2px] transition-transform flex items-center justify-center gap-2">4th Quarter (Oct-Dec)</button>
+                  <button onClick={() => generateReport('annual')} disabled={reportLoading} className="bg-green-700 text-white py-4 px-6 rounded-lg shadow-md md:col-span-2 font-bold text-lg hover:bg-green-800 transition-colors">Download Annual Statement ({selectedReportYear})</button>
                 </div>
-
-                {reportLoading && (
-                  <p className="text-center text-gray-500 mt-6">Generating report, please wait...</p>
-                )}
+                {reportLoading && <div className="mt-6 text-center text-primary font-medium animate-pulse">Generating PDF... Please wait.</div>}
               </div>
             </div>
           )}
@@ -997,4 +787,3 @@ export default function SettingsPage() {
     </ProtectedRoute>
   );
 }
-
