@@ -19,12 +19,6 @@
       "role": "Admin"
     },
     {
-      "userId": "Shiv",
-      "name": "Shiv",
-      "password": "$2a$10$KzOv2e39M.B/eJGl1PW5E.fmaJZqA9b8nLU2QFhL0LfOsiN3nAS1u",
-      "role": "Admin"
-    },
-    {
       "userId": "Arjun",
       "name": "Arjun",
       "password": "$2a$10$9t8otkZb.3NnXoHtNG9K4.urDIZeXMCLGzb/guWKdoEyfgJ4F27qy",
