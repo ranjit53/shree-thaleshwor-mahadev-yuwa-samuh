@@ -6,7 +6,7 @@
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही ",
     "active": false,
-    "isActive": true
+    "isActive": false
   },
   {
     "id": "M-0002",
@@ -14,7 +14,8 @@
     "phone": "9812092516",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0003",
@@ -22,7 +23,8 @@
     "phone": "9816870885",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0004",
@@ -30,7 +32,8 @@
     "phone": "984558155",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0005",
@@ -38,7 +41,8 @@
     "phone": "9840039599",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0006",
@@ -46,7 +50,8 @@
     "phone": "9863697834",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0007",
@@ -54,7 +59,8 @@
     "phone": "974-9836895",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0008",
@@ -62,7 +68,8 @@
     "phone": "+977 981-9842061",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0009",
@@ -70,7 +77,8 @@
     "phone": "+977 984-3174828",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0010",
@@ -78,7 +86,8 @@
     "phone": "+977 982-8361502",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0011",
@@ -86,7 +95,8 @@
     "phone": "+977 984-4049629",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0012",
@@ -94,7 +104,8 @@
     "phone": "+977 9844588219",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0013",
@@ -102,7 +113,8 @@
     "phone": "+977 984-0734052",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0014",
@@ -110,7 +122,8 @@
     "phone": "+977 984-4443718",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0015",
@@ -118,7 +131,8 @@
     "phone": "+977 984-4425528",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0016",
@@ -126,7 +140,8 @@
     "phone": "+9779844588357",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0017",
@@ -134,7 +149,8 @@
     "phone": "+977 984844884",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0018",
@@ -142,7 +158,8 @@
     "phone": "+977 981-2201645",
     "joinDate": "2025-09-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   },
   {
     "id": "M-0019",
@@ -150,6 +167,7 @@
     "phone": "+971 52 212 3632",
     "joinDate": "2025-10-10",
     "address": "बागमती-३,सर्लाही",
-    "active": true
+    "active": true,
+    "isActive": true
   }
 ]
