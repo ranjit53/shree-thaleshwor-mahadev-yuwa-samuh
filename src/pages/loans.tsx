@@ -297,7 +297,7 @@ export default function LoansPage() {
                     >
                       <option value="">Select Member</option>
                       {members
-                        .filter(m => (m as any).status !== 'inactive') // Filter added to exclude members with 'inactive' status
+                        .filter(m => (m as any).status !== 'inactive') // <--- FILTER ADDED HERE
                         .map(m => (
                         <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
                       ))}
