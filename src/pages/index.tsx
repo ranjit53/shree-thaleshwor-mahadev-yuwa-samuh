@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import { readFile } from '@/lib/api';
-// Assuming formatCurrency, formatNumber, formatDate, and calculateOutstandingPrincipal are available in '@/lib/utils'
+// FIX: Ensure all necessary utility functions are correctly imported.
 import { formatCurrency, formatNumber, formatDate, calculateOutstandingPrincipal } from '@/lib/utils'; 
 import type { Member, Saving, Loan, Payment, FinePayment, Expenditure } from '@/types';
 import {
@@ -103,7 +103,7 @@ export default function Dashboard() {
       const totalMembers = members.length;
       const totalSaving = savings.reduce((sum, s) => sum + s.amount, 0);
       const totalLoan = loans.reduce((sum, l) => {
-        // NOTE: calculateOutstandingPrincipal is assumed to be imported from '@/lib/utils'
+        // NOTE: calculateOutstandingPrincipal is imported from '@/lib/utils'
         const loanPayments = payments.filter(p => p.loanId === l.id);
         const outstanding = calculateOutstandingPrincipal(l, loanPayments);
         return sum + outstanding;
@@ -291,7 +291,7 @@ export default function Dashboard() {
       
       loans.forEach(loan => {
         const loanPayments = payments.filter(p => p.loanId === loan.id);
-        // NOTE: calculateOutstandingPrincipal is assumed to be imported from '@/lib/utils'
+        // NOTE: calculateOutstandingPrincipal is imported from '@/lib/utils'
         const outstanding = calculateOutstandingPrincipal(loan, loanPayments);
         if (outstanding > 0) {
           const member = members.find(m => m.id === loan.memberId);
