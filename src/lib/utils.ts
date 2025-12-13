@@ -3,15 +3,13 @@
  */
 
 /**
- * Format currency with thousand separators
+ * Format currency with thousand separators and "Rs" prefix
  */
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('ne-NP', {
-    style: 'currency',
-    currency: 'NPR',
+  return `Rs ${new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(amount)}`;
 }
 
 /**
@@ -74,4 +72,3 @@ export function formatDate(date: string | Date): string {
 export function getCurrentDate(): string {
   return new Date().toISOString().split('T')[0];
 }
-
