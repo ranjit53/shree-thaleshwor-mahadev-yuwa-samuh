@@ -1,0 +1,806 @@
+{
+  "timestamp": "2025-12-13T19-17-21",
+  "members": [
+    {
+      "id": "M-0001",
+      "name": "दिनेश्वर सिं ",
+      "phone": "+9779861946891",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही ",
+      "active": false
+    },
+    {
+      "id": "M-0002",
+      "name": "जितेन्द्र कुमार महतो",
+      "phone": "9812092516",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0003",
+      "name": "सन्तोष महतो (Media)",
+      "phone": "9816870885",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0004",
+      "name": "जितेन्द्र महतो",
+      "phone": "984558155",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0005",
+      "name": "शिव शंकर साह",
+      "phone": "9840039599",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0006",
+      "name": "सुरेन्द्र कुमार महतो",
+      "phone": "9863697834",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0007",
+      "name": "शिव राम महतो",
+      "phone": "974-9836895",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0008",
+      "name": "उमेश साह",
+      "phone": "+977 981-9842061",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0009",
+      "name": "शत्रुधन राय",
+      "phone": "+977 984-3174828",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0010",
+      "name": "नागेन्द्र राय यादव",
+      "phone": "+977 982-8361502",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0011",
+      "name": "बिनोद महतो",
+      "phone": "+977 984-4049629",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0012",
+      "name": "रन्जित कुमार महतो",
+      "phone": "9844588219",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0013",
+      "name": "बेनी माधव कुशवाहा",
+      "phone": "+977 984-0734052",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0014",
+      "name": "संतोष महतो (Tractor)",
+      "phone": "+977 984-4443718",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0015",
+      "name": "राम पुकार महतो कोईरि",
+      "phone": "+977 984-4425528",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0016",
+      "name": "सुरेश महतो",
+      "phone": "+9779844588357",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0017",
+      "name": "प्रदीप साह",
+      "phone": "984844884",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0018",
+      "name": "उमेश महतो",
+      "phone": "+977 981-2201645",
+      "joinDate": "2025-09-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    },
+    {
+      "id": "M-0019",
+      "name": "किसन महतो",
+      "phone": "+971 52 212 3632",
+      "joinDate": "2025-10-10",
+      "address": "बागमती-३,सर्लाही",
+      "active": true
+    }
+  ],
+  "savings": [
+    {
+      "id": "S-1762889675966",
+      "memberId": "M-0001",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": ""
+    },
+    {
+      "id": "S-1762889702664-0",
+      "memberId": "M-0002",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-1",
+      "memberId": "M-0003",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-2",
+      "memberId": "M-0004",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-3",
+      "memberId": "M-0005",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-4",
+      "memberId": "M-0006",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-5",
+      "memberId": "M-0007",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-6",
+      "memberId": "M-0008",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-7",
+      "memberId": "M-0009",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-8",
+      "memberId": "M-0010",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-9",
+      "memberId": "M-0011",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-10",
+      "memberId": "M-0012",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-11",
+      "memberId": "M-0013",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-12",
+      "memberId": "M-0014",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-13",
+      "memberId": "M-0015",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-14",
+      "memberId": "M-0016",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-15",
+      "memberId": "M-0017",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762889702664-16",
+      "memberId": "M-0018",
+      "amount": 1200,
+      "date": "2025-09-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-0",
+      "memberId": "M-0001",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-1",
+      "memberId": "M-0002",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-2",
+      "memberId": "M-0003",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-3",
+      "memberId": "M-0004",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-4",
+      "memberId": "M-0005",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-5",
+      "memberId": "M-0006",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-6",
+      "memberId": "M-0007",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-7",
+      "memberId": "M-0008",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-8",
+      "memberId": "M-0009",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-9",
+      "memberId": "M-0010",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-10",
+      "memberId": "M-0011",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-11",
+      "memberId": "M-0012",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-12",
+      "memberId": "M-0013",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-13",
+      "memberId": "M-0014",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-14",
+      "memberId": "M-0015",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-15",
+      "memberId": "M-0016",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-16",
+      "memberId": "M-0017",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890522991-17",
+      "memberId": "M-0018",
+      "amount": 1000,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762890535293-0",
+      "memberId": "M-0019",
+      "amount": 2200,
+      "date": "2025-10-10",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-0",
+      "memberId": "M-0001",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-1",
+      "memberId": "M-0002",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-2",
+      "memberId": "M-0003",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-3",
+      "memberId": "M-0004",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-4",
+      "memberId": "M-0005",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-5",
+      "memberId": "M-0006",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-6",
+      "memberId": "M-0007",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-7",
+      "memberId": "M-0008",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-8",
+      "memberId": "M-0009",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-9",
+      "memberId": "M-0010",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-10",
+      "memberId": "M-0011",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-11",
+      "memberId": "M-0012",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-12",
+      "memberId": "M-0013",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-13",
+      "memberId": "M-0014",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-14",
+      "memberId": "M-0015",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-15",
+      "memberId": "M-0016",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-16",
+      "memberId": "M-0017",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-17",
+      "memberId": "M-0018",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1762892229490-18",
+      "memberId": "M-0019",
+      "amount": 1000,
+      "date": "2025-11-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-0",
+      "memberId": "M-0001",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-1",
+      "memberId": "M-0002",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-2",
+      "memberId": "M-0003",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-3",
+      "memberId": "M-0004",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-4",
+      "memberId": "M-0005",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-5",
+      "memberId": "M-0006",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-6",
+      "memberId": "M-0007",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-7",
+      "memberId": "M-0008",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-8",
+      "memberId": "M-0010",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-9",
+      "memberId": "M-0011",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-10",
+      "memberId": "M-0012",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-11",
+      "memberId": "M-0013",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-12",
+      "memberId": "M-0014",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-13",
+      "memberId": "M-0015",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-14",
+      "memberId": "M-0016",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-15",
+      "memberId": "M-0017",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    },
+    {
+      "id": "S-1765433443726-16",
+      "memberId": "M-0019",
+      "amount": 1000,
+      "date": "2025-12-11",
+      "remarks": "Bulk fixed saving"
+    }
+  ],
+  "loans": [
+    {
+      "id": "L-1762885887476",
+      "memberId": "M-0014",
+      "principal": 18000,
+      "interestRate": 20,
+      "startDate": "2025-09-10",
+      "termMonths": 6,
+      "status": "closed"
+    },
+    {
+      "id": "L-1762890590645",
+      "memberId": "M-0001",
+      "principal": 20300,
+      "interestRate": 20,
+      "startDate": "2025-10-10",
+      "termMonths": 6,
+      "status": "active"
+    },
+    {
+      "id": "L-1763014929143",
+      "memberId": "M-0005",
+      "principal": 19640,
+      "interestRate": 20,
+      "startDate": "2025-11-11",
+      "termMonths": 6,
+      "status": "active"
+    },
+    {
+      "id": "L-1765433932234",
+      "memberId": "M-0015",
+      "principal": 35970,
+      "interestRate": 20,
+      "startDate": "2025-12-11",
+      "termMonths": 6,
+      "purpose": "Home Loan",
+      "status": "active"
+    }
+  ],
+  "payments": [
+    {
+      "id": "P-1762889776868",
+      "loanId": "L-1762885887476",
+      "memberId": "M-0014",
+      "date": "2025-10-10",
+      "principalPaid": 0,
+      "interestPaid": 300,
+      "remarks": "intrest"
+    },
+    {
+      "id": "P-1762889845170",
+      "loanId": "L-1762885887476",
+      "memberId": "M-0014",
+      "date": "2025-11-11",
+      "principalPaid": 0,
+      "interestPaid": 300,
+      "remarks": "intrest"
+    },
+    {
+      "id": "P-1763037105477",
+      "loanId": "L-1762890590645",
+      "memberId": "M-0001",
+      "date": "2025-11-11",
+      "principalPaid": 0,
+      "interestPaid": 340
+    },
+    {
+      "id": "P-1765433520777",
+      "loanId": "L-1762890590645",
+      "memberId": "M-0001",
+      "date": "2025-12-11",
+      "principalPaid": 0,
+      "interestPaid": 340,
+      "remarks": "Intrest"
+    },
+    {
+      "id": "P-1765433592926",
+      "loanId": "L-1763014929143",
+      "memberId": "M-0005",
+      "date": "2025-12-11",
+      "principalPaid": 0,
+      "interestPaid": 330,
+      "remarks": "Intrest"
+    },
+    {
+      "id": "P-1765624205846",
+      "loanId": "L-1762885887476",
+      "memberId": "M-0014",
+      "date": "2025-12-11",
+      "principalPaid": 18000,
+      "interestPaid": 300
+    }
+  ],
+  "fines": [],
+  "expenditures": [
+    {
+      "id": "E-1763781249151",
+      "date": "2025-11-11",
+      "item": "Note book stamp passbook pen etc",
+      "amount": 2970
+    }
+  ],
+  "settings": {
+    "users": [
+      {
+        "userId": "admin",
+        "name": "Administrator",
+        "password": "$2a$10$rOzJqZqZqZqZqZqZqZqZqOqZqZqZqZqZqZqZqZqZqZqZqZqZqZqZq",
+        "role": "Admin"
+      },
+      {
+        "userId": "user",
+        "name": "user",
+        "password": "$2a$10$udaB1avtin2m1BRIpmf2Kew/nkv/Va9.2uexZ7Q24OjVmsOz4oyFO",
+        "role": "Viewer"
+      },
+      {
+        "userId": "Ranjit",
+        "name": "Ranjit",
+        "password": "$2a$10$X8efpO9aPMhjvUwN/e17t.6Xs.E5ARJMZ7t0DlVewKTgdf7w41BmC",
+        "role": "Admin"
+      },
+      {
+        "userId": "Arjun",
+        "name": "Arjun",
+        "password": "$2a$10$9t8otkZb.3NnXoHtNG9K4.urDIZeXMCLGzb/guWKdoEyfgJ4F27qy",
+        "role": "Admin"
+      },
+      {
+        "userId": "Surendra",
+        "name": "Surendra",
+        "password": "$2a$10$1Kz5ucX7dcUiJvFNhnNS0.rW151PvHQB9xGHVOCmPAEzWcIeWp/ji",
+        "role": "Viewer"
+      }
+    ]
+  }
+}
