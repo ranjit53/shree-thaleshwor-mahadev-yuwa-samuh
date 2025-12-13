@@ -6,7 +6,8 @@ import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import { readFile } from '@/lib/api';
-import { formatCurrency, formatNumber } from '@/lib/utils';
+// Assuming formatCurrency, formatNumber, formatDate, and calculateOutstandingPrincipal are available in '@/lib/utils'
+import { formatCurrency, formatNumber, formatDate, calculateOutstandingPrincipal } from '@/lib/utils'; 
 import type { Member, Saving, Loan, Payment, FinePayment, Expenditure } from '@/types';
 import {
   LineChart,
@@ -27,6 +28,22 @@ import toast from 'react-hot-toast';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#3b82f6'];
 
+// New types to include date and pending count
+type SavingDefaulter = {
+  id: string;
+  name: string;
+  lastSavingDate: string; // The exact YYYY-MM-DD date
+  pendingMonths: number;
+};
+
+// New type for Interest Defaulters
+type InterestDefaulter = {
+  id: string;
+  name: string;
+  lastPaymentDate: string; // The exact YYYY-MM-DD date of last interest payment
+  pendingMonths: number;
+};
+
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -38,8 +55,9 @@ export default function Dashboard() {
   });
   const [lineData, setLineData] = useState<any[]>([]);
   const [pieData, setPieData] = useState<any[]>([]);
-  const [savingDefaulters, setSavingDefaulters] = useState<Array<{ id: string; name: string }>>([]);
-  const [interestDefaulters, setInterestDefaulters] = useState<Array<{ id: string; name: string }>>([]);
+  const [savingDefaulters, setSavingDefaulters] = useState<SavingDefaulter[]>([]);
+  // UPDATED STATE TYPE
+  const [interestDefaulters, setInterestDefaulters] = useState<InterestDefaulter[]>([]);
   const [totalFine, setTotalFine] = useState(0);
   const [totalExpenditure, setTotalExpenditure] = useState(0);
   const router = useRouter();
@@ -47,6 +65,21 @@ export default function Dashboard() {
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  /**
+   * Calculates the difference in months between two Date objects (laterDate - earlierDate).
+   * Result is always >= 0.
+   */
+  const calculateMonthDiff = (laterDate: Date, earlierDate: Date): number => {
+    const diffYears = laterDate.getFullYear() - earlierDate.getFullYear();
+    const diffMonths = laterDate.getMonth() - earlierDate.getMonth();
+    return (diffYears * 12) + diffMonths;
+  };
+  
+  /**
+   * Helper to get YYYY-MM key from date string (YYYY-MM-DD)
+   */
+  const getMonthKey = (dateString: string): string => dateString.slice(0, 7);
 
   const loadDashboardData = async () => {
     try {
@@ -70,9 +103,10 @@ export default function Dashboard() {
       const totalMembers = members.length;
       const totalSaving = savings.reduce((sum, s) => sum + s.amount, 0);
       const totalLoan = loans.reduce((sum, l) => {
+        // NOTE: calculateOutstandingPrincipal is assumed to be imported from '@/lib/utils'
         const loanPayments = payments.filter(p => p.loanId === l.id);
-        const principalPaid = loanPayments.reduce((sum, p) => sum + p.principalPaid, 0);
-        return sum + Math.max(0, l.principal - principalPaid);
+        const outstanding = calculateOutstandingPrincipal(l, loanPayments);
+        return sum + outstanding;
       }, 0);
       const totalInterest = payments.reduce((sum, p) => sum + p.interestPaid, 0);
       const totalFineComputed = fines.reduce((sum, f) => sum + f.amount, 0);
@@ -89,66 +123,118 @@ export default function Dashboard() {
       setTotalFine(totalFineComputed);
       setTotalExpenditure(totalExpenditureComputed);
 
-      // Calculate Monthly Defaulters with names
+      // Calculate Defaulters
       const now = new Date();
-      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      
-      // Saving Defaulters: Members who saved last month but not this month
-      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const prevMonthStr = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
-      
-      const membersWhoSavedLastMonth = new Set(
-        savings
-          .filter(s => s.date.startsWith(prevMonthStr))
-          .map(s => s.memberId)
-      );
-      
-      const membersWhoSavedThisMonth = new Set(
-        savings
-          .filter(s => s.date.startsWith(currentMonth))
-          .map(s => s.memberId)
-      );
-      
-      // Defaulters are those who saved last month but not this month
-      const savingDefaulterIds = Array.from(membersWhoSavedLastMonth).filter(
-        memberId => !membersWhoSavedThisMonth.has(memberId)
-      );
-      
-      const savingDefaulterList = savingDefaulterIds
-        .map(memberId => {
-          const member = members.find(m => m.id === memberId);
-          return member ? { id: member.id, name: member.name } : null;
-        })
-        .filter((m): m is { id: string; name: string } => m !== null);
-      
-      setSavingDefaulters(savingDefaulterList);
+      const currentMonthKey = getMonthKey(now.toISOString().split('T')[0]); // YYYY-MM
+      const currentMonthDate = new Date(currentMonthKey); // YYYY-MM-01
 
-      // Loan Interest Defaulters: Members with active loans who haven't paid interest this month
-      const membersWithActiveLoans = new Map<string, string>(); // memberId -> memberName
-      loans.forEach(loan => {
-        const loanPayments = payments.filter(p => p.loanId === loan.id);
-        const principalPaid = loanPayments.reduce((sum, p) => sum + p.principalPaid, 0);
-        const outstanding = Math.max(0, loan.principal - principalPaid);
-        if (outstanding > 0) {
-          const member = members.find(m => m.id === loan.memberId);
-          if (member) {
-            membersWithActiveLoans.set(loan.memberId, member.name);
-          }
+      // =========================================================
+      // SAVING DEFAULTERS LOGIC
+      // =========================================================
+      
+      const memberLastSavingMonth = new Map<string, string>(); // memberId -> YYYY-MM
+      const memberLastSavingDate = new Map<string, string>(); // memberId -> YYYY-MM-DD
+      
+      const allSavingsSorted = savings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      allSavingsSorted.forEach(s => {
+        if (!memberLastSavingMonth.has(s.memberId)) {
+          memberLastSavingMonth.set(s.memberId, getMonthKey(s.date));
+          memberLastSavingDate.set(s.memberId, s.date);
+        }
+      });
+
+      const savingDefaulterList: SavingDefaulter[] = [];
+
+      members.forEach(member => {
+        const lastSaveMonthKey = memberLastSavingMonth.get(member.id);
+
+        if (lastSaveMonthKey && lastSaveMonthKey !== currentMonthKey) {
+            
+            const lastSaveMonthDate = new Date(lastSaveMonthKey); 
+            let pendingMonths = calculateMonthDiff(currentMonthDate, lastSaveMonthDate);
+            
+            if (pendingMonths > 0) {
+                savingDefaulterList.push({
+                    id: member.id,
+                    name: member.name,
+                    lastSavingDate: memberLastSavingDate.get(member.id) || 'N/A',
+                    pendingMonths: pendingMonths,
+                });
+            }
         }
       });
       
-      const membersWhoPaidInterestThisMonth = new Set(
-        payments
-          .filter(p => p.date.startsWith(currentMonth) && p.interestPaid > 0)
-          .map(p => p.memberId)
-      );
+      setSavingDefaulters(savingDefaulterList);
+      // =========================================================
       
-      // Defaulters are those with active loans but no interest payment this month
-      const interestDefaulterList = Array.from(membersWithActiveLoans.entries())
-        .filter(([memberId]) => !membersWhoPaidInterestThisMonth.has(memberId))
-        .map(([id, name]) => ({ id, name }));
+      // =========================================================
+      // LOAN INTEREST DEFAULTERS LOGIC (UPDATED WITH DATE & PENDING MONTHS)
+      // =========================================================
       
+      const interestDefaulterMap = new Map<string, InterestDefaulter>();
+
+      loans.forEach(loan => {
+        // 1. Skip new loans (Interest not yet due)
+        if (loan.startDate.startsWith(currentMonthKey)) {
+          return;
+        }
+
+        const loanPayments = payments.filter(p => p.loanId === loan.id);
+        const outstanding = calculateOutstandingPrincipal(loan, loanPayments);
+        
+        // 2. Only check active loans
+        if (outstanding <= 0) {
+            return;
+        }
+
+        // 3. Find the latest date of a payment that included interest
+        const latestInterestPayment = loanPayments
+            .filter(p => p.interestPaid > 0)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+        // Determine the baseline date for overdue calculation
+        let lastPaymentDateStr: string;
+        let lastPaymentMonthKey: string;
+
+        if (latestInterestPayment) {
+            lastPaymentDateStr = latestInterestPayment.date;
+            lastPaymentMonthKey = getMonthKey(latestInterestPayment.date);
+        } else {
+            // If no interest payment was ever made, use the loan start date.
+            lastPaymentDateStr = loan.startDate;
+            lastPaymentMonthKey = getMonthKey(loan.startDate);
+        }
+
+        // 4. Check if overdue: Last payment month is NOT the current month
+        if (lastPaymentMonthKey !== currentMonthKey) {
+            const lastPaymentMonthDate = new Date(lastPaymentMonthKey);
+            
+            // Calculate the difference in months: Current Month - Last Paid Month
+            let pendingMonths = calculateMonthDiff(currentMonthDate, lastPaymentMonthDate);
+
+            if (pendingMonths > 0) {
+                const member = members.find(m => m.id === loan.memberId);
+                if (!member) return;
+
+                // Handle multiple overdue loans for one member: keep the highest pendingMonths count
+                const existingDefaulter = interestDefaulterMap.get(member.id);
+
+                if (!existingDefaulter || pendingMonths > existingDefaulter.pendingMonths) {
+                    interestDefaulterMap.set(member.id, {
+                        id: member.id,
+                        name: member.name,
+                        lastPaymentDate: lastPaymentDateStr,
+                        pendingMonths: pendingMonths,
+                    });
+                }
+            }
+        }
+      });
+
+      const interestDefaulterList = Array.from(interestDefaulterMap.values());
       setInterestDefaulters(interestDefaulterList);
+      // =========================================================
 
       // Prepare line chart data (monthly trends)
       const monthlyData: { [key: string]: { saving: number; loan: number; fine: number; interest: number; expenditure: number; month: string } } = {};
@@ -205,8 +291,8 @@ export default function Dashboard() {
       
       loans.forEach(loan => {
         const loanPayments = payments.filter(p => p.loanId === loan.id);
-        const principalPaid = loanPayments.reduce((sum, p) => sum + p.principalPaid, 0);
-        const outstanding = Math.max(0, loan.principal - principalPaid);
+        // NOTE: calculateOutstandingPrincipal is assumed to be imported from '@/lib/utils'
+        const outstanding = calculateOutstandingPrincipal(loan, loanPayments);
         if (outstanding > 0) {
           const member = members.find(m => m.id === loan.memberId);
           const memberName = member?.name || loan.memberId;
@@ -397,12 +483,20 @@ export default function Dashboard() {
                     <div
                       key={defaulter.id}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 active:bg-gray-200 cursor-pointer touch-manipulation"
-                      onClick={() => router.push(`/savings`)}
+                      onClick={() => router.push(`/savings?memberId=${defaulter.id}`)}
                     >
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-800 truncate">{defaulter.name}</p>
-                        <p className="text-sm text-gray-500 truncate">{defaulter.id}</p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {defaulter.id}
+                          <span className="ml-2 text-danger font-semibold">
+                            ({defaulter.pendingMonths} {defaulter.pendingMonths === 1 ? 'month' : 'months'} pending)
+                          </span>
+                        </p>
                       </div>
+                      <p className="text-sm text-gray-600">
+                        Last Save: {formatDate(defaulter.lastSavingDate)}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -423,12 +517,22 @@ export default function Dashboard() {
                     <div
                       key={defaulter.id}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 active:bg-gray-200 cursor-pointer touch-manipulation"
-                      onClick={() => router.push(`/payments`)}
+                      onClick={() => router.push(`/payments?memberId=${defaulter.id}`)}
                     >
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-800 truncate">{defaulter.name}</p>
-                        <p className="text-sm text-gray-500 truncate">{defaulter.id}</p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {defaulter.id}
+                          {/* UPDATED DISPLAY TO SHOW PENDING MONTHS */}
+                          <span className="ml-2 text-warning font-semibold">
+                            ({defaulter.pendingMonths} {defaulter.pendingMonths === 1 ? 'month' : 'months'} overdue)
+                          </span>
+                        </p>
                       </div>
+                      <p className="text-sm text-gray-600">
+                        {/* UPDATED DISPLAY TO SHOW LAST INTEREST PAYMENT DATE (year, month, day) */}
+                        Last Int. Pay: {formatDate(defaulter.lastPaymentDate)}
+                      </p>
                     </div>
                   ))}
                 </div>
