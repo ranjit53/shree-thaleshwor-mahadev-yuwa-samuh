@@ -20,6 +20,11 @@ import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
+// ADDED: Local type to include the isActive property, mirroring loans.tsx and payments.tsx
+type LocalMember = Member & {
+  isActive: boolean;
+}
+
 // --- HELPER: Devanagari to English Transliteration ---
 const transliterateToEnglish = (text: string): string => {
   if (!text) return '';
@@ -58,7 +63,7 @@ export default function SettingsPage() {
 
   const [bulkData, setBulkData] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<LocalMember[]>([]); // UPDATED to use LocalMember
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
   const [bulkFixedAmount, setBulkFixedAmount] = useState<string>('');
   const [bulkFixedDate, setBulkFixedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -87,14 +92,25 @@ export default function SettingsPage() {
     }
   };
 
+  // UPDATED: Filter logic added for active members
   const loadMembersForBulk = async () => {
     try {
-      const list = await readFile<Member[]>('data/members.json');
-      const m = list || [];
-      setMembers(m);
-      const all = new Set(m.map(mm => mm.id));
-      setSelectedMemberIds(all);
-      setSelectAllMembers(true);
+      // CHANGED: Reading membersData as any[] to handle the extra isActive property from file
+      const list = await readFile<any[]>('data/members.json');
+      const membersData = list || [];
+      
+      // ADDED: Logic to process isActive status, defaulting to true if not present
+      const membersWithStatus = membersData.map(m => ({
+        ...m,
+        isActive: m.isActive ?? true,
+      })) as LocalMember[]; // Type cast to LocalMember[]
+
+      setMembers(membersWithStatus); // UPDATED to use LocalMember[]
+      const activeMembers = membersWithStatus.filter(m => m.isActive); // Filter for active members
+
+      const allActiveIds = new Set(activeMembers.map(mm => mm.id));
+      setSelectedMemberIds(allActiveIds);
+      setSelectAllMembers(true); // Default to selecting all *active* members
     } catch (e) {
       // ignore
     }
@@ -110,10 +126,12 @@ export default function SettingsPage() {
     }
   };
 
+  // UPDATED: Operates only on active members
   const toggleSelectAllMembers = (checked: boolean) => {
     setSelectAllMembers(checked);
+    const activeMembers = members.filter(m => m.isActive);
     if (checked) {
-      setSelectedMemberIds(new Set(members.map(m => m.id)));
+      setSelectedMemberIds(new Set(activeMembers.map(m => m.id)));
     } else {
       setSelectedMemberIds(new Set());
     }
@@ -123,7 +141,8 @@ export default function SettingsPage() {
     const next = new Set(selectedMemberIds);
     if (checked) next.add(id); else next.delete(id);
     setSelectedMemberIds(next);
-    setSelectAllMembers(next.size === members.length && members.length > 0);
+    const activeMembersCount = members.filter(m => m.isActive).length;
+    setSelectAllMembers(next.size === activeMembersCount && activeMembersCount > 0);
   };
 
   const applyBulkFixedSavings = async () => {
@@ -148,6 +167,8 @@ export default function SettingsPage() {
       toast.loading(`Adding savings for ${selectedMemberIds.size} members...`, { id: 'bulk-saving' });
       const existing = (await readFile<Saving[]>('data/savings.json')) || [];
       const now = Date.now();
+      
+      // IMPORTANT: The selectedMemberIds set only contains IDs of active members
       const add: Saving[] = Array.from(selectedMemberIds).map((memberId, idx) => ({
         id: `S-${now}-${idx}`,
         memberId,
@@ -835,12 +856,14 @@ export default function SettingsPage() {
                       onChange={(e) => toggleSelectAllMembers(e.target.checked)}
                     />
                     <label htmlFor="select-all-members" className="font-medium">
-                      Select all members
+                      Select all active members
                     </label>
-                    <span className="text-sm text-gray-500">({members.length} members)</span>
+                    <span className="text-sm text-gray-500">({members.filter(m => m.isActive).length} active members)</span>
                   </div>
                   <div className="max-h-64 overflow-auto divide-y">
-                    {members.map((m) => (
+                    {members
+                      .filter(m => m.isActive) // ADDED: Filter to show only active members
+                      .map((m) => (
                       <label key={m.id} className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50">
                         <input
                           type="checkbox"
@@ -851,8 +874,8 @@ export default function SettingsPage() {
                         <span className="text-sm text-gray-500">({m.id})</span>
                       </label>
                     ))}
-                    {members.length === 0 && (
-                      <div className="px-4 py-6 text-gray-500 text-center">No members available.</div>
+                    {members.filter(m => m.isActive).length === 0 && ( // UPDATED: Length check for active members
+                      <div className="px-4 py-6 text-gray-500 text-center">No active members available.</div>
                     )}
                   </div>
                 </div>
