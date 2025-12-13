@@ -389,7 +389,8 @@ export default function SettingsPage() {
         readFile<Expenditure[]>('data/expenditures.json'),
       ]);
 
-      const members = (membersRes ?? []).sort((a, b) => a.name.localeCompare(b.name));
+      // SORTED BY ID: M-0001, M-0002...
+      const members = (membersRes ?? []).sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
       const savings = savingsRes ?? [];
       const loans = loansRes ?? [];
       const payments = paymentsRes ?? [];
@@ -409,8 +410,6 @@ export default function SettingsPage() {
       }
 
       const formatDate = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-      
-      // FIXED: Switched to 'Rs' to ensure standard PDF font compatibility
       const formatCurrency = (amount: number) => `Rs ${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
       const inPeriod = (dateStr: string) => {
@@ -540,10 +539,12 @@ export default function SettingsPage() {
 
       (doc as any).autoTable({
         startY: y,
-        // FIXED: Condensed headers to prevent wrapping issues
-        head: [['Member Name (ID)', 'Savings', 'Loans', 'P. Paid', 'Int. Paid', 'Fines', 'Net']],
-        body: memberData.map(m => [
-          `${m.member.name} (${m.member.id})`,
+        // UPDATED: Added S.N. and placed ID before Name
+        head: [['S.N.', 'ID', 'Member Name', 'Savings', 'Loans', 'P. Paid', 'Int. Paid', 'Fines', 'Net']],
+        body: memberData.map((m, index) => [
+          index + 1,
+          m.member.id,
+          m.member.name,
           formatCurrency(m.savings),
           formatCurrency(m.loansIssued),
           formatCurrency(m.principalPaid),
@@ -552,17 +553,19 @@ export default function SettingsPage() {
           formatCurrency(m.netContribution),
         ]),
         theme: 'striped',
-        headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 9, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 8, textColor: 0 },
+        headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7, textColor: 0 },
         alternateRowStyles: { fillColor: [240, 249, 255] },
         columnStyles: {
-          0: { cellWidth: 45, fontStyle: 'bold' },
-          1: { halign: 'right', cellWidth: 23 },
-          2: { halign: 'right', cellWidth: 23 },
-          3: { halign: 'right', cellWidth: 23 },
-          4: { halign: 'right', cellWidth: 23 },
+          0: { cellWidth: 10, halign: 'center' }, // S.N.
+          1: { cellWidth: 18, fontStyle: 'bold' }, // ID
+          2: { cellWidth: 35 }, // Name
+          3: { halign: 'right', cellWidth: 20 },
+          4: { halign: 'right', cellWidth: 20 },
           5: { halign: 'right', cellWidth: 20 },
-          6: { halign: 'right', fontStyle: 'bold', cellWidth: 28 },
+          6: { halign: 'right', cellWidth: 20 },
+          7: { halign: 'right', cellWidth: 15 },
+          8: { halign: 'right', fontStyle: 'bold', cellWidth: 24 },
         },
         margin: { left: 14, right: 14 },
         pageBreak: 'auto',
