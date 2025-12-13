@@ -47,12 +47,6 @@
       "name": "Santosh",
       "password": "$2a$10$iNFXc323CsNWLSKjRqea3u.ykW360BqcSOcoacnBxcs1PedkSW2o.",
       "role": "Viewer"
-    },
-    {
-      "userId": "Jitendra",
-      "name": "Jitendra",
-      "password": "$2a$10$RiCV8u17zvxZfIsdsSRviOh5BFH71AYPsCs9Ar7meksNOIimNCw8q",
-      "role": "Viewer"
     }
   ]
 }
