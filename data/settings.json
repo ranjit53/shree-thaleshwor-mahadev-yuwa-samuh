@@ -29,6 +29,12 @@
       "name": "Surendra",
       "password": "$2a$10$1Kz5ucX7dcUiJvFNhnNS0.rW151PvHQB9xGHVOCmPAEzWcIeWp/ji",
       "role": "Viewer"
+    },
+    {
+      "userId": "Umesh",
+      "name": "Umesh",
+      "password": "$2a$10$Ke9ep5eNTFh3N4phJsu2a.UJaR4HIb6wN2NciDQ4kMKargUeVj7Bq",
+      "role": "Viewer"
     }
   ]
 }
