@@ -12,8 +12,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+// ADDED: Local type to include the isActive property, mirroring members.tsx
+type LocalMember = Member & {
+  isActive: boolean;
+}
+
 export default function PaymentsPage() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<LocalMember[]>([]); // UPDATED to use LocalMember
   const [loans, setLoans] = useState<Loan[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,14 +63,22 @@ export default function PaymentsPage() {
 
   const loadData = async () => {
     try {
+      // CHANGED: Reading membersData as any[] to handle the extra isActive property from file
       const [membersData, loansData, paymentsData, finesData, expData] = await Promise.all([
-        readFile<Member[]>('data/members.json'),
+        readFile<any[]>('data/members.json'),
         readFile<Loan[]>('data/loans.json'),
         readFile<Payment[]>('data/payments.json'),
         readFile<FinePayment[]>('data/fines.json'),
         readFile<Expenditure[]>('data/expenditures.json'),
       ]);
-      setMembers(membersData || []);
+
+      // ADDED: Logic to process isActive status, defaulting to true if not present
+      const membersWithStatus = (membersData || []).map(m => ({
+        ...m,
+        isActive: m.isActive ?? true,
+      })) as LocalMember[]; // Type cast to LocalMember[]
+
+      setMembers(membersWithStatus); // UPDATED
       setLoans(loansData || []);
       setPayments(paymentsData || []);
       setFines(finesData || []);
@@ -342,7 +355,7 @@ export default function PaymentsPage() {
             />
           </div>
 
-          {/* Add/Edit Form */}
+          {/* Add/Edit Payment Form (Loan) */}
           {(showAddForm || editingPayment) && isAdmin && (
             <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
               <h3 className="text-lg sm:text-xl font-semibold mb-4">
@@ -364,6 +377,8 @@ export default function PaymentsPage() {
                       {loans
                         .filter(loan => loan.status !== 'closed' && getOutstanding(loan) > 0)
                         .map(loan => {
+                          // Note: Member status check is not strictly necessary here, 
+                          // as only active loans (non-closed, outstanding > 0) are shown.
                           const member = members.find(m => m.id === loan.memberId);
                           const outstanding = getOutstanding(loan);
                           return (
@@ -471,9 +486,12 @@ export default function PaymentsPage() {
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning touch-manipulation text-base"
                   >
                     <option value="">Select Member</option>
-                    {members.map(m => (
-                      <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
-                    ))}
+                    {/* FILTER ADDED HERE: Only show members where isActive is true */}
+                    {members
+                      .filter(m => m.isActive)
+                      .map(m => (
+                        <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
+                      ))}
                   </select>
                 </div>
                 <div>
