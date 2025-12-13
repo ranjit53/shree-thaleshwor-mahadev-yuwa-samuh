@@ -296,7 +296,9 @@ export default function LoansPage() {
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning touch-manipulation text-base"
                     >
                       <option value="">Select Member</option>
-                      {members.map(m => (
+                      {members
+                        .filter(m => (m as any).status !== 'inactive') // Filter added to exclude members with 'inactive' status
+                        .map(m => (
                         <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
                       ))}
                     </select>
