@@ -12,8 +12,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+// ADDED: Local type to include the isActive property, mirroring members.tsx
+type LocalMember = Member & {
+  isActive: boolean;
+}
+
 export default function SavingsPage() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<LocalMember[]>([]); // UPDATED to use LocalMember
   const [savings, setSavings] = useState<Saving[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -35,11 +40,19 @@ export default function SavingsPage() {
 
   const loadData = async () => {
     try {
+      // CHANGED: Reading data as any[] to handle the extra isActive property from file
       const [membersData, savingsData] = await Promise.all([
-        readFile<Member[]>('data/members.json'),
+        readFile<any[]>('data/members.json'),
         readFile<Saving[]>('data/savings.json'),
       ]);
-      setMembers(membersData || []);
+
+      // ADDED: Logic to process isActive status, defaulting to true if not present
+      const membersWithStatus = (membersData || []).map(m => ({
+        ...m,
+        isActive: m.isActive ?? true,
+      })) as LocalMember[]; // Type cast to LocalMember[]
+
+      setMembers(membersWithStatus);
       setSavings(savingsData || []);
     } catch (error: any) {
       toast.error('Failed to load data: ' + error.message);
@@ -213,9 +226,12 @@ export default function SavingsPage() {
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-success touch-manipulation text-base"
                     >
                       <option value="">Select Member</option>
-                      {members.map(m => (
-                        <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
-                      ))}
+                      {/* FILTER ADDED HERE: Only show members where isActive is true */}
+                      {members
+                        .filter(m => m.isActive)
+                        .map(m => (
+                          <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
+                        ))}
                     </select>
                   </div>
                   <div>
