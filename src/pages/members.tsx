@@ -12,21 +12,35 @@ import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+// ADDED: Local types to extend Member and Form Data for the new isActive property
+// This resolves the TypeScript error by allowing the component to use 'isActive'
+type LocalMember = Member & {
+  isActive: boolean;
+}
+
+type FormData = {
+  name: string;
+  phone: string;
+  joinDate: string;
+  address: string;
+  isActive: boolean;
+}
+
 export default function MembersPage() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<LocalMember[]>([]);
   const [savings, setSavings] = useState<Saving[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [fines, setFines] = useState<FinePayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [viewingMember, setViewingMember] = useState<Member | null>(null);
+  const [editingMember, setEditingMember] = useState<LocalMember | null>(null);
+  const [viewingMember, setViewingMember] = useState<LocalMember | null>(null);
   const [activeTab, setActiveTab] = useState<'savings' | 'loans' | 'payments' | 'fines'>('savings');
   const [searchTerm, setSearchTerm] = useState('');
   const { isAdmin } = useAuth();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     phone: '',
     joinDate: new Date().toISOString().split('T')[0],
@@ -41,7 +55,7 @@ export default function MembersPage() {
   const loadData = async () => {
     try {
       const [membersData, savingsData, loansData, paymentsData, finesData] = await Promise.all([
-        readFile<Member[]>('data/members.json'),
+        readFile<LocalMember[]>('data/members.json'), // CHANGED: Using LocalMember[]
         readFile<Saving[]>('data/savings.json'),
         readFile<Loan[]>('data/loans.json'),
         readFile<Payment[]>('data/payments.json'),
@@ -122,7 +136,7 @@ export default function MembersPage() {
           id: newId,
           ...formData,
           isActive: formData.isActive ?? true, // ADDED: Ensure isActive is set for new member
-        });
+        } as LocalMember); // CAST: Use assertion to satisfy TypeScript locally
         toast.success('Member added successfully');
       }
 
@@ -135,7 +149,7 @@ export default function MembersPage() {
     }
   };
 
-  const handleDelete = async (member: Member) => {
+  const handleDelete = async (member: LocalMember) => {
     if (!isAdmin) {
       toast.error('Only admins can delete members');
       return;
@@ -158,7 +172,7 @@ export default function MembersPage() {
   };
 
   // ADDED: Function to toggle member's active status
-  const handleToggleActive = async (member: Member) => {
+  const handleToggleActive = async (member: LocalMember) => {
     if (!isAdmin) {
       toast.error('Only admins can change member status');
       return;
@@ -192,7 +206,7 @@ export default function MembersPage() {
     setViewingMember(null);
   };
 
-  const handleEdit = (member: Member) => {
+  const handleEdit = (member: LocalMember) => {
     setEditingMember(member);
     setFormData({
       name: member.name,
@@ -204,12 +218,12 @@ export default function MembersPage() {
     setViewingMember(null);
   };
 
-  const handleViewMember = (member: Member) => {
+  const handleViewMember = (member: LocalMember) => {
     setViewingMember(member);
     setActiveTab('savings');
   };
 
-  const filteredMembers = members.filter((m: Member) =>
+  const filteredMembers = members.filter((m: LocalMember) =>
     m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.phone.includes(searchTerm)
@@ -443,6 +457,7 @@ export default function MembersPage() {
                         <label className="text-sm font-medium text-gray-500">Join Date</label>
                         <p className="text-base">{formatDate(viewingMember.joinDate)}</p>
                       </div>
+                      {/* ADDED: Status display in modal */}
                       <div>
                         <label className="text-sm font-medium text-gray-500">Status</label>
                         <p className={`text-base font-bold ${viewingMember.isActive ?? true ? 'text-success' : 'text-danger'}`}>
@@ -698,7 +713,7 @@ export default function MembersPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(viewingMember)}
-                        className="flex-1 bg-gray-500 text-white px-4 py-2.5 rounded-lg hover:bg-gray-600 active:bg-gray-700 touch-manipulation font-medium" // CHANGED: Delete button color to avoid confusion with Deactivate
+                        className="flex-1 bg-gray-500 text-white px-4 py-2.5 rounded-lg hover:bg-gray-600 active:bg-gray-700 touch-manipulation font-medium" // CHANGED: Delete button color to neutral gray
                       >
                         Delete
                       </button>
