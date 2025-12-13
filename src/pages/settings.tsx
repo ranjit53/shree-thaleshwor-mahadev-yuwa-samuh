@@ -1,6 +1,9 @@
 /**
  * Settings page - User management, Bulk saving, Backup/Restore, Reports
- * Full Code: Original logic for Users/Backup + New Professional Reports
+ * Features:
+ * 1. Exact functional copies of Users, Bulk, Backup from 'settings (3).tsx'
+ * 2. Professional Reports from 'sett.tsx'
+ * 3. NEW: Automatic Nepali-to-English transliteration for PDF compatibility
  */
 
 import { useState, useEffect } from 'react';
@@ -16,6 +19,28 @@ import toast from 'react-hot-toast';
 // PDF libraries
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+
+// --- HELPER: Devanagari to English Transliteration ---
+const transliterateToEnglish = (text: string): string => {
+  if (!text) return '';
+  
+  // Mapping for Nepali/Devanagari characters
+  const map: { [key: string]: string } = {
+    'अ': 'a', 'आ': 'aa', 'इ': 'i', 'ई': 'ee', 'उ': 'u', 'ऊ': 'oo', 'ऋ': 'ri', 'ए': 'e', 'ऐ': 'ai', 'ओ': 'o', 'औ': 'au', 'अं': 'am', 'अः': 'ah',
+    'क': 'k', 'ख': 'kh', 'ग': 'g', 'घ': 'gh', 'ङ': 'ng',
+    'च': 'ch', 'छ': 'chh', 'ज': 'j', 'झ': 'jh', 'ञ': 'ny',
+    'ट': 't', 'ठ': 'th', 'ड': 'd', 'ढ': 'dh', 'ण': 'n',
+    'त': 't', 'थ': 'th', 'द': 'd', 'ध': 'dh', 'न': 'n',
+    'प': 'p', 'फ': 'f', 'ब': 'b', 'भ': 'bh', 'म': 'm',
+    'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'w',
+    'श': 'sh', 'ष': 'sh', 'स': 's', 'ह': 'h',
+    'क्ष': 'ksh', 'त्र': 'tr', 'ज्ञ': 'gy',
+    'ा': 'a', 'ि': 'i', 'ी': 'ee', 'ु': 'u', 'ू': 'oo', 'ृ': 'ri', 'े': 'e', 'ै': 'ai', 'ो': 'o', 'ौ': 'au', 'ं': 'n', 'ः': 'ah', '्': '',
+    '०': '0', '१': '1', '२': '2', '३': '3', '४': '4', '५': '5', '६': '6', '७': '7', '८': '8', '९': '9'
+  };
+
+  return text.split('').map(char => map[char] || char).join('');
+};
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -376,7 +401,7 @@ export default function SettingsPage() {
   };
 
   // =========================================================
-  // IMPROVED REPORT GENERATION (ID FIRST, SERIAL WISE, P&L)
+  // IMPROVED REPORT GENERATION (ID FIRST, SERIAL WISE, P&L, TRANSLITERATION)
   // =========================================================
   const generateReport = async (period: 'q1' | 'q2' | 'q3' | 'q4' | 'annual') => {
     setReportLoading(true);
@@ -466,7 +491,6 @@ export default function SettingsPage() {
       const outstandingLoans = totalLoansIssued - totalPrincipalPaid;
       const netBalance = totalSavings + totalInterest + totalFines - outstandingLoans - totalExpenditures;
       
-      // Profit & Loss Calculations
       const grossIncome = totalInterest + totalFines;
       const netProfit = grossIncome - totalExpenditures;
 
@@ -568,7 +592,7 @@ export default function SettingsPage() {
         body: memberData.map((m, index) => [
           index + 1, // Sequential Serial Number
           m.member.id, // ID first
-          m.member.name,
+          transliterateToEnglish(m.member.name), // Transliterate Unicode Name to English
           formatCurrency(m.savings),
           formatCurrency(m.loansIssued),
           formatCurrency(m.principalPaid),
@@ -639,40 +663,99 @@ export default function SettingsPage() {
 
           {/* Tabs */}
           <div className="flex gap-2 border-b border-gray-200 overflow-x-auto -webkit-overflow-scrolling-touch">
-            <button onClick={() => setActiveTab('users')} className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'users' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}>Users</button>
-            <button onClick={() => setActiveTab('bulk')} className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'bulk' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}>Bulk Saving</button>
-            <button onClick={() => setActiveTab('backup')} className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'backup' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}>Backup/Restore</button>
-            <button onClick={() => setActiveTab('reports')} className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'reports' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}>Reports</button>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'users' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
+            >
+              Users
+            </button>
+            <button
+              onClick={() => setActiveTab('bulk')}
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'bulk' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
+            >
+              Bulk Saving
+            </button>
+            <button
+              onClick={() => setActiveTab('backup')}
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'backup' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
+            >
+              Backup/Restore
+            </button>
+            <button
+              onClick={() => setActiveTab('reports')}
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'reports' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
+            >
+              Reports
+            </button>
           </div>
 
-          {/* User Management Tab */}
+          {/* Users Tab */}
           {activeTab === 'users' && (
             <div className="space-y-6">
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2"><UserPlus size={24} />Add New User</h3>
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+                  <UserPlus size={24} />
+                  Add New User
+                </h3>
                 <form onSubmit={handleAddUser} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
-                      <input type="text" required value={userForm.userId} onChange={(e) => setUserForm({ ...userForm, userId: e.target.value })} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary" />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        User ID <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={userForm.userId}
+                        onChange={(e) => setUserForm({ ...userForm, userId: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                      <input type="text" required value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary" />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={userForm.name}
+                        onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                      <input type="password" required value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary" />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Password <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={userForm.password}
+                        onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                      <select required value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'Admin' | 'Viewer' })} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Role <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={userForm.role}
+                        onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'Admin' | 'Viewer' })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
+                      >
                         <option value="Viewer">Viewer</option>
                         <option value="Admin">Admin</option>
                       </select>
                     </div>
                   </div>
-                  <button type="submit" className="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 font-medium">Add User</button>
+                  <button
+                    type="submit"
+                    className="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 active:bg-primary/80 touch-manipulation font-medium"
+                  >
+                    Add User
+                  </button>
                 </form>
               </div>
 
@@ -680,12 +763,17 @@ export default function SettingsPage() {
                 <h3 className="text-lg sm:text-xl font-semibold mb-4">Existing Users</h3>
                 <div className="space-y-2">
                   {settings?.users.map((user) => (
-                    <div key={user.userId} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                    <div key={user.userId} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-semibold">{user.name} ({user.userId})</p>
                         <p className="text-sm text-gray-600">Role: {user.role}</p>
                       </div>
-                      <button onClick={() => handleDeleteUser(user.userId)} className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 active:bg-red-800 touch-manipulation font-medium">Delete</button>
+                      <button
+                        onClick={() => handleDeleteUser(user.userId)}
+                        className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 active:bg-red-800 touch-manipulation font-medium"
+                      >
+                        Delete
+                      </button>
                     </div>
                   ))}
                   {(!settings?.users || settings.users.length === 0) && (
@@ -700,40 +788,90 @@ export default function SettingsPage() {
           {activeTab === 'bulk' && (
             <div className="space-y-6">
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2"><Upload size={24} />Bulk Fixed Saving</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Upload size={24} />
+                  Bulk Fixed Saving (Same Amount to Selected Members)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                    <input type="number" value={bulkFixedAmount} onChange={(e) => setBulkFixedAmount(e.target.value)} className="w-full px-4 py-2 border rounded-lg" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Amount (per member) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={bulkFixedAmount}
+                      onChange={(e) => setBulkFixedAmount(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                    <input type="date" value={bulkFixedDate} onChange={(e) => setBulkFixedDate(e.target.value)} className="w-full px-4 py-2 border rounded-lg" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={bulkFixedDate}
+                      onChange={(e) => setBulkFixedDate(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div className="flex items-end">
-                    <button onClick={applyBulkFixedSavings} className="w-full bg-green-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-green-700">Apply to Selected ({selectedMemberIds.size})</button>
+                    <button
+                      onClick={applyBulkFixedSavings}
+                      className="w-full bg-green-600 text-white px-6 py-2.5 rounded-lg hover:bg-green-700 active:bg-green-800 touch-manipulation font-medium"
+                    >
+                      Apply to Selected ({selectedMemberIds.size})
+                    </button>
                   </div>
                 </div>
                 <div className="border rounded-lg overflow-hidden">
                   <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b">
-                    <input id="select-all" type="checkbox" checked={selectAllMembers} onChange={(e) => toggleSelectAllMembers(e.target.checked)} />
-                    <label htmlFor="select-all" className="font-medium cursor-pointer">Select All Members ({members.length})</label>
+                    <input
+                      id="select-all-members"
+                      type="checkbox"
+                      checked={selectAllMembers}
+                      onChange={(e) => toggleSelectAllMembers(e.target.checked)}
+                    />
+                    <label htmlFor="select-all-members" className="font-medium">
+                      Select all members
+                    </label>
+                    <span className="text-sm text-gray-500">({members.length} members)</span>
                   </div>
-                  <div className="max-h-72 overflow-auto divide-y">
+                  <div className="max-h-64 overflow-auto divide-y">
                     {members.map((m) => (
                       <label key={m.id} className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50">
-                        <input type="checkbox" checked={selectedMemberIds.has(m.id)} onChange={(e) => toggleMember(m.id, e.target.checked)} />
-                        <span className="font-medium text-gray-800">{m.name}</span><span className="text-sm text-gray-500">({m.id})</span>
+                        <input
+                          type="checkbox"
+                          checked={selectedMemberIds.has(m.id)}
+                          onChange={(e) => toggleMember(m.id, e.target.checked)}
+                        />
+                        <span className="font-medium">{m.name}</span>
+                        <span className="text-sm text-gray-500">({m.id})</span>
                       </label>
                     ))}
+                    {members.length === 0 && (
+                      <div className="px-4 py-6 text-gray-500 text-center">No members available.</div>
+                    )}
                   </div>
                 </div>
               </div>
 
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold mb-4">Bulk Import (CSV/JSON)</h3>
-                <textarea value={bulkData} onChange={(e) => setBulkData(e.target.value)} placeholder="Format: MemberId,Amount,Date" className="w-full h-32 p-3 border rounded-lg font-mono text-sm" />
-                <button onClick={handleBulkSaving} className="mt-3 bg-primary text-white px-6 py-2 rounded-lg font-medium">Import Data</button>
+                <h3 className="text-lg sm:text-xl font-semibold mb-4">Bulk Import via CSV/JSON</h3>
+                <textarea
+                  value={bulkData}
+                  onChange={(e) => setBulkData(e.target.value)}
+                  placeholder="Paste CSV (MemberId,Amount,Date) or JSON array"
+                  className="w-full h-48 px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm"
+                />
+                <button
+                  onClick={handleBulkSaving}
+                  className="mt-4 bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90"
+                >
+                  Import Savings
+                </button>
               </div>
             </div>
           )}
@@ -742,28 +880,100 @@ export default function SettingsPage() {
           {activeTab === 'backup' && (
             <div className="space-y-6">
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2"><Download size={24} />Data Backup</h3>
-                <button onClick={handleBackup} className="bg-primary text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2"><Save size={20}/>Create New Backup File</button>
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Download size={24} />
+                  Create Backup
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Create a snapshot of all data files (members, savings, loans, payments, settings).
+                </p>
+                <button
+                  onClick={handleBackup}
+                  className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 active:bg-primary/80 touch-manipulation font-medium"
+                >
+                  <Download size={20} />
+                  Create Backup Now
+                </button>
               </div>
+
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2"><RotateCcw size={24} />Restore Data</h3>
-                <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 mb-6 text-center">
-                   <input type="file" accept=".json" onChange={async (e) => {
-                      const file = e.target.files?.[0]; if (!file) return;
-                      const data = JSON.parse(await file.text()); handleRestoreFromObject(data);
-                    }} className="text-sm" />
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+                  <RotateCcw size={24} />
+                  Restore from Backup
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Select a backup file to restore. <strong className="text-red-600">This will overwrite all current data.</strong>
+                </p>
+
+                <div className="mb-8 p-5 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    Upload Backup File (from your computer)
+                  </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Choose a previously downloaded <code className="bg-gray-200 px-1 rounded">backup-YYYYMMDD-HHMMSS.json</code> file
+                  </p>
+                  <input
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const text = await file.text();
+                        const data = JSON.parse(text);
+                        await handleRestoreFromObject(data);
+                      } catch (err: any) {
+                        toast.error('Invalid or corrupted backup file');
+                      } finally {
+                        if (e.currentTarget) e.currentTarget.value = '';
+                      }
+                    }}
+                    className="block w-full text-sm text-gray-700 file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
+                  />
                 </div>
-                <div className="space-y-2">
-                  <h4 className="font-medium text-gray-700">Recent Server Backups:</h4>
-                  {backups.map((b) => (
-                    <div key={b} className="flex items-center justify-between p-3 bg-white border rounded-lg">
-                      <span className="text-xs font-mono">{b.replace('backups/', '')}</span>
-                      <div className="flex gap-2">
-                         <button onClick={() => downloadBackup(b)} className="px-3 py-1 bg-gray-200 rounded text-xs">Download</button>
-                         <button onClick={() => handleRestore(b)} className="px-3 py-1 bg-orange-600 text-white rounded text-xs">Restore</button>
-                      </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-md font-medium text-gray-700">
+                      Or restore from server backups:
+                    </h4>
+                    <button
+                      onClick={loadBackups}
+                      className="px-3 py-1.5 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 flex items-center gap-1 touch-manipulation"
+                    >
+                      <RotateCcw size={14} />
+                      Refresh
+                    </button>
+                  </div>
+                  {backups.length === 0 ? (
+                    <p className="text-gray-500 italic">No server backups available yet. Create one above and refresh.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {backups.map((backup) => (
+                        <div
+                          key={backup}
+                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border"
+                        >
+                          <code className="text-xs font-mono text-gray-700">{backup.replace('backups/', '')}</code>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => downloadBackup(backup)}
+                              className="px-3 py-1.5 text-xs bg-gray-200 text-gray-800 rounded hover:bg-gray-300 flex items-center gap-1 touch-manipulation"
+                            >
+                              <Download size={14} />
+                              Download
+                            </button>
+                            <button
+                              onClick={() => handleRestore(backup)}
+                              className="px-4 py-1.5 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 touch-manipulation font-medium"
+                            >
+                              Restore
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -776,16 +986,43 @@ export default function SettingsPage() {
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-primary"><FileText size={24} />Professional Reports</h3>
                 <div className="mb-6 max-w-xs">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Report Year</label>
-                  <input type="number" value={selectedReportYear} onChange={(e) => setSelectedReportYear(parseInt(e.target.value))} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary" />
+                  <input
+                    type="number"
+                    min="2000"
+                    max="2100"
+                    value={selectedReportYear}
+                    onChange={(e) => setSelectedReportYear(parseInt(e.target.value) || new Date().getFullYear())}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Current year: {new Date().getFullYear()}</p>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                  <button onClick={() => generateReport('q1')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow-md hover:translate-y-[-2px] transition-transform flex items-center justify-center gap-2">1st Quarter (Jan-Mar)</button>
-                  <button onClick={() => generateReport('q2')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow-md hover:translate-y-[-2px] transition-transform flex items-center justify-center gap-2">2nd Quarter (Apr-Jun)</button>
-                  <button onClick={() => generateReport('q3')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow-md hover:translate-y-[-2px] transition-transform flex items-center justify-center gap-2">3rd Quarter (Jul-Sep)</button>
-                  <button onClick={() => generateReport('q4')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow-md hover:translate-y-[-2px] transition-transform flex items-center justify-center gap-2">4th Quarter (Oct-Dec)</button>
-                  <button onClick={() => generateReport('annual')} disabled={reportLoading} className="bg-green-700 text-white py-4 px-6 rounded-lg shadow-md md:col-span-2 font-bold text-lg hover:bg-green-800 transition-colors">Download Annual Statement ({selectedReportYear})</button>
+                  <button onClick={() => generateReport('q1')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
+                    <Download size={20} />
+                    1st Quarter ({selectedReportYear} Jan–Mar)
+                  </button>
+                  <button onClick={() => generateReport('q2')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
+                    <Download size={20} />
+                    2nd Quarter ({selectedReportYear} Apr–Jun)
+                  </button>
+                  <button onClick={() => generateReport('q3')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
+                    <Download size={20} />
+                    3rd Quarter ({selectedReportYear} Jul–Sep)
+                  </button>
+                  <button onClick={() => generateReport('q4')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
+                    <Download size={20} />
+                    4th Quarter ({selectedReportYear} Oct–Dec)
+                  </button>
+                  <button onClick={() => generateReport('annual')} disabled={reportLoading} className="bg-green-600 text-white py-4 px-6 rounded-lg shadow hover:bg-green-700 disabled:opacity-60 flex items-center justify-center gap-2 font-medium md:col-span-2">
+                    <Download size={20} />
+                    Annual Report (Full Year {selectedReportYear})
+                  </button>
                 </div>
-                {reportLoading && <div className="mt-6 text-center text-primary font-medium animate-pulse">Generating PDF... Please wait.</div>}
+
+                {reportLoading && (
+                  <p className="text-center text-gray-500 mt-6">Generating report, please wait...</p>
+                )}
               </div>
             </div>
           )}
