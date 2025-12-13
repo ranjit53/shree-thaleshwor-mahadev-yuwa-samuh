@@ -473,7 +473,7 @@ export default function SettingsPage() {
       // Header
       doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
-      doc.text('Shree Thaleshwor Mahadev Yuwa Samuh , Financial Report', pageWidth / 2, y, { align: 'center' });
+      doc.text('Shree Thaleshwor Mahadev Yuwa Samuh', pageWidth / 2, y, { align: 'center' });
 
       y += 10;
       doc.setFontSize(16);
@@ -997,3 +997,4 @@ export default function SettingsPage() {
     </ProtectedRoute>
   );
 }
+
