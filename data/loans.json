@@ -35,15 +35,5 @@
     "termMonths": 6,
     "purpose": "Home Loan",
     "status": "active"
-  },
-  {
-    "id": "L-1765662331943",
-    "memberId": "M-0014",
-    "principal": 5000,
-    "interestRate": 20,
-    "startDate": "2025-12-11",
-    "termMonths": 3,
-    "purpose": "home",
-    "status": "active"
   }
 ]
