@@ -375,7 +375,7 @@ export default function SettingsPage() {
   };
 
   // =========================================================
-  // ENGLISH PROFESSIONAL MEMBER-WISE REPORT (ORIGINAL STYLE)
+  // UPDATED: FIXED ENGLISH PROFESSIONAL REPORT
   // =========================================================
   const generateReport = async (period: 'q1' | 'q2' | 'q3' | 'q4' | 'annual') => {
     setReportLoading(true);
@@ -409,7 +409,9 @@ export default function SettingsPage() {
       }
 
       const formatDate = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-      const formatCurrency = (amount: number) => `रु ${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+      
+      // FIXED: Switched to 'Rs' to ensure standard PDF font compatibility
+      const formatCurrency = (amount: number) => `Rs ${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
       const inPeriod = (dateStr: string) => {
         const d = new Date(dateStr);
@@ -515,7 +517,7 @@ export default function SettingsPage() {
         ],
         theme: 'grid',
         headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 11, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 10 },
+        bodyStyles: { fontSize: 10, textColor: 0 },
         columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right', fontStyle: 'bold' } },
         margin: { left: 14, right: 14 },
       });
@@ -523,7 +525,10 @@ export default function SettingsPage() {
       y = (doc as any).lastAutoTable.finalY + 20;
 
       // Member-wise Detailed Report
-      if (y > pageHeight - 40) doc.addPage();
+      if (y > pageHeight - 40) {
+        doc.addPage();
+        y = 20;
+      }
       doc.setFillColor(30, 64, 175);
       doc.rect(14, y, pageWidth - 28, 10, 'F');
       doc.setTextColor(255);
@@ -535,7 +540,8 @@ export default function SettingsPage() {
 
       (doc as any).autoTable({
         startY: y,
-        head: [['Member Name (ID)', 'Savings', 'Loans Issued', 'Principal Paid', 'Interest Paid', 'Fines Paid', 'Net Contribution']],
+        // FIXED: Condensed headers to prevent wrapping issues
+        head: [['Member Name (ID)', 'Savings', 'Loans', 'P. Paid', 'Int. Paid', 'Fines', 'Net']],
         body: memberData.map(m => [
           `${m.member.name} (${m.member.id})`,
           formatCurrency(m.savings),
@@ -546,17 +552,17 @@ export default function SettingsPage() {
           formatCurrency(m.netContribution),
         ]),
         theme: 'striped',
-        headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 10, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 9 },
+        headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8, textColor: 0 },
         alternateRowStyles: { fillColor: [240, 249, 255] },
         columnStyles: {
-          0: { cellWidth: 50, fontStyle: 'bold' },
-          1: { halign: 'right' },
-          2: { halign: 'right' },
-          3: { halign: 'right' },
-          4: { halign: 'right' },
-          5: { halign: 'right' },
-          6: { halign: 'right', fontStyle: 'bold' },
+          0: { cellWidth: 45, fontStyle: 'bold' },
+          1: { halign: 'right', cellWidth: 23 },
+          2: { halign: 'right', cellWidth: 23 },
+          3: { halign: 'right', cellWidth: 23 },
+          4: { halign: 'right', cellWidth: 23 },
+          5: { halign: 'right', cellWidth: 20 },
+          6: { halign: 'right', fontStyle: 'bold', cellWidth: 28 },
         },
         margin: { left: 14, right: 14 },
         pageBreak: 'auto',
