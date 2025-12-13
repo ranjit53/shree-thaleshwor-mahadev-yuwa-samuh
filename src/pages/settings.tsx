@@ -1,21 +1,25 @@
 /**
- * Settings page - User management, Bulk saving, Backup/Restore
+ * Settings page - User management, Bulk saving, Backup/Restore, Reports
  */
 
 import { useState, useEffect } from 'react';
 import { readFile, writeFile, listFiles } from '@/lib/api';
 import { hashPassword } from '@/lib/auth';
-import type { Settings, Member, Saving } from '@/types';
+import type { Settings, Member, Saving, Loan, Payment, FinePayment, Expenditure } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
-import { UserPlus, Upload, Download, RotateCcw, Save } from 'lucide-react';
+import { UserPlus, Upload, Download, RotateCcw, Save, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+// PDF libraries
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'bulk' | 'backup'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'bulk' | 'backup' | 'reports'>('users');
   const [backups, setBackups] = useState<string[]>([]);
   const { isAdmin } = useAuth();
 
@@ -28,12 +32,15 @@ export default function SettingsPage() {
 
   const [bulkData, setBulkData] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-  // Bulk fixed saving support
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
   const [bulkFixedAmount, setBulkFixedAmount] = useState<string>('');
   const [bulkFixedDate, setBulkFixedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [selectAllMembers, setSelectAllMembers] = useState<boolean>(true);
+
+  // Report states
+  const [reportLoading, setReportLoading] = useState(false);
+  const [selectedReportYear, setSelectedReportYear] = useState<number>(new Date().getFullYear());
 
   useEffect(() => {
     if (isAdmin) {
@@ -53,6 +60,7 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
+
   const loadMembersForBulk = async () => {
     try {
       const list = await readFile<Member[]>('data/members.json');
@@ -72,9 +80,10 @@ export default function SettingsPage() {
       setBackups(files.filter(f => f.endsWith('.json')));
     } catch (error: any) {
       console.error('Failed to load backups:', error);
-      toast.error('Failed to load backups: ' + error.message);  // ← Added for debugging
+      toast.error('Failed to load backups: ' + error.message);
     }
   };
+
   const toggleSelectAllMembers = (checked: boolean) => {
     setSelectAllMembers(checked);
     if (checked) {
@@ -83,12 +92,14 @@ export default function SettingsPage() {
       setSelectedMemberIds(new Set());
     }
   };
+
   const toggleMember = (id: string, checked: boolean) => {
     const next = new Set(selectedMemberIds);
     if (checked) next.add(id); else next.delete(id);
     setSelectedMemberIds(next);
     setSelectAllMembers(next.size === members.length && members.length > 0);
   };
+
   const applyBulkFixedSavings = async () => {
     if (!isAdmin) {
       toast.error('Only admins can perform bulk operations');
@@ -126,7 +137,7 @@ export default function SettingsPage() {
       console.error('Bulk saving error:', error);
     }
   };
-  
+
   const downloadBackup = async (backupPath: string) => {
     try {
       toast.loading('Downloading backup...', { id: 'download-backup' });
@@ -156,20 +167,16 @@ export default function SettingsPage() {
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!isAdmin) {
       toast.error('Only admins can add users');
       return;
     }
-
     try {
       const currentSettings = settings || { users: [] };
-      
       if (currentSettings.users.find(u => u.userId === userForm.userId)) {
         toast.error('User ID already exists');
         return;
       }
-
       const hashedPassword = await hashPassword(userForm.password);
       const updatedUsers = [
         ...currentSettings.users,
@@ -180,12 +187,10 @@ export default function SettingsPage() {
           role: userForm.role,
         },
       ];
-
       const updatedSettings: Settings = {
         ...currentSettings,
         users: updatedUsers,
       };
-
       await writeFile('data/settings.json', updatedSettings);
       setSettings(updatedSettings);
       setUserForm({
@@ -205,11 +210,9 @@ export default function SettingsPage() {
       toast.error('Only admins can delete users');
       return;
     }
-
     if (!confirm(`Are you sure you want to delete user ${userId}?`)) {
       return;
     }
-
     try {
       const currentSettings = settings || { users: [] };
       const updatedUsers = currentSettings.users.filter(u => u.userId !== userId);
@@ -217,7 +220,6 @@ export default function SettingsPage() {
         ...currentSettings,
         users: updatedUsers,
       };
-
       await writeFile('data/settings.json', updatedSettings);
       setSettings(updatedSettings);
       toast.success('User deleted successfully');
@@ -231,10 +233,8 @@ export default function SettingsPage() {
       toast.error('Only admins can perform bulk operations');
       return;
     }
-
     try {
       let records: Array<{ memberId: string; amount: number; date: string }> = [];
-      
       if (bulkData.trim().startsWith('[')) {
         records = JSON.parse(bulkData);
       } else {
@@ -243,12 +243,10 @@ export default function SettingsPage() {
         const memberIdIndex = headers.findIndex(h => h.includes('member') || h.includes('id'));
         const amountIndex = headers.findIndex(h => h.includes('amount'));
         const dateIndex = headers.findIndex(h => h.includes('date'));
-
         if (memberIdIndex === -1 || amountIndex === -1 || dateIndex === -1) {
           toast.error('CSV must have columns: MemberId, Amount, Date');
           return;
         }
-
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',');
           records.push({
@@ -258,18 +256,14 @@ export default function SettingsPage() {
           });
         }
       }
-
       const members = await readFile<Member[]>('data/members.json') || [];
       const memberIds = new Set(members.map(m => m.id));
       const invalidRecords = records.filter(r => !memberIds.has(r.memberId));
-      
       if (invalidRecords.length > 0) {
         toast.error(`Invalid member IDs found: ${invalidRecords.map(r => r.memberId).join(', ')}`);
         return;
       }
-
       const existingSavings = await readFile<Saving[]>('data/savings.json') || [];
-      
       const newSavings = records.map(record => ({
         id: `S-${Date.now()}-${Math.random()}`,
         memberId: record.memberId,
@@ -277,10 +271,8 @@ export default function SettingsPage() {
         date: record.date,
         remarks: 'Bulk import',
       }));
-
       const updatedSavings = [...existingSavings, ...newSavings];
       await writeFile('data/savings.json', updatedSavings);
-      
       toast.success(`Successfully imported ${newSavings.length} saving records`);
       setBulkData('');
     } catch (error: any) {
@@ -288,13 +280,11 @@ export default function SettingsPage() {
     }
   };
 
-  // ← FIXED: Auto-refresh after backup
   const handleBackup = async () => {
     if (!isAdmin) {
       toast.error('Only admins can create backups');
       return;
     }
-
     try {
       const [members, savings, loans, payments, fines, expenditures, settingsData] = await Promise.all([
         readFile('data/members.json'),
@@ -305,7 +295,6 @@ export default function SettingsPage() {
         readFile('data/expenditures.json'),
         readFile('data/settings.json'),
       ]);
-
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       const backupData = {
         timestamp,
@@ -317,12 +306,10 @@ export default function SettingsPage() {
         expenditures: expenditures || [],
         settings: settingsData || { users: [] },
       };
-
       const filename = `backups/backup-${timestamp}.json`;
       await writeFile(filename, backupData);
-      
       toast.success('Backup created successfully');
-      await loadBackups();  // Auto-refresh list
+      await loadBackups();
     } catch (error: any) {
       toast.error('Failed to create backup: ' + error.message);
     }
@@ -333,19 +320,15 @@ export default function SettingsPage() {
       toast.error('Only admins can restore backups');
       return;
     }
-
     if (!confirm('Are you sure you want to restore from this backup? This will overwrite all current data.')) {
       return;
     }
-
     try {
       const backupData = await readFile<any>(backupPath);
-      
       if (!backupData) {
         toast.error('Backup file not found');
         return;
       }
-
       await Promise.all([
         writeFile('data/members.json', backupData.members || []),
         writeFile('data/savings.json', backupData.savings || []),
@@ -353,14 +336,13 @@ export default function SettingsPage() {
         writeFile('data/payments.json', backupData.payments || []),
         writeFile('data/settings.json', backupData.settings || { users: [] }),
       ]);
-
       toast.success('Data restored successfully');
       window.location.reload();
     } catch (error: any) {
       toast.error('Failed to restore backup: ' + error.message);
     }
   };
-  
+
   const handleRestoreFromObject = async (backupData: any) => {
     if (!isAdmin) {
       toast.error('Only admins can restore backups');
@@ -385,6 +367,104 @@ export default function SettingsPage() {
       window.location.reload();
     } catch (error: any) {
       toast.error('Failed to restore uploaded backup: ' + error.message);
+    }
+  };
+
+  // Generate Report for selected year
+  const generateReport = async (period: 'q1' | 'q2' | 'q3' | 'q4' | 'annual') => {
+    setReportLoading(true);
+    try {
+      const [membersRes, savingsRes, loansRes, paymentsRes, finesRes, expRes] = await Promise.all([
+        readFile<Member[]>('data/members.json'),
+        readFile<Saving[]>('data/savings.json'),
+        readFile<Loan[]>('data/loans.json'),
+        readFile<Payment[]>('data/payments.json'),
+        readFile<FinePayment[]>('data/fines.json'),
+        readFile<Expenditure[]>('data/expenditures.json'),
+      ]);
+
+      const members = membersRes ?? [];
+      const savings = savingsRes ?? [];
+      const loans = loansRes ?? [];
+      const payments = paymentsRes ?? [];
+      const fines = finesRes ?? [];
+      const expenditures = expRes ?? [];
+
+      const year = selectedReportYear;
+      let startDate: Date, endDate: Date;
+
+      if (period === 'annual') {
+        startDate = new Date(year, 0, 1);
+        endDate = new Date(year, 11, 31);
+      } else {
+        const quarter = parseInt(period.slice(1)) - 1;
+        startDate = new Date(year, quarter * 3, 1);
+        endDate = new Date(year, quarter * 3 + 3, 0);
+      }
+
+      const formatDate = (d: Date) => d.toISOString().split('T')[0];
+
+      const inPeriod = (dateStr: string) => {
+        const d = new Date(dateStr);
+        return d >= startDate && d <= endDate;
+      };
+
+      const filteredSavings = savings.filter(s => inPeriod(s.date));
+      const filteredLoans = loans.filter(l => inPeriod(l.startDate));
+      const filteredPayments = payments.filter(p => inPeriod(p.date));
+      const filteredFines = fines.filter(f => inPeriod(f.date));
+      const filteredExpenditures = expenditures.filter(e => inPeriod(e.date));
+
+      const totalSavings = filteredSavings.reduce((sum, s) => sum + s.amount, 0);
+      const totalLoansIssued = filteredLoans.reduce((sum, l) => sum + l.principal, 0);
+      const totalPrincipalPaid = filteredPayments.reduce((sum, p) => sum + p.principalPaid, 0);
+      const totalInterest = filteredPayments.reduce((sum, p) => sum + p.interestPaid, 0);
+      const totalFines = filteredFines.reduce((sum, f) => sum + f.amount, 0);
+      const totalExpenditures = filteredExpenditures.reduce((sum, e) => sum + e.amount, 0);
+      const outstandingLoans = totalLoansIssued - totalPrincipalPaid;
+      const netBalance = totalSavings + totalInterest + totalFines - outstandingLoans - totalExpenditures;
+
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const title = period === 'annual' ? `${year} Annual Financial Report` : `${year} ${period.toUpperCase()} Quarterly Report`;
+
+      doc.setFontSize(20);
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      doc.setFontSize(12);
+      doc.text(`Period: ${formatDate(startDate)} to ${formatDate(endDate)}`, pageWidth / 2, 30, { align: 'center' });
+      doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 38, { align: 'center' });
+
+      let y = 50;
+      doc.setFontSize(14);
+      doc.text('Financial Summary', 14, y);
+      y += 10;
+
+      (doc as any).autoTable({
+        startY: y,
+        head: [['Description', 'Amount (₹)']],
+        body: [
+          ['Total Savings Collected', totalSavings.toFixed(2)],
+          ['Total Loans Issued', totalLoansIssued.toFixed(2)],
+          ['Principal Repaid', totalPrincipalPaid.toFixed(2)],
+          ['Interest Collected', totalInterest.toFixed(2)],
+          ['Fines Collected', totalFines.toFixed(2)],
+          ['Total Expenditures', totalExpenditures.toFixed(2)],
+          ['Outstanding Loans', outstandingLoans.toFixed(2)],
+          ['Net Available Balance', netBalance.toFixed(2)],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246] },
+      });
+
+      const filename = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      doc.save(filename);
+
+      toast.success('Report downloaded successfully!');
+    } catch (error: any) {
+      toast.error('Failed to generate report: ' + error.message);
+    } finally {
+      setReportLoading(false);
     }
   };
 
@@ -422,33 +502,27 @@ export default function SettingsPage() {
           <div className="flex gap-2 border-b border-gray-200 overflow-x-auto -webkit-overflow-scrolling-touch">
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${
-                activeTab === 'users'
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-600 hover:text-gray-800 active:text-gray-900'
-              }`}
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'users' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
             >
               Users
             </button>
             <button
               onClick={() => setActiveTab('bulk')}
-              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${
-                activeTab === 'bulk'
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-600 hover:text-gray-800 active:text-gray-900'
-              }`}
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'bulk' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
             >
               Bulk Saving
             </button>
             <button
               onClick={() => setActiveTab('backup')}
-              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${
-                activeTab === 'backup'
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-gray-600 hover:text-gray-800 active:text-gray-900'
-              }`}
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'backup' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
             >
               Backup/Restore
+            </button>
+            <button
+              onClick={() => setActiveTab('reports')}
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'reports' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
+            >
+              Reports
             </button>
           </div>
 
@@ -620,7 +694,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Backup/Restore Tab - With Refresh Button */}
+          {/* Backup/Restore Tab */}
           {activeTab === 'backup' && (
             <div className="space-y-6">
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
@@ -649,7 +723,6 @@ export default function SettingsPage() {
                   Select a backup file to restore. <strong className="text-red-600">This will overwrite all current data.</strong>
                 </p>
 
-                {/* Upload Local Backup - Prominent */}
                 <div className="mb-8 p-5 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
                   <label className="block text-sm font-semibold text-gray-700 mb-3">
                     Upload Backup File (from your computer)
@@ -677,7 +750,6 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                {/* ← FIXED: Server Backups with Refresh */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-md font-medium text-gray-700">
@@ -723,6 +795,83 @@ export default function SettingsPage() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reports Tab */}
+          {activeTab === 'reports' && (
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-xl shadow-lg">
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <FileText size={24} className="text-primary" />
+                  Download Financial Reports
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Select a year and generate PDF reports for quarterly or annual financial summary.
+                </p>
+
+                <div className="mb-8 max-w-xs">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Year
+                  </label>
+                  <input
+                    type="number"
+                    min="2000"
+                    max="2100"
+                    value={selectedReportYear}
+                    onChange={(e) => setSelectedReportYear(parseInt(e.target.value) || new Date().getFullYear())}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Current year: {new Date().getFullYear()}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                  <button
+                    onClick={() => generateReport('q1')}
+                    disabled={reportLoading}
+                    className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium"
+                  >
+                    <Download size={20} />
+                    1st Quarterly ({selectedReportYear} Jan–Mar)
+                  </button>
+                  <button
+                    onClick={() => generateReport('q2')}
+                    disabled={reportLoading}
+                    className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium"
+                  >
+                    <Download size={20} />
+                    2nd Quarterly ({selectedReportYear} Apr–Jun)
+                  </button>
+                  <button
+                    onClick={() => generateReport('q3')}
+                    disabled={reportLoading}
+                    className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium"
+                  >
+                    <Download size={20} />
+                    3rd Quarterly ({selectedReportYear} Jul–Sep)
+                  </button>
+                  <button
+                    onClick={() => generateReport('q4')}
+                    disabled={reportLoading}
+                    className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium"
+                  >
+                    <Download size={20} />
+                    4th Quarterly ({selectedReportYear} Oct–Dec)
+                  </button>
+                  <button
+                    onClick={() => generateReport('annual')}
+                    disabled={reportLoading}
+                    className="bg-success text-white py-4 px-6 rounded-lg shadow hover:bg-success/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium md:col-span-2"
+                  >
+                    <Download size={20} />
+                    Annual Report (Full Year {selectedReportYear})
+                  </button>
+                </div>
+
+                {reportLoading && (
+                  <p className="text-center text-gray-500 mt-6">Generating report, please wait...</p>
+                )}
               </div>
             </div>
           )}
