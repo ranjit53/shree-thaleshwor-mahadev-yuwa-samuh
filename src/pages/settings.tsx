@@ -16,28 +16,6 @@ import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-// =========================================================
-// ✅ NEPALI FONT SUPPORT FOR PDF (Devanagari)
-// =========================================================
-const loadNepaliFont = async (doc: jsPDF) => {
-  try {
-    const response = await fetch('/fonts/NotoSansDevanagari-Regular.ttf');
-    if (!response.ok) throw new Error('Font not found');
-    const arrayBuffer = await response.arrayBuffer();
-
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-
-    doc.addFileToVFS('NotoSansDevanagari-Regular.ttf', base64);
-    doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoDevanagari', 'normal');
-    doc.setFont('NotoDevanagari');
-  } catch (err) {
-    console.warn('Nepali font failed to load, falling back to Helvetica');
-    doc.setFont('helvetica');
-  }
-};
-
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -397,7 +375,7 @@ export default function SettingsPage() {
   };
 
   // =========================================================
-  // ✅ PROFESSIONAL MEMBER-WISE REPORT WITH NEPALI SUPPORT
+  // ENGLISH PROFESSIONAL MEMBER-WISE REPORT (ORIGINAL STYLE)
   // =========================================================
   const generateReport = async (period: 'q1' | 'q2' | 'q3' | 'q4' | 'annual') => {
     setReportLoading(true);
@@ -487,74 +465,77 @@ export default function SettingsPage() {
       const netBalance = totalSavings + totalInterest + totalFines - outstandingLoans - totalExpenditures;
 
       const doc = new jsPDF('p', 'mm', 'a4');
-      await loadNepaliFont(doc); // Load Nepali font
-
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       let y = 20;
 
       // Header
       doc.setFontSize(22);
-      doc.text('वित्तीय प्रतिवेदन', pageWidth / 2, y, { align: 'center' });
+      doc.setFont('helvetica', 'bold');
+      doc.text('Financial Report', pageWidth / 2, y, { align: 'center' });
+
       y += 10;
-
       doc.setFontSize(16);
-      const periodTitle = period === 'annual'
-        ? `${year} वार्षिक प्रतिवेदन`
-        : `${year} ${period.toUpperCase()} त्रैमासिक प्रतिवेदन`;
+      const periodTitle = period === 'annual' 
+        ? `${year} Annual Report` 
+        : `${year} ${period.toUpperCase()} Quarterly Report`;
       doc.text(periodTitle, pageWidth / 2, y, { align: 'center' });
-      y += 8;
 
+      y += 8;
       doc.setFontSize(11);
       doc.setTextColor(100);
-      doc.text(`अवधि: ${formatDate(startDate)} – ${formatDate(endDate)}`, pageWidth / 2, y, { align: 'center' });
+      doc.text(`Period: ${formatDate(startDate)} – ${formatDate(endDate)}`, pageWidth / 2, y, { align: 'center' });
       y += 6;
-      doc.text(`तयार गरिएको मिति: ${new Date().toLocaleString('en-GB')}`, pageWidth / 2, y, { align: 'center' });
+      doc.text(`Generated on: ${new Date().toLocaleString('en-GB')}`, pageWidth / 2, y, { align: 'center' });
+
       y += 15;
 
-      // Overall Summary
+      // Overall Financial Summary
       doc.setFillColor(30, 64, 175);
       doc.rect(14, y, pageWidth - 28, 10, 'F');
       doc.setTextColor(255);
       doc.setFontSize(13);
-      doc.text('समग्र वित्तीय सारांश', pageWidth / 2, y + 7, { align: 'center' });
+      doc.setFont('helvetica', 'bold');
+      doc.text('Overall Financial Summary', pageWidth / 2, y + 7, { align: 'center' });
+
       y += 18;
 
       (doc as any).autoTable({
         startY: y,
-        head: [['विवरण', 'रकम']],
+        head: [['Description', 'Amount']],
         body: [
-          ['कुल बचत संकलन', formatCurrency(totalSavings)],
-          ['कुल कर्जा जारी', formatCurrency(totalLoansIssued)],
-          ['साँवा फिर्ता', formatCurrency(totalPrincipalPaid)],
-          ['ब्याज संकलन', formatCurrency(totalInterest)],
-          ['जरिवाना संकलन', formatCurrency(totalFines)],
-          ['कुल खर्च', formatCurrency(totalExpenditures)],
-          ['बाँकी कर्जा', formatCurrency(outstandingLoans)],
-          ['शुद्ध उपलब्ध रकम', formatCurrency(netBalance)],
+          ['Total Savings Collected', formatCurrency(totalSavings)],
+          ['Total Loans Issued', formatCurrency(totalLoansIssued)],
+          ['Principal Repaid', formatCurrency(totalPrincipalPaid)],
+          ['Interest Collected', formatCurrency(totalInterest)],
+          ['Fines Collected', formatCurrency(totalFines)],
+          ['Total Expenditures', formatCurrency(totalExpenditures)],
+          ['Outstanding Loans', formatCurrency(outstandingLoans)],
+          ['Net Available Balance', formatCurrency(netBalance)],
         ],
         theme: 'grid',
         headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 11, fontStyle: 'bold' },
         bodyStyles: { fontSize: 10 },
         columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right', fontStyle: 'bold' } },
-        styles: { font: 'NotoDevanagari' },
         margin: { left: 14, right: 14 },
       });
 
       y = (doc as any).lastAutoTable.finalY + 20;
 
-      // Member-wise Table
+      // Member-wise Detailed Report
       if (y > pageHeight - 40) doc.addPage();
       doc.setFillColor(30, 64, 175);
       doc.rect(14, y, pageWidth - 28, 10, 'F');
       doc.setTextColor(255);
       doc.setFontSize(13);
-      doc.text('सदस्य-वार वित्तीय विवरण', pageWidth / 2, y + 7, { align: 'center' });
+      doc.setFont('helvetica', 'bold');
+      doc.text('Member-wise Financial Details', pageWidth / 2, y + 7, { align: 'center' });
+
       y += 18;
 
       (doc as any).autoTable({
         startY: y,
-        head: [['सदस्य नाम (आईडी)', 'बचत', 'कर्जा जारी', 'साँवा भुक्तानी', 'ब्याज भुक्तानी', 'जरिवाना', 'शुद्ध योगदान']],
+        head: [['Member Name (ID)', 'Savings', 'Loans Issued', 'Principal Paid', 'Interest Paid', 'Fines Paid', 'Net Contribution']],
         body: memberData.map(m => [
           `${m.member.name} (${m.member.id})`,
           formatCurrency(m.savings),
@@ -570,10 +551,13 @@ export default function SettingsPage() {
         alternateRowStyles: { fillColor: [240, 249, 255] },
         columnStyles: {
           0: { cellWidth: 50, fontStyle: 'bold' },
-          1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' },
-          4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right', fontStyle: 'bold' },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'right' },
+          5: { halign: 'right' },
+          6: { halign: 'right', fontStyle: 'bold' },
         },
-        styles: { font: 'NotoDevanagari' },
         margin: { left: 14, right: 14 },
         pageBreak: 'auto',
         rowPageBreak: 'avoid',
@@ -582,14 +566,14 @@ export default function SettingsPage() {
       // Footer
       doc.setFontSize(10);
       doc.setTextColor(128);
-      doc.text('Savings & Loan Management System द्वारा तयार गरिएको', pageWidth / 2, pageHeight - 15, { align: 'center' });
+      doc.text('Generated by Savings & Loan Management System', pageWidth / 2, pageHeight - 15, { align: 'center' });
 
       const filename = `${periodTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Detailed_Report.pdf`;
       doc.save(filename);
 
-      toast.success('विस्तृत सदस्य-वार प्रतिवेदन सफलतापूर्वक डाउनलोड गरियो!');
+      toast.success('Detailed member-wise report downloaded successfully!');
     } catch (error: any) {
-      toast.error('प्रतिवेदन तयार गर्न असफल: ' + error.message);
+      toast.error('Failed to generate report: ' + error.message);
     } finally {
       setReportLoading(false);
     }
@@ -740,7 +724,7 @@ export default function SettingsPage() {
                       </button>
                     </div>
                   ))}
-                  {settings?.users.length === 0 && (
+                  {(!settings?.users || settings.users.length === 0) && (
                     <p className="text-gray-500 text-center py-8">No users yet.</p>
                   )}
                 </div>
