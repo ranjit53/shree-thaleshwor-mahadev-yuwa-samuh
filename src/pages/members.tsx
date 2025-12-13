@@ -31,7 +31,7 @@ export default function MembersPage() {
     phone: '',
     joinDate: new Date().toISOString().split('T')[0],
     address: '',
-    status: 'active' as 'active' | 'inactive',
+    isActive: true, // ADDED: Status for new members
   });
 
   useEffect(() => {
@@ -112,6 +112,7 @@ export default function MembersPage() {
         updatedMembers[index] = {
           ...editingMember,
           ...formData,
+          isActive: formData.isActive, // ADDED: Ensure isActive is carried through update
         };
         toast.success('Member updated successfully');
       } else {
@@ -120,7 +121,7 @@ export default function MembersPage() {
         updatedMembers.push({
           id: newId,
           ...formData,
-          status: 'active',
+          isActive: formData.isActive ?? true, // ADDED: Ensure isActive is set for new member
         });
         toast.success('Member added successfully');
       }
@@ -156,13 +157,35 @@ export default function MembersPage() {
     }
   };
 
+  // ADDED: Function to toggle member's active status
+  const handleToggleActive = async (member: Member) => {
+    if (!isAdmin) {
+      toast.error('Only admins can change member status');
+      return;
+    }
+
+    try {
+      const updatedMembers = members.map(m => 
+        m.id === member.id ? { ...m, isActive: !member.isActive } : m
+      );
+      await writeFile('data/members.json', updatedMembers);
+      setMembers(updatedMembers);
+      // Update viewing member state to reflect the change immediately in the modal
+      setViewingMember(updatedMembers.find(m => m.id === member.id) || null);
+      toast.success(`Member ${member.name} is now ${!member.isActive ? 'Active' : 'Inactive'}`);
+      await loadData();
+    } catch (error: any) {
+      toast.error('Failed to update member status: ' + error.message);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
       phone: '',
       joinDate: new Date().toISOString().split('T')[0],
       address: '',
-      status: 'active',
+      isActive: true, // ADDED: Reset isActive state
     });
     setShowAddForm(false);
     setEditingMember(null);
@@ -176,7 +199,7 @@ export default function MembersPage() {
       phone: member.phone,
       joinDate: member.joinDate,
       address: member.address || '',
-      status: member.status || 'active',
+      isActive: member.isActive ?? true, // ADDED: Load existing isActive status
     });
     setViewingMember(null);
   };
@@ -184,29 +207,6 @@ export default function MembersPage() {
   const handleViewMember = (member: Member) => {
     setViewingMember(member);
     setActiveTab('savings');
-  };
-
-  const handleToggleStatus = async (member: Member) => {
-    if (!isAdmin) {
-      toast.error('Only admins can change member status');
-      return;
-    }
-
-    try {
-      const updatedMembers = members.map(m => 
-        m.id === member.id 
-          ? { ...m, status: m.status === 'active' ? 'inactive' : 'active' }
-          : m
-      );
-      await writeFile('data/members.json', updatedMembers);
-      setMembers(updatedMembers);
-      toast.success(`Member status changed to ${member.status === 'active' ? 'inactive' : 'active'}`);
-      if (viewingMember?.id === member.id) {
-        setViewingMember(updatedMembers.find(m => m.id === member.id) || null);
-      }
-    } catch (error: any) {
-      toast.error('Failed to update status: ' + error.message);
-    }
   };
 
   const filteredMembers = members.filter((m: Member) =>
@@ -312,6 +312,23 @@ export default function MembersPage() {
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary touch-manipulation text-base"
                     />
                   </div>
+                  {/* ADDED: Active Status toggle on form - only visible if editing existing member */}
+                  {editingMember && (
+                    <div className="md:col-span-2 flex items-center gap-4">
+                      <label className="text-sm font-medium text-gray-700">
+                        Active Status:
+                      </label>
+                      <input
+                        type="checkbox"
+                        checked={formData.isActive}
+                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                        className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary"
+                      />
+                      <span className={`text-sm font-semibold ${formData.isActive ? 'text-success' : 'text-danger'}`}>
+                        {formData.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <button
@@ -357,7 +374,17 @@ export default function MembersPage() {
                     filteredMembers.map((member) => (
                       <tr key={member.id} className="hover:bg-gray-50">
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap font-medium text-sm">{member.id}</td>
-                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">{member.name}</td>
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
+                          {member.name}
+                          {/* ADDED: Status Badge */}
+                          <span 
+                            className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              (member.isActive ?? true) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {(member.isActive ?? true) ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">{member.phone}</td>
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">{formatDate(member.joinDate)}</td>
                         <td className="px-4 sm:px-6 py-4 text-sm max-w-[200px] truncate">{member.address || '-'}</td>
@@ -371,20 +398,6 @@ export default function MembersPage() {
                             >
                               <Eye size={18} />
                             </button>
-                            {isAdmin && (
-                              <button
-                                onClick={() => handleToggleStatus(member)}
-                                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors touch-manipulation ${
-                                  member.status === 'active' || !member.status
-                                    ? 'bg-success/10 text-success hover:bg-success/20'
-                                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                                }`}
-                                title={`Toggle status (currently ${member.status || 'active'})`}
-                                aria-label="Toggle member status"
-                              >
-                                {member.status === 'active' || !member.status ? 'Active' : 'Inactive'}
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -429,6 +442,12 @@ export default function MembersPage() {
                       <div>
                         <label className="text-sm font-medium text-gray-500">Join Date</label>
                         <p className="text-base">{formatDate(viewingMember.joinDate)}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Status</label>
+                        <p className={`text-base font-bold ${viewingMember.isActive ?? true ? 'text-success' : 'text-danger'}`}>
+                          {viewingMember.isActive ?? true ? 'Active' : 'Inactive'}
+                        </p>
                       </div>
                       <div className="md:col-span-2">
                         <label className="text-sm font-medium text-gray-500">Address</label>
@@ -655,6 +674,20 @@ export default function MembersPage() {
 
                   {isAdmin && (
                     <div className="flex flex-col sm:flex-row gap-2 mt-6 pt-4 border-t border-gray-200">
+                      
+                      {/* ADDED: Active/Inactive Toggle Button */}
+                      <button
+                        onClick={() => handleToggleActive(viewingMember)}
+                        className={`flex-1 px-4 py-2.5 rounded-lg touch-manipulation font-medium transition-colors text-white ${
+                          (viewingMember.isActive ?? true)
+                            ? 'bg-danger hover:bg-danger/90 active:bg-danger/80' // Deactivate (Red)
+                            : 'bg-success hover:bg-success/90 active:bg-success/80' // Activate (Green)
+                        }`}
+                        title={(viewingMember.isActive ?? true) ? 'Deactivate Member' : 'Activate Member'}
+                      >
+                        {(viewingMember.isActive ?? true) ? 'Deactivate Member' : 'Activate Member'}
+                      </button>
+
                       <button
                         onClick={() => {
                           handleEdit(viewingMember);
@@ -665,7 +698,7 @@ export default function MembersPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(viewingMember)}
-                        className="flex-1 bg-danger text-white px-4 py-2.5 rounded-lg hover:bg-danger/90 active:bg-danger/80 touch-manipulation font-medium"
+                        className="flex-1 bg-gray-500 text-white px-4 py-2.5 rounded-lg hover:bg-gray-600 active:bg-gray-700 touch-manipulation font-medium" // CHANGED: Delete button color to avoid confusion with Deactivate
                       >
                         Delete
                       </button>
