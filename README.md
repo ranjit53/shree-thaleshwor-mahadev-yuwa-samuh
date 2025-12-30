@@ -73,9 +73,62 @@ JWT_SECRET=your-super-secret-jwt-key-change-in-production
 
 # Next.js
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# WhatsApp Notifications (Optional)
+SENDWO_API_KEY=your_sendwo_api_key
+SENDWO_BASE_URL=https://api.sendwo.com
+SENDWO_WHATSAPP_NUMBER=your_sendwo_whatsapp_number
 ```
 
 **Important**: Never commit `.env.local` to the repository. It's already in `.gitignore`.
+
+### 5. Set Up WhatsApp Notifications (Optional)
+
+The application supports automatic WhatsApp notifications for all transactions. To enable this feature:
+
+#### Get SendWo WhatsApp Credentials
+
+1. **Sign up for SendWo**: Go to [sendwo.com](https://sendwo.com/) and create an account
+2. **Set up WhatsApp Business API**: Follow SendWo's setup process to connect your WhatsApp Business account
+3. **Get your credentials**:
+   - **API Key**: Provided by SendWo after account setup
+   - **Base URL**: Usually `https://api.sendwo.com` (confirm with SendWo)
+   - **WhatsApp Number**: Your verified WhatsApp Business number
+
+#### Configure WhatsApp in Environment Variables
+
+Add these to your `.env.local` file:
+
+```env
+SENDWO_API_KEY=your_sendwo_api_key
+SENDWO_BASE_URL=https://api.sendwo.com
+SENDWO_WHATSAPP_NUMBER=+977xxxxxxxxxx  # Your SendWo WhatsApp number
+```
+
+#### Supported Notifications
+
+The system automatically sends WhatsApp messages for:
+
+- ✅ **New Loan Approvals**: Sent to the member when a loan is approved
+- ✅ **Payment Receipts**: Sent when loan payments are recorded
+- ✅ **Savings Deposits**: Sent when savings are added to a member's account
+- ✅ **Fine Applications**: Sent when fines are applied to members
+- ✅ **Group Expenditures**: Sent to all active members when expenditures are recorded
+
+#### Message Format
+
+All messages are sent in Nepali/English format with:
+- Group branding (श्री थलेस्वर महादेव युवा समूह)
+- Professional formatting with emojis
+- Complete transaction details
+- Local currency formatting (रू)
+
+#### Phone Number Format
+
+The system automatically formats phone numbers:
+- Handles various Nepali number formats (9812092516 → +9779812092516)
+- Supports international format (+977xxxxxxxxxx)
+- Defaults to Nepal (+977) for numbers without country code
 
 ### 5. Generate Admin Password Hash
 
@@ -159,7 +212,8 @@ For other platforms (Netlify, Railway, etc.), follow similar steps:
 │   │   ├── api.ts           # Frontend API client
 │   │   ├── auth.ts          # Authentication utilities
 │   │   ├── github.ts       # GitHub API utilities
-│   │   └── utils.ts         # General utilities
+│   │   ├── utils.ts         # General utilities
+│   │   └── whatsapp.ts      # WhatsApp notification service
 │   ├── pages/               # Next.js pages
 │   │   ├── api/             # API routes (backend)
 │   │   │   ├── auth/        # Authentication endpoints
@@ -314,4 +368,3 @@ For issues or questions, please open an issue in the GitHub repository.
 ---
 
 **Built with ❤️ for Shree Thaleshwor Mahadev Yuwa Samuh**
-
