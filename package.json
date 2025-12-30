@@ -20,7 +20,8 @@
     "react-hot-toast": "^2.4.1",
     "lucide-react": "^0.294.0",
     "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.8.2"
+    "jspdf-autotable": "^3.8.2",
+    "axios": "^1.6.5"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
