@@ -509,5 +509,11 @@
     "amount": 1000,
     "date": "2025-12-11",
     "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1767122871794",
+    "memberId": "M-0006",
+    "amount": 500,
+    "date": "2025-12-30"
   }
 ]
