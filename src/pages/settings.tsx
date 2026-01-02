@@ -257,7 +257,6 @@ export default function SettingsPage() {
       setMonthlyLoading(false);
     }
   };
-
   // JSX Rendering (updated tabs + new sections)
   return (
     <ProtectedRoute>
@@ -437,3 +436,4 @@ export default function SettingsPage() {
     </ProtectedRoute>
   );
 }
+
