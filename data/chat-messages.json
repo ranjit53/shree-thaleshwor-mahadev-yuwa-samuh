@@ -4,6 +4,9 @@
     "sender": "admin",
     "text": "नमस्कार🙏",
     "attachment": null,
-    "timestamp": "2026-01-02T23:13:16.243Z"
+    "timestamp": "2026-01-02T23:13:16.243Z",
+    "seenBy": [
+      "admin"
+    ]
   }
 ]
