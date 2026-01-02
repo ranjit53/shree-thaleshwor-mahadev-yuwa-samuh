@@ -5,6 +5,11 @@ type Message = {
   id: string;
   sender: string;
   text: string;
+  attachment?: {
+    name: string;
+    url: string;
+    type?: string;
+  } | null;
   timestamp: string;
   edited?: boolean;
 };
@@ -59,7 +64,11 @@ export default function ChatBox() {
   const sendMessage = async () => {
     if (!text.trim()) return;
     setLoading(true);
-    const payload = { text: text.trim() };
+    const payload: any = { text: text.trim() };
+    // include attachment if present and user is admin
+    if (isAdmin && selectedFile) {
+      payload.attachment = selectedFilePayload;
+    }
     try {
       const token = localStorage.getItem('token');
       const res = await fetch('/api/chat/send', {
@@ -78,6 +87,30 @@ export default function ChatBox() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Attachment handling (admin only)
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [selectedFilePayload, setSelectedFilePayload] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const onFileChange = (f: File | null) => {
+    if (!f) {
+      setSelectedFile(null);
+      setSelectedFileName(null);
+      setSelectedFilePayload(null);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string; // data:<mime>;base64,<data>
+      const base64 = result.split(',')[1];
+      setSelectedFilePayload({ name: f.name, data: base64, type: f.type });
+      setSelectedFileName(f.name);
+      setSelectedFile(f);
+    };
+    reader.readAsDataURL(f);
   };
 
   const startEdit = (m: Message) => {
@@ -169,6 +202,16 @@ export default function ChatBox() {
           className="flex-1 border rounded px-3 py-2"
           placeholder="Type a message..."
         />
+        {isAdmin && (
+          <label className="flex items-center gap-2">
+            <input
+              type="file"
+              onChange={e => onFileChange(e.target.files ? e.target.files[0] : null)}
+              className="hidden"
+            />
+            <div className="text-sm text-gray-600">{selectedFileName || 'Attach'}</div>
+          </label>
+        )}
         <button
           onClick={sendMessage}
           disabled={loading}
