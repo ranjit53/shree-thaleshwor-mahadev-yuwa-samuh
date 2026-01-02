@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 type Message = {
   id: string;
@@ -16,6 +17,7 @@ export default function ChatBox() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     loadMessages();
@@ -45,11 +47,12 @@ export default function ChatBox() {
   const sendMessage = async () => {
     if (!text.trim()) return;
     setLoading(true);
-    const payload = { sender: 'User', text: text.trim() };
+    const payload = { text: text.trim() };
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/chat/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Send failed');
@@ -79,9 +82,10 @@ export default function ChatBox() {
     if (!editingId) return;
     if (!editingText.trim()) return;
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/chat/edit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ id: editingId, text: editingText.trim() }),
       });
       if (!res.ok) throw new Error('Edit failed');
@@ -96,9 +100,10 @@ export default function ChatBox() {
   const deleteMessage = async (id: string) => {
     if (!confirm('Delete this message?')) return;
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/chat/delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error('Delete failed');
@@ -113,7 +118,7 @@ export default function ChatBox() {
       <div ref={containerRef} className="h-72 overflow-y-auto mb-4 space-y-3 p-2 border rounded">
         {messages.length === 0 && <div className="text-sm text-gray-500">No messages</div>}
         {messages.map(m => {
-          const isOwn = m.sender === 'User';
+          const isOwn = user ? m.sender === user.userId : false;
           const editing = editingId === m.id;
           return (
             <div key={m.id} className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
@@ -130,9 +135,9 @@ export default function ChatBox() {
                 <div className={`mt-1 px-3 py-2 rounded-md inline-block max-w-full ${isOwn ? 'bg-indigo-50 text-right' : 'bg-gray-100'}`}>
                   {!isOwn && <div className="text-sm font-medium">{m.sender}</div>}
                   <div className="text-sm">{m.text}</div>
-                  {isOwn && (
+                  {(isOwn || isAdmin) && (
                     <div className="mt-1 text-xs flex gap-2 justify-end">
-                      <button onClick={() => startEdit(m)} className="text-indigo-600">Edit</button>
+                      {isOwn && <button onClick={() => startEdit(m)} className="text-indigo-600">Edit</button>}
                       <button onClick={() => deleteMessage(m.id)} className="text-red-600">Delete</button>
                     </div>
                   )}
