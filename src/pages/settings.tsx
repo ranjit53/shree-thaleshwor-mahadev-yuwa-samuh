@@ -20,10 +20,11 @@ import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-// ADDED: Local type to include the isActive property, mirroring loans.tsx and payments.tsx
-type LocalMember = Member & {
-  isActive: boolean;
-}
+// Chart libraries
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 // --- HELPER: Devanagari to English Transliteration ---
 const transliterateToEnglish = (text: string): string => {
@@ -50,7 +51,7 @@ const transliterateToEnglish = (text: string): string => {
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'bulk' | 'backup' | 'reports'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'bulk' | 'backup' | 'reports' | 'monthly-reports'>('users');
   const [backups, setBackups] = useState<string[]>([]);
   const { isAdmin } = useAuth();
 
@@ -63,7 +64,7 @@ export default function SettingsPage() {
 
   const [bulkData, setBulkData] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [members, setMembers] = useState<LocalMember[]>([]); // UPDATED to use LocalMember
+  const [members, setMembers] = useState<Member[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
   const [bulkFixedAmount, setBulkFixedAmount] = useState<string>('');
   const [bulkFixedDate, setBulkFixedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -72,6 +73,11 @@ export default function SettingsPage() {
   // Report states
   const [reportLoading, setReportLoading] = useState(false);
   const [selectedReportYear, setSelectedReportYear] = useState<number>(new Date().getFullYear());
+
+  // Monthly Reports states
+  const [selectedMonthlyMonth, setSelectedMonthlyMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [monthlyData, setMonthlyData] = useState<any>(null);
+  const [monthlyLoading, setMonthlyLoading] = useState(false);
 
   useEffect(() => {
     if (isAdmin) {
@@ -92,25 +98,14 @@ export default function SettingsPage() {
     }
   };
 
-  // UPDATED: Filter logic added for active members
   const loadMembersForBulk = async () => {
     try {
-      // CHANGED: Reading membersData as any[] to handle the extra isActive property from file
-      const list = await readFile<any[]>('data/members.json');
-      const membersData = list || [];
-      
-      // ADDED: Logic to process isActive status, defaulting to true if not present
-      const membersWithStatus = membersData.map(m => ({
-        ...m,
-        isActive: m.isActive ?? true,
-      })) as LocalMember[]; // Type cast to LocalMember[]
-
-      setMembers(membersWithStatus); // UPDATED to use LocalMember[]
-      const activeMembers = membersWithStatus.filter(m => m.isActive); // Filter for active members
-
-      const allActiveIds = new Set(activeMembers.map(mm => mm.id));
-      setSelectedMemberIds(allActiveIds);
-      setSelectAllMembers(true); // Default to selecting all *active* members
+      const list = await readFile<Member[]>('data/members.json');
+      const m = list || [];
+      setMembers(m);
+      const all = new Set(m.map(mm => mm.id));
+      setSelectedMemberIds(all);
+      setSelectAllMembers(true);
     } catch (e) {
       // ignore
     }
@@ -126,12 +121,10 @@ export default function SettingsPage() {
     }
   };
 
-  // UPDATED: Operates only on active members
   const toggleSelectAllMembers = (checked: boolean) => {
     setSelectAllMembers(checked);
-    const activeMembers = members.filter(m => m.isActive);
     if (checked) {
-      setSelectedMemberIds(new Set(activeMembers.map(m => m.id)));
+      setSelectedMemberIds(new Set(members.map(m => m.id)));
     } else {
       setSelectedMemberIds(new Set());
     }
@@ -141,8 +134,7 @@ export default function SettingsPage() {
     const next = new Set(selectedMemberIds);
     if (checked) next.add(id); else next.delete(id);
     setSelectedMemberIds(next);
-    const activeMembersCount = members.filter(m => m.isActive).length;
-    setSelectAllMembers(next.size === activeMembersCount && activeMembersCount > 0);
+    setSelectAllMembers(next.size === members.length && members.length > 0);
   };
 
   const applyBulkFixedSavings = async () => {
@@ -167,8 +159,6 @@ export default function SettingsPage() {
       toast.loading(`Adding savings for ${selectedMemberIds.size} members...`, { id: 'bulk-saving' });
       const existing = (await readFile<Saving[]>('data/savings.json')) || [];
       const now = Date.now();
-      
-      // IMPORTANT: The selectedMemberIds set only contains IDs of active members
       const add: Saving[] = Array.from(selectedMemberIds).map((memberId, idx) => ({
         id: `S-${now}-${idx}`,
         memberId,
@@ -652,6 +642,141 @@ export default function SettingsPage() {
     }
   };
 
+  // =========================================================
+  // MONTHLY DATA GENERATION FOR UI (TABLE, PIE, BAR CHARTS)
+  // =========================================================
+  const generateMonthlyData = async () => {
+    setMonthlyLoading(true);
+    try {
+      const [membersRes, savingsRes, loansRes, paymentsRes, finesRes, expRes] = await Promise.all([
+        readFile<Member[]>('data/members.json'),
+        readFile<Saving[]>('data/savings.json'),
+        readFile<Loan[]>('data/loans.json'),
+        readFile<Payment[]>('data/payments.json'),
+        readFile<FinePayment[]>('data/fines.json'),
+        readFile<Expenditure[]>('data/expenditures.json'),
+      ]);
+
+      const members = (membersRes ?? []).sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+      const savings = savingsRes ?? [];
+      const loans = loansRes ?? [];
+      const payments = paymentsRes ?? [];
+      const fines = finesRes ?? [];
+      const expenditures = expRes ?? [];
+
+      const [year, month] = selectedMonthlyMonth.split('-').map(Number);
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0);
+
+      const inMonth = (dateStr: string) => {
+        const d = new Date(dateStr);
+        return d >= startDate && d <= endDate;
+      };
+
+      const filteredSavings = savings.filter(s => inMonth(s.date));
+      const filteredLoans = loans.filter(l => inMonth(l.startDate));
+      const filteredPayments = payments.filter(p => inMonth(p.date));
+      const filteredFines = fines.filter(f => inMonth(f.date));
+      const filteredExpenditures = expenditures.filter(e => inMonth(e.date));
+
+      let totalSavings = 0, totalLoansIssued = 0, totalPrincipalPaid = 0, totalInterest = 0;
+      let totalFines = 0, totalExpenditures = 0;
+
+      const memberData: Array<{
+        member: Member;
+        savings: number;
+        loansIssued: number;
+        principalPaid: number;
+        interestPaid: number;
+        fines: number;
+        netContribution: number;
+      }> = [];
+
+      const memberLabels: string[] = [];
+      const memberSavingsData: number[] = [];
+      const memberLoansData: number[] = [];
+      const memberInterestData: number[] = [];
+      const memberFinesData: number[] = [];
+
+      members.forEach(member => {
+        const memSavings = filteredSavings.filter(s => s.memberId === member.id).reduce((sum, s) => sum + s.amount, 0);
+        const memLoans = filteredLoans.filter(l => l.memberId === member.id).reduce((sum, l) => sum + l.principal, 0);
+        const memPayments = filteredPayments.filter(p => p.memberId === member.id);
+        const memPrincipalPaid = memPayments.reduce((sum, p) => sum + p.principalPaid, 0);
+        const memInterestPaid = memPayments.reduce((sum, p) => sum + p.interestPaid, 0);
+        const memFines = filteredFines.filter(f => f.memberId === member.id).reduce((sum, f) => sum + f.amount, 0);
+
+        totalSavings += memSavings;
+        totalLoansIssued += memLoans;
+        totalPrincipalPaid += memPrincipalPaid;
+        totalInterest += memInterestPaid;
+        totalFines += memFines;
+
+        memberData.push({
+          member,
+          savings: memSavings,
+          loansIssued: memLoans,
+          principalPaid: memPrincipalPaid,
+          interestPaid: memInterestPaid,
+          fines: memFines,
+          netContribution: memSavings + memInterestPaid + memFines - memLoans,
+        });
+
+        // For charts
+        memberLabels.push(`${member.id} - ${member.name.slice(0, 10)}`);
+        memberSavingsData.push(memSavings);
+        memberLoansData.push(memLoans);
+        memberInterestData.push(memInterestPaid);
+        memberFinesData.push(memFines);
+      });
+
+      totalExpenditures = filteredExpenditures.reduce((sum, e) => sum + e.amount, 0);
+      const outstandingLoans = totalLoansIssued - totalPrincipalPaid;
+      const netBalance = totalSavings + totalInterest + totalFines - outstandingLoans - totalExpenditures;
+      const grossIncome = totalInterest + totalFines;
+      const netProfit = grossIncome - totalExpenditures;
+
+      setMonthlyData({
+        totalSavings,
+        totalLoansIssued,
+        outstandingLoans,
+        totalInterest,
+        totalFines,
+        totalExpenditures,
+        netBalance,
+        grossIncome,
+        netProfit,
+        memberData,
+        pieData: {
+          labels: ['Savings', 'Interest', 'Fines', 'Expenditures', 'Outstanding Loans'],
+          datasets: [{
+            data: [totalSavings, totalInterest, totalFines, totalExpenditures, outstandingLoans],
+            backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF'],
+          }],
+        },
+        barData: {
+          labels: memberLabels,
+          datasets: [
+            { label: 'Savings', data: memberSavingsData, backgroundColor: '#36A2EB' },
+            { label: 'Loans Issued', data: memberLoansData, backgroundColor: '#FF6384' },
+            { label: 'Interest Paid', data: memberInterestData, backgroundColor: '#FFCE56' },
+            { label: 'Fines', data: memberFinesData, backgroundColor: '#4BC0C0' },
+          ],
+        },
+      });
+    } catch (error: any) {
+      toast.error('Failed to generate monthly data: ' + error.message);
+    } finally {
+      setMonthlyLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'monthly-reports') {
+      generateMonthlyData();
+    }
+  }, [activeTab, selectedMonthlyMonth]);
+
   if (!isAdmin) {
     return (
       <ProtectedRoute requireAdmin>
@@ -707,6 +832,12 @@ export default function SettingsPage() {
               className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'reports' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
             >
               Reports
+            </button>
+            <button
+              onClick={() => setActiveTab('monthly-reports')}
+              className={`px-4 py-2 font-medium transition-colors touch-manipulation whitespace-nowrap ${activeTab === 'monthly-reports' ? 'border-b-2 border-primary text-primary' : 'text-gray-600 hover:text-gray-800 active:text-gray-900'}`}
+            >
+              Monthly Reports
             </button>
           </div>
 
@@ -856,14 +987,12 @@ export default function SettingsPage() {
                       onChange={(e) => toggleSelectAllMembers(e.target.checked)}
                     />
                     <label htmlFor="select-all-members" className="font-medium">
-                      Select all active members
+                      Select all members
                     </label>
-                    <span className="text-sm text-gray-500">({members.filter(m => m.isActive).length} active members)</span>
+                    <span className="text-sm text-gray-500">({members.length} members)</span>
                   </div>
                   <div className="max-h-64 overflow-auto divide-y">
-                    {members
-                      .filter(m => m.isActive) // ADDED: Filter to show only active members
-                      .map((m) => (
+                    {members.map((m) => (
                       <label key={m.id} className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50">
                         <input
                           type="checkbox"
@@ -874,8 +1003,8 @@ export default function SettingsPage() {
                         <span className="text-sm text-gray-500">({m.id})</span>
                       </label>
                     ))}
-                    {members.filter(m => m.isActive).length === 0 && ( // UPDATED: Length check for active members
-                      <div className="px-4 py-6 text-gray-500 text-center">No active members available.</div>
+                    {members.length === 0 && (
+                      <div className="px-4 py-6 text-gray-500 text-center">No members available.</div>
                     )}
                   </div>
                 </div>
@@ -1045,6 +1174,101 @@ export default function SettingsPage() {
 
                 {reportLoading && (
                   <p className="text-center text-gray-500 mt-6">Generating report, please wait...</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Monthly Reports Tab */}
+          {activeTab === 'monthly-reports' && (
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-primary">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-primary"><FileText size={24} />Monthly Reports</h3>
+                <div className="mb-6 max-w-xs">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Select Month</label>
+                  <input
+                    type="month"
+                    value={selectedMonthlyMonth}
+                    onChange={(e) => setSelectedMonthlyMonth(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                {monthlyLoading && (
+                  <p className="text-center text-gray-500 mt-6">Loading monthly data, please wait...</p>
+                )}
+
+                {!monthlyLoading && monthlyData && (
+                  <div className="space-y-8">
+                    {/* Summary */}
+                    <div>
+                      <h4 className="text-lg font-semibold mb-4">Summary</h4>
+                      <ul className="space-y-2">
+                        <li>Total Savings: Rs {monthlyData.totalSavings.toFixed(2)}</li>
+                        <li>Total Loans Issued: Rs {monthlyData.totalLoansIssued.toFixed(2)}</li>
+                        <li>Outstanding Loans: Rs {monthlyData.outstandingLoans.toFixed(2)}</li>
+                        <li>Total Interest: Rs {monthlyData.totalInterest.toFixed(2)}</li>
+                        <li>Total Fines: Rs {monthlyData.totalFines.toFixed(2)}</li>
+                        <li>Total Expenditures: Rs {monthlyData.totalExpenditures.toFixed(2)}</li>
+                        <li>Net Balance: Rs {monthlyData.netBalance.toFixed(2)}</li>
+                        <li>Gross Income: Rs {monthlyData.grossIncome.toFixed(2)}</li>
+                        <li>Net Profit/Loss: Rs {monthlyData.netProfit.toFixed(2)}</li>
+                      </ul>
+                    </div>
+
+                    {/* Pie Chart */}
+                    <div>
+                      <h4 className="text-lg font-semibold mb-4">Aggregate Distribution (Pie Chart)</h4>
+                      <div className="max-w-md mx-auto">
+                        <Pie data={monthlyData.pieData} options={{ responsive: true }} />
+                      </div>
+                    </div>
+
+                    {/* Bar Chart */}
+                    <div>
+                      <h4 className="text-lg font-semibold mb-4">Member-wise Breakdown (Bar Chart)</h4>
+                      <div className="overflow-x-auto">
+                        <Bar data={monthlyData.barData} options={{ responsive: true, indexAxis: 'y' }} />
+                      </div>
+                    </div>
+
+                    {/* Member-wise Table */}
+                    <div>
+                      <h4 className="text-lg font-semibold mb-4">Member-wise Details</h4>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full bg-white border border-gray-200">
+                          <thead>
+                            <tr>
+                              <th className="px-4 py-2 border">S.N.</th>
+                              <th className="px-4 py-2 border">ID</th>
+                              <th className="px-4 py-2 border">Name</th>
+                              <th className="px-4 py-2 border">Savings</th>
+                              <th className="px-4 py-2 border">Loans Issued</th>
+                              <th className="px-4 py-2 border">Principal Paid</th>
+                              <th className="px-4 py-2 border">Interest Paid</th>
+                              <th className="px-4 py-2 border">Fines</th>
+                              <th className="px-4 py-2 border">Net Contribution</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {monthlyData.memberData.map((m: any, index: number) => (
+                              <tr key={m.member.id}>
+                                <td className="px-4 py-2 border">{index + 1}</td>
+                                <td className="px-4 py-2 border">{m.member.id}</td>
+                                <td className="px-4 py-2 border">{m.member.name}</td>
+                                <td className="px-4 py-2 border text-right">Rs {m.savings.toFixed(2)}</td>
+                                <td className="px-4 py-2 border text-right">Rs {m.loansIssued.toFixed(2)}</td>
+                                <td className="px-4 py-2 border text-right">Rs {m.principalPaid.toFixed(2)}</td>
+                                <td className="px-4 py-2 border text-right">Rs {m.interestPaid.toFixed(2)}</td>
+                                <td className="px-4 py-2 border text-right">Rs {m.fines.toFixed(2)}</td>
+                                <td className="px-4 py-2 border text-right">Rs {m.netContribution.toFixed(2)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
