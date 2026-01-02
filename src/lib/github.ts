@@ -109,6 +109,43 @@ export async function writeGitHubFile(
 }
 
 /**
+ * Write a raw (binary/text) file to the repo using base64 content.
+ * `base64Content` must already be base64-encoded (no further encoding will be done).
+ */
+export async function writeRawFile(
+  path: string,
+  base64Content: string,
+  token: string,
+  owner: string,
+  repo: string,
+  sha?: string
+): Promise<void> {
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+  const body: any = {
+    message: `Add ${path}`,
+    content: base64Content,
+  };
+
+  if (sha) body.sha = sha;
+
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      Authorization: `token ${token}`,
+      Accept: 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new Error(`GitHub API error: ${response.status} - ${error.message || response.statusText}`);
+  }
+}
+
+/**
  * List backup files from backups/ directory
  */
 export async function listGitHubFiles(
