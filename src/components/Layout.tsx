@@ -31,8 +31,6 @@ const navItems = [
   { path: '/savings', label: 'Saving', icon: PiggyBank, color: 'bg-success' },
   { path: '/loans', label: 'Loan', icon: CreditCard, color: 'bg-warning' },
   { path: '/payments', label: 'Payment', icon: DollarSign, color: 'bg-info' },
-  { path: '/payments', label: 'Payment', icon: DollarSign, color: 'bg-info' },
-  { path: '/chat', label: 'Chat', icon: MessageSquare, color: 'bg-indigo-500' },
   { path: '/settings', label: 'Setting', icon: Settings, color: 'bg-accent' },
 ];
 
