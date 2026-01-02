@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { readGitHubFile, writeGitHubFile } from '@/lib/github';
+import { readGitHubFile, writeGitHubFile, writeRawFile } from '@/lib/github';
 import { verifyToken } from '@/lib/auth';
 
 type Message = {
@@ -48,6 +48,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { attachment } = req.body || {};
     if (attachment && payload && payload.role === 'Admin') {
       // attachment expected: { name, data (base64 string without data: header), type }
+      if (!attachment.data) {
+        return res.status(400).json({ error: 'Attachment data missing' });
+      }
       const filename = `${Date.now()}-${attachment.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
       const path = `public/uploads/${filename}`;
 
