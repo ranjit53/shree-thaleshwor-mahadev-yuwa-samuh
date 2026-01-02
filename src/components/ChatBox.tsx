@@ -32,6 +32,18 @@ export default function ChatBox() {
       if (!res.ok) throw new Error('Failed to load messages');
       const data: Message[] = await res.json();
       setMessages(data);
+      // mark messages as seen for current user
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          await fetch('/api/chat/seen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          });
+        }
+      } catch (e) {
+        console.error('Mark seen failed', e);
+      }
     } catch (err) {
       console.error(err);
     }
