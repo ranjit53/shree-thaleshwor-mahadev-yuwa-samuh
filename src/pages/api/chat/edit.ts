@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { readGitHubFile, writeGitHubFile } from '@/lib/github';
+import { verifyToken } from '@/lib/auth';
 
 type Message = {
   id: string;
@@ -23,6 +24,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const owner = process.env.GITHUB_OWNER;
   const repo = process.env.GITHUB_REPO;
 
+  const authHeader = req.headers.authorization;
+  const userToken = authHeader?.split(' ')[1];
+  if (!userToken) return res.status(401).json({ error: 'Authentication required' });
+  const user = verifyToken(userToken);
+  if (!user) return res.status(401).json({ error: 'Invalid token' });
+
   if (!token || !owner || !repo) {
     return res.status(500).json({ error: 'GitHub configuration missing' });
   }
@@ -34,6 +41,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const idx = list.findIndex(m => m.id === id);
     if (idx === -1) return res.status(404).json({ error: 'Message not found' });
+
+    // Only the original sender may edit their message
+    const msg = list[idx];
+    if (msg.sender !== user.userId) {
+      return res.status(403).json({ error: 'Not authorized to edit this message' });
+    }
 
     list[idx].text = text;
     list[idx].edited = true;
