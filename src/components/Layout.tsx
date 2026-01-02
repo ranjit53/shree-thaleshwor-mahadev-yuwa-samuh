@@ -17,7 +17,9 @@ import {
   Menu,
   X,
   LogOut,
+  MessageSquare,
 } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -29,13 +31,34 @@ const navItems = [
   { path: '/savings', label: 'Saving', icon: PiggyBank, color: 'bg-success' },
   { path: '/loans', label: 'Loan', icon: CreditCard, color: 'bg-warning' },
   { path: '/payments', label: 'Payment', icon: DollarSign, color: 'bg-info' },
+  { path: '/payments', label: 'Payment', icon: DollarSign, color: 'bg-info' },
+  { path: '/chat', label: 'Chat', icon: MessageSquare, color: 'bg-indigo-500' },
   { path: '/settings', label: 'Setting', icon: Settings, color: 'bg-accent' },
 ];
 
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
   const router = useRouter();
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const res = await fetch('/api/chat/get');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!mounted) return;
+        const count = Array.isArray(data) ? data.filter((m: any) => m.sender !== 'User').length : 0;
+        setUnread(count);
+      } catch (e) {}
+    };
+
+    load();
+    const id = setInterval(load, 10000);
+    return () => { mounted = false; clearInterval(id); };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -126,6 +149,19 @@ export default function Layout({ children }: LayoutProps) {
             })}
           </nav>
         </aside>
+
+        {/* Floating chat button */}
+        <button
+          onClick={() => router.push('/chat')}
+          title="Open chat"
+          className="fixed right-4 top-[72px] z-50 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform"
+          aria-label="Open chat"
+        >
+          <MessageSquare size={20} />
+          {unread > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold w-5 h-5 rounded-full flex items-center justify-center">{unread}</span>
+          )}
+        </button>
 
         {/* Overlay for mobile */}
         {sidebarOpen && (
