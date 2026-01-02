@@ -44,13 +44,19 @@ export default function Layout({ children }: LayoutProps) {
     let mounted = true;
     const load = async () => {
       try {
-        const res = await fetch('/api/chat/get');
+        if (!user) { setUnread(0); return; }
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/chat/get', { headers: token ? { Authorization: `Bearer ${token}` } : {} });
         if (!res.ok) return;
         const data = await res.json();
         if (!mounted) return;
-        const count = Array.isArray(data) ? data.filter((m: any) => m.sender !== 'User').length : 0;
+        const count = Array.isArray(data)
+          ? data.filter((m: any) => m.sender !== user.userId && !(m.seenBy || []).includes(user.userId)).length
+          : 0;
         setUnread(count);
-      } catch (e) {}
+      } catch (e) {
+        console.error(e);
+      }
     };
 
     load();
