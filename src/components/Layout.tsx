@@ -1,6 +1,5 @@
 /**
  * Main layout component with header and sidebar navigation
- * Updated: Added Chat icon in header
  */
 
 import { useState, ReactNode } from 'react';
@@ -18,7 +17,6 @@ import {
   Menu,
   X,
   LogOut,
-  MessageCircle,      // ← NEW
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -72,31 +70,14 @@ export default function Layout({ children }: LayoutProps) {
               </h1>
             </Link>
           </div>
-
-          {/* Right side - User info + Chat + Logout */}
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            {/* Chat Button */}
-            <Link
-              href="/chat"
-              className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 text-gray-600 transition-colors touch-manipulation"
-              title="Chat & Notices"
-              aria-label="Open chat and notices"
-            >
-              <MessageCircle size={22} />
-            </Link>
-
-            {/* User info - visible on larger screens */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <div className="text-right hidden md:block">
               <div className="text-sm font-medium text-gray-700">{user?.userId}</div>
               <div className="text-xs text-gray-500">{user?.role}</div>
             </div>
-
-            {/* Avatar */}
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold flex-shrink-0">
               {user?.userId?.[0]?.toUpperCase() || 'U'}
             </div>
-
-            {/* Logout */}
             <button
               onClick={handleLogout}
               className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 text-gray-600 touch-manipulation"
@@ -110,7 +91,7 @@ export default function Layout({ children }: LayoutProps) {
       </header>
 
       <div className="flex w-full">
-        {/* Sidebar - unchanged */}
+        {/* Sidebar */}
         <aside
           className={`
             fixed lg:sticky top-[64px] left-0 h-[calc(100vh-4rem)] w-64 bg-white shadow-lg z-30
@@ -164,3 +145,4 @@ export default function Layout({ children }: LayoutProps) {
     </div>
   );
 }
+
