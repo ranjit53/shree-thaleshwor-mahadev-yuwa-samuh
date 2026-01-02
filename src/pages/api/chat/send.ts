@@ -6,6 +6,11 @@ type Message = {
   id: string;
   sender: string;
   text: string;
+  attachment?: {
+    name: string;
+    url: string;
+    type?: string;
+  } | null;
   timestamp: string;
 };
 
@@ -39,10 +44,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const list: Message[] = result?.data ?? [];
     const sha = result?.sha;
 
+    let attachmentInfo: Message['attachment'] = null;
+    const { attachment } = req.body || {};
+    if (attachment && payload && payload.role === 'Admin') {
+      // attachment expected: { name, data (base64 string without data: header), type }
+      const filename = `${Date.now()}-${attachment.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const path = `public/uploads/${filename}`;
+
+      // write file to GitHub using raw content (attachment.data must be base64)
+      await writeRawFile(path, attachment.data, githubToken, owner, repo);
+
+      // raw.githubusercontent URL
+      const url = `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`;
+      attachmentInfo = { name: attachment.name, url, type: attachment.type };
+    }
+
     const newMsg: Message = {
       id: Date.now().toString(),
       sender,
       text,
+      attachment: attachmentInfo,
       timestamp: new Date().toISOString(),
     };
 
