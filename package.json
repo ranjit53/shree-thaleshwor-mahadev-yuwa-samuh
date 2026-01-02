@@ -21,7 +21,7 @@
     "lucide-react": "^0.294.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
-    "chart.js": "^4.4.3",
+    "chart.js": "^4.4.4",
     "react-chartjs-2": "^5.2.0"
   },
   "devDependencies": {
