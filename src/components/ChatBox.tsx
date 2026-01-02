@@ -62,7 +62,7 @@ export default function ChatBox() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() && !selectedFilePayload) return;
     setLoading(true);
     const payload: any = { text: text.trim() };
     // include attachment if present and user is admin
@@ -80,6 +80,10 @@ export default function ChatBox() {
       const newMsg: Message = await res.json();
       setMessages(prev => [...prev, newMsg]);
       setText('');
+      // clear selected file after successful send
+      setSelectedFile(null);
+      setSelectedFileName(null);
+      setSelectedFilePayload(null);
       // focus input after send
       inputRef.current?.focus();
     } catch (err) {
@@ -180,6 +184,17 @@ export default function ChatBox() {
                 <div className={`mt-1 px-3 py-2 rounded-md inline-block max-w-full ${isOwn ? 'bg-indigo-50 text-right' : 'bg-gray-100'}`}>
                   {!isOwn && <div className="text-sm font-medium">{m.sender}</div>}
                   <div className="text-sm">{m.text}</div>
+                  {m.attachment && (
+                    <div className="mt-2">
+                      {m.attachment.type?.startsWith('image/') ? (
+                        <img src={m.attachment.url} alt={m.attachment.name} className="max-w-xs rounded" />
+                      ) : (
+                        <a href={m.attachment.url} target="_blank" rel="noreferrer" className="text-indigo-600 underline">
+                          {m.attachment.name}
+                        </a>
+                      )}
+                    </div>
+                  )}
                   {(isOwn || isAdmin) && (
                     <div className="mt-1 text-xs flex gap-2 justify-end">
                       {isOwn && <button onClick={() => startEdit(m)} className="text-indigo-600">Edit</button>}
