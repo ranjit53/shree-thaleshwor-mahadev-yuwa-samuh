@@ -18,6 +18,9 @@
     "sender": "user",
     "text": "नमस्कार 🙏",
     "attachment": null,
-    "timestamp": "2026-01-05T12:11:26.908Z"
+    "timestamp": "2026-01-05T12:11:26.908Z",
+    "seenBy": [
+      "user"
+    ]
   }
 ]
