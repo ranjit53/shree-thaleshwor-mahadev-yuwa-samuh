@@ -35,5 +35,15 @@
     "termMonths": 6,
     "purpose": "Home Loan",
     "status": "active"
+  },
+  {
+    "id": "L-1767939813741",
+    "memberId": "M-0011",
+    "principal": 51770,
+    "interestRate": 20,
+    "startDate": "2026-01-09",
+    "termMonths": 6,
+    "purpose": "kirana",
+    "status": "active"
   }
 ]
