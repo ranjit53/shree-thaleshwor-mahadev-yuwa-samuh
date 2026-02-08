@@ -800,5 +800,12 @@
     "amount": 1000,
     "date": "2026-02-08",
     "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533749821",
+    "memberId": "M-0009",
+    "amount": 2000,
+    "date": "2026-02-08",
+    "remarks": "purano"
   }
 ]
