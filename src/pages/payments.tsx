@@ -317,7 +317,7 @@ export default function PaymentsPage() {
                   className="flex items-center gap-2 bg-info text-white px-4 py-2 rounded-lg hover:bg-info/90 transition-colors"
                 >
                   <Plus size={20} />
-                  Add Payment
+                  Add Intrest
                 </button>
                 <button
                   onClick={() => {
@@ -1203,3 +1203,4 @@ export default function PaymentsPage() {
     </ProtectedRoute>
   );
 }
+
