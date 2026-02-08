@@ -102,7 +102,6 @@ export default function Dashboard() {
       const totalMembers = members.length;
       const totalSaving = savings.reduce((sum, s) => sum + s.amount, 0);
       
-      // FIX 1: Update calculateOutstandingPrincipal call to match new utils.ts signature
       const totalLoan = loans.reduce((sum, l) => {
         const loanPayments = payments.filter(p => p.loanId === l.id);
         const outstanding = calculateOutstandingPrincipal(
@@ -181,13 +180,11 @@ export default function Dashboard() {
       const interestDefaulterMap = new Map<string, InterestDefaulter>();
 
       loans.forEach(loan => {
-        // 1. Skip new loans (Interest not yet due)
         if (loan.startDate.startsWith(currentMonthKey)) {
           return;
         }
 
         const loanPayments = payments.filter(p => p.loanId === loan.id);
-        // FIX 2: Update calculateOutstandingPrincipal call to match new utils.ts signature
         const outstanding = calculateOutstandingPrincipal(
           loan.principal, 
           loan.interestRate, 
@@ -195,17 +192,14 @@ export default function Dashboard() {
           loanPayments
         );
         
-        // 2. Only check active loans
         if (outstanding <= 0) {
             return;
         }
 
-        // 3. Find the latest date of a payment that included interest
         const latestInterestPayment = loanPayments
             .filter(p => p.interestPaid > 0)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
-        // Determine the baseline date for overdue calculation
         let lastPaymentDateStr: string;
         let lastPaymentMonthKey: string;
 
@@ -213,23 +207,19 @@ export default function Dashboard() {
             lastPaymentDateStr = latestInterestPayment.date;
             lastPaymentMonthKey = getMonthKey(latestInterestPayment.date);
         } else {
-            // If no interest payment was ever made, use the loan start date.
             lastPaymentDateStr = loan.startDate;
             lastPaymentMonthKey = getMonthKey(loan.startDate);
         }
 
-        // 4. Check if overdue: Last payment month is NOT the current month
         if (lastPaymentMonthKey !== currentMonthKey) {
             const lastPaymentMonthDate = new Date(lastPaymentMonthKey);
             
-            // Calculate the difference in months: Current Month - Last Paid Month
             let pendingMonths = calculateMonthDiff(currentMonthDate, lastPaymentMonthDate);
 
             if (pendingMonths > 0) {
                 const member = members.find(m => m.id === loan.memberId);
                 if (!member) return;
 
-                // Handle multiple overdue loans for one member: keep the highest pendingMonths count
                 const existingDefaulter = interestDefaulterMap.get(member.id);
 
                 if (!existingDefaulter || pendingMonths > existingDefaulter.pendingMonths) {
@@ -249,47 +239,59 @@ export default function Dashboard() {
       // =========================================================
 
       // Prepare line chart data (monthly trends)
-      const monthlyData: { [key: string]: { saving: number; loan: number; fine: number; interest: number; expenditure: number; month: string } } = {};
+      const monthlyData: { [key: string]: { 
+        saving: number; 
+        loan: number; 
+        fine: number; 
+        interest: number; 
+        expenditure: number; 
+        collection: number;    // ← NEW
+        month: string 
+      } } = {};
       
+      // Initialize months from all data sources
+      const allDates = [
+        ...savings.map(s => s.date),
+        ...loans.map(l => l.startDate),
+        ...fines.map(f => f.date),
+        ...payments.map(p => p.date),
+        ...expenditures.map(e => e.date),
+      ];
+
+      allDates.forEach(dateStr => {
+        const month = new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        if (!monthlyData[month]) {
+          monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, collection: 0, month };
+        }
+      });
+
       savings.forEach(s => {
         const month = new Date(s.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-        if (!monthlyData[month]) {
-          monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, month };
-        }
         monthlyData[month].saving += s.amount;
+        monthlyData[month].collection += s.amount;           // ← NEW
       });
 
       loans.forEach(l => {
         const month = new Date(l.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-        if (!monthlyData[month]) {
-          monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, month };
-        }
         monthlyData[month].loan += l.principal;
       });
 
       fines.forEach(f => {
         const month = new Date(f.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-        if (!monthlyData[month]) {
-          monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, month };
-        }
         monthlyData[month].fine += f.amount;
+        monthlyData[month].collection += f.amount;           // ← NEW
       });
 
       payments.forEach(p => {
         if (p.interestPaid > 0) {
           const month = new Date(p.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-          if (!monthlyData[month]) {
-            monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, month };
-          }
           monthlyData[month].interest += p.interestPaid;
+          monthlyData[month].collection += p.interestPaid;   // ← NEW
         }
       });
 
       expenditures.forEach(e => {
         const month = new Date(e.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-        if (!monthlyData[month]) {
-          monthlyData[month] = { saving: 0, loan: 0, fine: 0, interest: 0, expenditure: 0, month };
-        }
         monthlyData[month].expenditure += e.amount;
       });
 
@@ -304,7 +306,6 @@ export default function Dashboard() {
       loans.forEach(loan => {
         const loanPayments = payments.filter(p => p.loanId === loan.id);
         
-        // FIX 3: Update calculateOutstandingPrincipal call to match new utils.ts signature
         const outstanding = calculateOutstandingPrincipal(
           loan.principal, 
           loan.interestRate, 
@@ -385,6 +386,13 @@ export default function Dashboard() {
       color: 'bg-danger',
       onClick: () => router.push('/payments'),
     },
+	{
+      title: 'Net Collected Amount',
+      value: formatCurrency(stats.totalSaving + stats.totalInterest + totalFine),
+      icon: DollarSign,
+      color: 'bg-indigo-700',
+      onClick: () => router.push('/payments'),
+    },
     {
       title: 'Net Available Balance',
       value: formatCurrency(stats.availableBalance),
@@ -450,6 +458,7 @@ export default function Dashboard() {
                     <Tooltip formatter={(value: number) => formatCurrency(value)} />
                     <Legend />
                     <Line type="monotone" dataKey="saving" stroke="#10b981" strokeWidth={2} name="Saving" />
+                    <Line type="monotone" dataKey="collection" stroke="#8b5cf6" strokeWidth={2} name="Collection" /> {/* ← NEW */}
                     <Line type="monotone" dataKey="loan" stroke="#f59e0b" strokeWidth={2} name="Loan" />
                     <Line type="monotone" dataKey="fine" stroke="#ef4444" strokeWidth={2} name="Fine" />
                     <Line type="monotone" dataKey="interest" stroke="#3b82f6" strokeWidth={2} name="Interest" />
