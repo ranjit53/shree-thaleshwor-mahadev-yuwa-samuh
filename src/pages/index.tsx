@@ -458,7 +458,6 @@ export default function Dashboard() {
                     <Tooltip formatter={(value: number) => formatCurrency(value)} />
                     <Legend />
                     <Line type="monotone" dataKey="saving" stroke="#10b981" strokeWidth={2} name="Saving" />
-                    <Line type="monotone" dataKey="collection" stroke="#8b5cf6" strokeWidth={2} name="Collection" /> {/* ← NEW */}
                     <Line type="monotone" dataKey="loan" stroke="#f59e0b" strokeWidth={2} name="Loan" />
                     <Line type="monotone" dataKey="fine" stroke="#ef4444" strokeWidth={2} name="Fine" />
                     <Line type="monotone" dataKey="interest" stroke="#3b82f6" strokeWidth={2} name="Interest" />
@@ -570,3 +569,4 @@ export default function Dashboard() {
     </ProtectedRoute>
   );
 }
+
