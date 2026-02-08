@@ -653,5 +653,152 @@
     "memberId": "M-0021",
     "amount": 5200,
     "date": "2026-01-09"
+  },
+  {
+    "id": "S-1770533681257-0",
+    "memberId": "M-0001",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-1",
+    "memberId": "M-0002",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-2",
+    "memberId": "M-0003",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-3",
+    "memberId": "M-0004",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-4",
+    "memberId": "M-0005",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-5",
+    "memberId": "M-0006",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-6",
+    "memberId": "M-0007",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-7",
+    "memberId": "M-0008",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-8",
+    "memberId": "M-0009",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-9",
+    "memberId": "M-0010",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-10",
+    "memberId": "M-0011",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-11",
+    "memberId": "M-0012",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-12",
+    "memberId": "M-0013",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-13",
+    "memberId": "M-0014",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-14",
+    "memberId": "M-0015",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-15",
+    "memberId": "M-0016",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-16",
+    "memberId": "M-0017",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-17",
+    "memberId": "M-0018",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-18",
+    "memberId": "M-0019",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-19",
+    "memberId": "M-0020",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
+  },
+  {
+    "id": "S-1770533681257-20",
+    "memberId": "M-0021",
+    "amount": 1000,
+    "date": "2026-02-08",
+    "remarks": "Bulk fixed saving"
   }
 ]
