@@ -45,5 +45,14 @@
     "termMonths": 6,
     "purpose": "kirana",
     "status": "active"
+  },
+  {
+    "id": "L-1770534196215",
+    "memberId": "M-0010",
+    "principal": 64330,
+    "interestRate": 20,
+    "startDate": "2026-02-08",
+    "termMonths": 6,
+    "status": "active"
   }
 ]
