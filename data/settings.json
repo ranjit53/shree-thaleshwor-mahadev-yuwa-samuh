@@ -41,6 +41,12 @@
       "name": "Shiv",
       "password": "$2a$10$EONWLQqI5EyiW2hjDXZQHupNxcnLViGR1LIMnoNJyTAIRN.LQN2BC",
       "role": "Viewer"
+    },
+    {
+      "userId": "Jitendra",
+      "name": "Jitendra",
+      "password": "$2a$10$cPtTWtxaxaQQSbx7DyTRzeSrCCLsgs85FaXIQizTUCuVD.QT4ZtF.",
+      "role": "Admin"
     }
   ]
 }
