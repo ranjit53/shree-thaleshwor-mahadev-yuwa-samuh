@@ -54,5 +54,14 @@
     "startDate": "2026-02-08",
     "termMonths": 6,
     "status": "active"
+  },
+  {
+    "id": "L-1773139725871",
+    "memberId": "M-0017",
+    "principal": 10000,
+    "interestRate": 20,
+    "startDate": "2026-03-09",
+    "termMonths": 6,
+    "status": "active"
   }
 ]
