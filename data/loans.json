@@ -63,5 +63,15 @@
     "startDate": "2026-03-09",
     "termMonths": 6,
     "status": "active"
+  },
+  {
+    "id": "L-1775663838828",
+    "memberId": "M-0008",
+    "principal": 36600,
+    "interestRate": 20,
+    "startDate": "2026-04-08",
+    "termMonths": 6,
+    "purpose": "Agriculture",
+    "status": "active"
   }
 ]
