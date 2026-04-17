@@ -53,6 +53,12 @@
       "name": "Arjun",
       "password": "$2a$10$Wz8IlUf9vUAYTLThklLL...RjvF0K0WnVRnRI4Wxx/MIlBE7c0/ky",
       "role": "Viewer"
+    },
+    {
+      "userId": "shivram",
+      "name": "Shivram",
+      "password": "$2a$10$YelDMc.BZzRv8i//mXS.bOS4nFrEhE3u1G8LZ0ZyjmVMNzlMxD1R2",
+      "role": "Viewer"
     }
   ]
 }
