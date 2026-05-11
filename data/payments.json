@@ -210,5 +210,13 @@
     "date": "2026-05-08",
     "principalPaid": 0,
     "interestPaid": 166.67
+  },
+  {
+    "id": "P-1778500326861",
+    "loanId": "L-1775663838828",
+    "memberId": "M-0008",
+    "date": "2026-05-08",
+    "principalPaid": 0,
+    "interestPaid": 610
   }
 ]
