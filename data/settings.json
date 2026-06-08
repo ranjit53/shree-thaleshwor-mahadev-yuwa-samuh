@@ -53,6 +53,12 @@
       "name": "Arjin",
       "password": "$2a$10$E7hMBMKotrrq90qISefWae40Qw1CkI3VRtq2uVj18D6jEOcQ7BRVy",
       "role": "Viewer"
+    },
+    {
+      "userId": "Jitendra",
+      "name": "Jitendra",
+      "password": "$2a$10$LTRIgqyc2Q2kNBPEBxYGfuVDVUOSLInqWmo.7pVV.4On6u7e1IVnC",
+      "role": "Admin"
     }
   ]
 }
