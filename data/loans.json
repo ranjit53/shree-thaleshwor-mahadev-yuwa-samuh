@@ -73,5 +73,14 @@
     "termMonths": 6,
     "purpose": "Agriculture",
     "status": "closed"
+  },
+  {
+    "id": "L-1781110167901",
+    "memberId": "M-0005",
+    "principal": 80235,
+    "interestRate": 20,
+    "startDate": "2026-05-08",
+    "termMonths": 6,
+    "status": "active"
   }
 ]
