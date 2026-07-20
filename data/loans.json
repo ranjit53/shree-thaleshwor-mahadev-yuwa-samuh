@@ -82,5 +82,15 @@
     "startDate": "2026-05-08",
     "termMonths": 6,
     "status": "active"
+  },
+  {
+    "id": "L-1784561616929",
+    "memberId": "M-0009",
+    "principal": 85170,
+    "interestRate": 20,
+    "startDate": "2026-07-09",
+    "termMonths": 6,
+    "purpose": "Busness Loan",
+    "status": "active"
   }
 ]
