@@ -63,6 +63,9 @@
     "sender": "Ranjit",
     "text": "Everything Updated, Sorry For Late. Thank You",
     "attachment": null,
-    "timestamp": "2026-07-20T15:36:29.294Z"
+    "timestamp": "2026-07-20T15:36:29.294Z",
+    "seenBy": [
+      "Ranjit"
+    ]
   }
 ]
