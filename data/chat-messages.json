@@ -78,6 +78,9 @@
     "sender": "Shiv",
     "text": "Hi",
     "attachment": null,
-    "timestamp": "2026-07-26T15:26:59.977Z"
+    "timestamp": "2026-07-26T15:26:59.977Z",
+    "seenBy": [
+      "Shiv"
+    ]
   }
 ]
