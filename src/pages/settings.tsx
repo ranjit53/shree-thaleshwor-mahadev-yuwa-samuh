@@ -28,6 +28,10 @@ type LocalMember = Member & {
 // --- HELPER: Devanagari to English Transliteration ---
 const transliterateToEnglish = (text: string): string => {
   if (!text) return '';
+  
+  // Mapping for Nepali/Devanagari characters
+ const transliterateToEnglish = (text: string): string => {
+  if (!text) return '';
 
   // 1. Handle explicit word-replacement translations first (e.g., brackets)
   let processedText = text;
@@ -130,8 +134,7 @@ const testNames = [
 
 testNames.forEach(name => console.log(`${name} = ${transliterateToEnglish(name)}`));
 
-
-  export default function SettingsPage() {
+export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'users' | 'bulk' | 'backup' | 'reports'>('users');
