@@ -71,7 +71,11 @@ export default function SettingsPage() {
 
   // Report states
   const [reportLoading, setReportLoading] = useState(false);
-  const [selectedReportYear, setSelectedReportYear] = useState<number>(new Date().getFullYear());
+  const currentReportDate = new Date();
+  const [reportFromYear, setReportFromYear] = useState<number>(currentReportDate.getFullYear());
+  const [reportFromMonth, setReportFromMonth] = useState<number>(currentReportDate.getMonth() + 1);
+  const [reportToYear, setReportToYear] = useState<number>(currentReportDate.getFullYear());
+  const [reportToMonth, setReportToMonth] = useState<number>(currentReportDate.getMonth() + 1);
 
   useEffect(() => {
     if (isAdmin) {
@@ -424,7 +428,7 @@ export default function SettingsPage() {
   // =========================================================
   // IMPROVED REPORT GENERATION (ID FIRST, SERIAL WISE, P&L, TRANSLITERATION)
   // =========================================================
-  const generateReport = async (period: 'q1' | 'q2' | 'q3' | 'q4' | 'annual') => {
+  const generateReport = async () => {
     setReportLoading(true);
     try {
       const [membersRes, savingsRes, loansRes, paymentsRes, finesRes, expRes] = await Promise.all([
@@ -444,16 +448,13 @@ export default function SettingsPage() {
       const fines = finesRes ?? [];
       const expenditures = expRes ?? [];
 
-      const year = selectedReportYear;
-      let startDate: Date, endDate: Date;
+      // Selected report range: from (YY, MM) through (YY, MM), inclusive.
+      const startDate = new Date(reportFromYear, reportFromMonth - 1, 1);
+      const endDate = new Date(reportToYear, reportToMonth, 0, 23, 59, 59, 999);
 
-      if (period === 'annual') {
-        startDate = new Date(year, 0, 1);
-        endDate = new Date(year, 11, 31);
-      } else {
-        const quarter = parseInt(period.slice(1)) - 1;
-        startDate = new Date(year, quarter * 3, 1);
-        endDate = new Date(year, quarter * 3 + 3, 0);
+      if (startDate > endDate) {
+        toast.error('From month/year cannot be after To month/year');
+        return;
       }
 
       const formatDateStr = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -527,9 +528,7 @@ export default function SettingsPage() {
 
       y += 10;
       doc.setFontSize(16);
-      const periodTitle = period === 'annual' 
-        ? `${year} Annual Report` 
-        : `${year} ${period.toUpperCase()} Quarterly Report`;
+      const periodTitle = `${reportFromYear}-${String(reportFromMonth).padStart(2, '0')} to ${reportToYear}-${String(reportToMonth).padStart(2, '0')} Report`;
       doc.text(periodTitle, pageWidth / 2, y, { align: 'center' });
 
       y += 8;
@@ -1007,41 +1006,83 @@ export default function SettingsPage() {
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-primary">
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-primary"><FileText size={24} />Professional Reports</h3>
-                <div className="mb-6 max-w-xs">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Report Year</label>
-                  <input
-                    type="number"
-                    min="2000"
-                    max="2100"
-                    value={selectedReportYear}
-                    onChange={(e) => setSelectedReportYear(parseInt(e.target.value) || new Date().getFullYear())}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Current year: {new Date().getFullYear()}</p>
+
+                <div className="mb-6">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Select the starting and ending year/month. The report includes both selected months.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                    <div className="border rounded-lg p-4 bg-gray-50">
+                      <h4 className="font-semibold text-gray-800 mb-3">From (YY, MM)</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Year (YY)</label>
+                          <input
+                            type="number"
+                            min="2000"
+                            max="2100"
+                            value={reportFromYear}
+                            onChange={(e) => setReportFromYear(parseInt(e.target.value) || new Date().getFullYear())}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Month (MM)</label>
+                          <select
+                            value={reportFromMonth}
+                            onChange={(e) => setReportFromMonth(parseInt(e.target.value))}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                          >
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                              <option key={month} value={month}>{String(month).padStart(2, '0')}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border rounded-lg p-4 bg-gray-50">
+                      <h4 className="font-semibold text-gray-800 mb-3">To (YY, MM)</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Year (YY)</label>
+                          <input
+                            type="number"
+                            min="2000"
+                            max="2100"
+                            value={reportToYear}
+                            onChange={(e) => setReportToYear(parseInt(e.target.value) || new Date().getFullYear())}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Month (MM)</label>
+                          <select
+                            value={reportToMonth}
+                            onChange={(e) => setReportToMonth(parseInt(e.target.value))}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                          >
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                              <option key={month} value={month}>{String(month).padStart(2, '0')}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                  <button onClick={() => generateReport('q1')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
-                    <Download size={20} />
-                    1st Quarter ({selectedReportYear} Jan–Mar)
-                  </button>
-                  <button onClick={() => generateReport('q2')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
-                    <Download size={20} />
-                    2nd Quarter ({selectedReportYear} Apr–Jun)
-                  </button>
-                  <button onClick={() => generateReport('q3')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
-                    <Download size={20} />
-                    3rd Quarter ({selectedReportYear} Jul–Sep)
-                  </button>
-                  <button onClick={() => generateReport('q4')} disabled={reportLoading} className="bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium">
-                    <Download size={20} />
-                    4th Quarter ({selectedReportYear} Oct–Dec)
-                  </button>
-                  <button onClick={() => generateReport('annual')} disabled={reportLoading} className="bg-green-600 text-white py-4 px-6 rounded-lg shadow hover:bg-green-700 disabled:opacity-60 flex items-center justify-center gap-2 font-medium md:col-span-2">
-                    <Download size={20} />
-                    Annual Report (Full Year {selectedReportYear})
-                  </button>
-                </div>
+                <button
+                  onClick={generateReport}
+                  disabled={reportLoading}
+                  className="w-full max-w-2xl bg-primary text-white py-4 px-6 rounded-lg shadow hover:bg-primary/90 disabled:opacity-60 flex items-center justify-center gap-2 font-medium"
+                >
+                  <Download size={20} />
+                  {reportLoading
+                    ? 'Generating Report...'
+                    : `Generate Report (${reportFromYear}-${String(reportFromMonth).padStart(2, '0')} to ${reportToYear}-${String(reportToMonth).padStart(2, '0')})`}
+                </button>
 
                 {reportLoading && (
                   <p className="text-center text-gray-500 mt-6">Generating report, please wait...</p>
