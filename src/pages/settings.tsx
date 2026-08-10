@@ -43,22 +43,21 @@ const transliterateToEnglish = (text: string): string => {
   }
 
   // Mapping for individual Devanagari characters
- const transliterateToEnglish = (text: string): string => {
+const transliterateToEnglish = (text: string): string => {
   if (!text) return '';
 
-  // 1. Process inline translations for bracket terms dynamically
+  // 1. Process explicit dictionary mappings first
   let processedText = text;
   const translationDict: { [key: string]: string } = {
     'ट्रैक्टर': 'TRACTOR',
     'Media': 'MEDIA'
   };
 
-  // Replace any matching terms inside parentheses
   for (const [hindiTerm, englishTerm] of Object.entries(translationDict)) {
-    processedText = processedText.replace(hindiTerm, englishTerm);
+    processedText = processedText.replace(new RegExp(hindiTerm, 'g'), englishTerm);
   }
 
-  // 2. Primary Devanagari Base Map
+  // 2. Transliteration Character Maps
   const map: { [key: string]: string } = {
     'अ': 'A', 'आ': 'AA', 'इ': 'I', 'ई': 'EE', 'उ': 'U', 'ऊ': 'OO', 'ऋ': 'RI', 'ए': 'E', 'ऐ': 'AI', 'ओ': 'O', 'औ': 'AU',
     'क': 'K', 'ख': 'KH', 'ग': 'G', 'घ': 'GH', 'ङ': 'NG',
@@ -72,76 +71,82 @@ const transliterateToEnglish = (text: string): string => {
     '०': '0', '१': '1', '२': '2', '३': '3', '४': '4', '५': '5', '६': '6', '७': '7', '८': '8', '९': '9'
   };
 
-  // Customized Matra choices matching your dataset rules (e.g., प्रदीप -> PRADIP)
   const matraMap: { [key: string]: string } = {
     'ा': 'A', 'ि': 'I', 'ी': 'I', 'ु': 'U', 'ू': 'U', 'ृ': 'RI', 'े': 'E', 'ै': 'AI', 'ो': 'O', 'ौ': 'AU'
   };
 
   const consonants = new Set(Object.keys(map).filter(k => !['अ','आ','इ','ई','उ','ऊ','ऋ','ए','ऐ','ओ','औ','०','१','२','३','४','५','६','७','८','९'].includes(k)));
 
-  let result = '';
-  const chars = Array.from(processedText);
-
-  for (let i = 0; i < chars.length; i++) {
-    let current = chars[i];
-    let next = chars[i + 1];
-
-    // Pass through English letters and brackets unchanged
-    if (/[A-Za-z() ]/.test(current)) {
-      result += current;
-      continue;
+  // 3. Process Text Segmentally Word by Word
+  const words = processedText.split(/(\s+|\(|\))/);
+  const processedWords = words.map(word => {
+    // If it's already an English word, space, or bracket, return it directly
+    if (/^[A-Za-z0-9() \n]+$/.test(word)) {
+      return word;
     }
 
-    if (!map[current] && !matraMap[current] && current !== 'ं' && current !== '्') {
-      result += current;
-      continue;
-    }
+    let wordResult = '';
+    const chars = Array.from(word);
 
-    if (map[current]) {
-      const isEndOfWord = !next || next === ' ' || next === '\n' || next === '(';
+    for (let i = 0; i < chars.length; i++) {
+      const current = chars[i];
+      const next = chars[i + 1];
 
-      // Exception 1: Contextual terminal 'व' mapping to 'V' (e.g., शिव -> SHIV)
-      if (current === 'व' && isEndOfWord) {
-        result += 'V';
-      } else {
-        result += map[current];
-      }
+      if (map[current]) {
+        const isLastChar = (i === chars.length - 1);
 
-      // Handle inherent vowel addition logic
-      if (consonants.has(current)) {
-        const isFollowedByMatra = next && matraMap[next];
-        const isFollowedByHalant = next === '्';
-        const isFollowedByAnusvar = next === 'ं';
-        
-        // Exception 2: Conjunct ending rule to retain terminal 'A' (e.g., नगेन्द्र -> NAGENDRA)
-        const isConjunctEnding = current === 'र' && chars[i - 1] === '्';
+        // Exception Rule 1: 'व' at the end of a standalone name segment maps to 'V'
+        if (current === 'व' && isLastChar) {
+          wordResult += 'V';
+        } else {
+          wordResult += map[current];
+        }
 
-        if (!isFollowedByMatra && !isFollowedByHalant && !isFollowedByAnusvar) {
-          if (!isEndOfWord || isConjunctEnding) {
-            result += 'A';
+        // Handle Inherent 'A' sound insertion rules
+        if (consonants.has(current)) {
+          const hasMatra = next && matraMap[next];
+          const hasHalant = next === '्';
+          const hasAnusvar = next === 'ं';
+
+          if (!hasMatra && !hasHalant && !hasAnusvar) {
+            // Check if word ends with a complex conjunct sequence like 'न्द्र' or 'त्र'
+            const isConjunctEnding = word.endsWith('न्द्र') || word.endsWith('त्र') || word.endsWith('द्र');
+            
+            if (!isLastChar || isConjunctEnding) {
+              wordResult += 'A';
+            }
           }
         }
+      } 
+      else if (matraMap[current]) {
+        wordResult += matraMap[current];
+      } 
+      else if (current === 'ं') {
+        // Exception Rule 2: Anusvar conversion context (सिंह -> SINGH)
+        if (next === 'ह') {
+          wordResult += 'NG';
+        } else {
+          wordResult += 'N';
+        }
       }
-    } 
-    else if (matraMap[current]) {
-      result += matraMap[current];
-    } 
-    // Exception 3: Anusvar conversion context (e.g., सिंह -> SINGH)
-    else if (current === 'ं') {
-      if (next === 'ह') {
-        result += 'NG';
-      } else {
-        result += 'N';
+      else if (current === '्') {
+        continue; // Halant drops vowel context naturally
       }
     }
-    else if (current === '्') {
-      continue;
-    }
-  }
+    return wordResult;
+  });
 
-  // Normalize spaces and convert everything to upper case
-  return result.replace(/\s+/g, ' ').trim().toUpperCase();
+  // Re-assemble segments, remove layout artifacts, and capitalize
+  return processedWords.join('').replace(/\s+/g, ' ').trim().toUpperCase();
 };
+
+// --- Execution Validation ---
+const dataset = [
+  "दिनेश्वर सिंह", "जितेन्द्र कुमार महतो", "संतोष महतो (Media)", "शिव शंकर साह",
+  "सुरेन्द्र कुमार महतो", "सत्रुधन राय", "बेनी मधब कुशवाहा", "सन्तोष महतो (ट्रैक्टर)"
+];
+dataset.forEach(name => console.log(`${name} -> ${transliterateToEnglish(name)}`));
+
 
   export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
