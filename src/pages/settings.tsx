@@ -29,24 +29,7 @@ type LocalMember = Member & {
 const transliterateToEnglish = (text: string): string => {
   if (!text) return '';
 
-  // 1. Handle explicit word-replacement translations first (e.g., brackets)
-  let processedText = text;
-  const translations: { [key: string]: string } = {
-    '(Media)': '(MEDIA)',
-    '(ट्रैक्टर)': '(TRACTOR)'
-  };
-  
-  for (const [key, value] of Object.entries(translations)) {
-    if (processedText.includes(key)) {
-      processedText = processedText.replace(key, value);
-    }
-  }
-
-  // Mapping for individual Devanagari characters
-const transliterateToEnglish = (text: string): string => {
-  if (!text) return '';
-
-  // 1. Process explicit dictionary mappings first
+  // 1. Process explicit dictionary mappings first (e.g., brackets)
   let processedText = text;
   const translationDict: { [key: string]: string } = {
     'ट्रैक्टर': 'TRACTOR',
@@ -57,7 +40,7 @@ const transliterateToEnglish = (text: string): string => {
     processedText = processedText.replace(new RegExp(hindiTerm, 'g'), englishTerm);
   }
 
-  // 2. Transliteration Character Maps
+  // 2. Primary Devanagari Base Map
   const map: { [key: string]: string } = {
     'अ': 'A', 'आ': 'AA', 'इ': 'I', 'ई': 'EE', 'उ': 'U', 'ऊ': 'OO', 'ऋ': 'RI', 'ए': 'E', 'ऐ': 'AI', 'ओ': 'O', 'औ': 'AU',
     'क': 'K', 'ख': 'KH', 'ग': 'G', 'घ': 'GH', 'ङ': 'NG',
@@ -71,13 +54,14 @@ const transliterateToEnglish = (text: string): string => {
     '०': '0', '१': '1', '२': '2', '३': '3', '४': '4', '५': '5', '६': '6', '७': '7', '८': '8', '९': '9'
   };
 
+  // Customized Matra choices matching your dataset rules (e.g., प्रदीप -> PRADIP)
   const matraMap: { [key: string]: string } = {
     'ा': 'A', 'ि': 'I', 'ी': 'I', 'ु': 'U', 'ू': 'U', 'ृ': 'RI', 'े': 'E', 'ै': 'AI', 'ो': 'O', 'ौ': 'AU'
   };
 
   const consonants = new Set(Object.keys(map).filter(k => !['अ','आ','इ','ई','उ','ऊ','ऋ','ए','ऐ','ओ','औ','०','१','२','३','४','५','६','७','८','९'].includes(k)));
 
-  // 3. Process Text Segmentally Word by Word
+  // 3. Process Text Segmentally Word by Word to prevent bracket bugs
   const words = processedText.split(/(\s+|\(|\))/);
   const processedWords = words.map(word => {
     // If it's already an English word, space, or bracket, return it directly
@@ -95,7 +79,7 @@ const transliterateToEnglish = (text: string): string => {
       if (map[current]) {
         const isLastChar = (i === chars.length - 1);
 
-        // Exception Rule 1: 'व' at the end of a standalone name segment maps to 'V'
+        // Rule for SHIV: 'व' at the very end of a word maps to 'V'
         if (current === 'व' && isLastChar) {
           wordResult += 'V';
         } else {
@@ -122,7 +106,7 @@ const transliterateToEnglish = (text: string): string => {
         wordResult += matraMap[current];
       } 
       else if (current === 'ं') {
-        // Exception Rule 2: Anusvar conversion context (सिंह -> SINGH)
+        // Rule for SINGH: Anusvar before 'ह' converts to 'NG'
         if (next === 'ह') {
           wordResult += 'NG';
         } else {
@@ -139,13 +123,6 @@ const transliterateToEnglish = (text: string): string => {
   // Re-assemble segments, remove layout artifacts, and capitalize
   return processedWords.join('').replace(/\s+/g, ' ').trim().toUpperCase();
 };
-
-// --- Execution Validation ---
-const dataset = [
-  "दिनेश्वर सिंह", "जितेन्द्र कुमार महतो", "संतोष महतो (Media)", "शिव शंकर साह",
-  "सुरेन्द्र कुमार महतो", "सत्रुधन राय", "बेनी मधब कुशवाहा", "सन्तोष महतो (ट्रैक्टर)"
-];
-dataset.forEach(name => console.log(`${name} -> ${transliterateToEnglish(name)}`));
 
 
   export default function SettingsPage() {
