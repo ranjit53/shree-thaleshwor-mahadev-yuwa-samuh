@@ -29,7 +29,7 @@ type LocalMember = Member & {
 const transliterateToEnglish = (text: string): string => {
   if (!text) return '';
   
-  // Mapping for individual Devanagari characters (Consonants & Vowels)
+  // Mapping for individual Devanagari characters
   const map: { [key: string]: string } = {
     'अ': 'A', 'आ': 'AA', 'इ': 'I', 'ई': 'EE', 'उ': 'U', 'ऊ': 'OO', 'ऋ': 'RI', 'ए': 'E', 'ऐ': 'AI', 'ओ': 'O', 'औ': 'AU',
     'क': 'K', 'ख': 'KH', 'ग': 'G', 'घ': 'GH', 'ङ': 'NG',
@@ -48,29 +48,24 @@ const transliterateToEnglish = (text: string): string => {
     'ा': 'A', 'ि': 'I', 'ी': 'EE', 'ु': 'U', 'ू': 'OO', 'ृ': 'RI', 'े': 'E', 'ै': 'AI', 'ो': 'O', 'ौ': 'AU'
   };
 
-  // Set of characters that are standalone consonants requiring an inherent 'A'
   const consonants = new Set(Object.keys(map).filter(k => !['अ','आ','इ','ई','उ','ऊ','ऋ','ए','ऐ','ओ','औ','०','१','२','३','४','५','६','७','८','९'].includes(k)));
 
   let result = '';
-  const chars = Array.from(text); // Correctly splits multi-byte Unicode characters
+  const chars = Array.from(text); 
 
   for (let i = 0; i < chars.length; i++) {
     let current = chars[i];
     let next = chars[i + 1];
 
-    // 1. Handle spaces, punctuation, or unmapped characters directly
     if (!map[current] && !matraMap[current] && current !== 'ं' && current !== '्') {
       result += current;
       continue;
     }
 
-    // 2. Handle standard character mappings
     if (map[current]) {
       result += map[current];
 
-      // Check if this is a consonant that needs an inherent 'A' sound
       if (consonants.has(current)) {
-        // Do NOT add 'A' if followed by a matra, a halant (्), or a space/end of word
         const isFollowedByMatra = next && matraMap[next];
         const isFollowedByHalant = next === '्';
         const isFollowedByAnusvar = next === 'ं';
@@ -81,15 +76,17 @@ const transliterateToEnglish = (text: string): string => {
         }
       }
     } 
-    // 3. Handle Matras (Vowel signs)
     else if (matraMap[current]) {
       result += matraMap[current];
     } 
-    // 4. Handle Anusvar (ं) -> Maps to 'N' or 'M' depending on context. Using 'N' for Singh.
+    // FIXED ANUSVAR LOGIC FOR SINGH
     else if (current === 'ं') {
-      result += 'N';
+      if (next === 'ह') {
+        result += 'NG'; // Changes si + m + ha into SI + NG + H
+      } else {
+        result += 'N';  // Fallback for words like कंचन (KANCHAN)
+      }
     }
-    // 5. Halant (्) suppresses the inherent vowel, so we do nothing (already skipped adding 'A')
     else if (current === '्') {
       continue;
     }
@@ -98,10 +95,7 @@ const transliterateToEnglish = (text: string): string => {
   return result.toUpperCase();
 };
 
-// Test
-console.log(transliterateToEnglish("दिनेश्वर सिंह")); // Output: DINESHWAR SINGH
-
-export default function SettingsPage() {
+  export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'users' | 'bulk' | 'backup' | 'reports'>('users');
