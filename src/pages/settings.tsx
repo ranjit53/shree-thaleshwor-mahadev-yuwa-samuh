@@ -29,44 +29,77 @@ type LocalMember = Member & {
 const transliterateToEnglish = (text: string): string => {
   if (!text) return '';
   
+  // Mapping for individual Devanagari characters (Consonants & Vowels)
   const map: { [key: string]: string } = {
-    'अ': 'a', 'आ': 'aa', 'इ': 'i', 'ई': 'ee', 'उ': 'u', 'ऊ': 'oo', 'ऋ': 'ri', 'ए': 'e', 'ऐ': 'ai', 'ओ': 'o', 'औ': 'au', 'अं': 'am', 'अः': 'ah',
-    'क': 'k', 'ख': 'kh', 'ग': 'g', 'घ': 'gh', 'ङ': 'ng',
-    'च': 'ch', 'छ': 'chh', 'ज': 'j', 'झ': 'jh', 'ञ': 'ny',
-    'ट': 't', 'ठ': 'th', 'ड': 'd', 'ढ': 'dh', 'ण': 'n',
-    'त': 't', 'थ': 'th', 'द': 'd', 'ध': 'dh', 'न': 'n',
-    'प': 'p', 'फ': 'f', 'ब': 'b', 'भ': 'bh', 'म': 'm',
-    'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'w',
-    'श': 'sh', 'ष': 'sh', 'स': 's', 'ह': 'h',
-    'क्ष': 'ksh', 'त्र': 'tr', 'ज्ञ': 'gy',
-    'ा': 'a', 'ि': 'i', 'ी': 'ee', 'ु': 'u', 'ू': 'oo', 'ृ': 'ri', 'े': 'e', 'ै': 'ai', 'ो': 'o', 'ौ': 'au', 'ं': 'n', 'ः': 'ah', '्': '',
+    'अ': 'A', 'आ': 'AA', 'इ': 'I', 'ई': 'EE', 'उ': 'U', 'ऊ': 'OO', 'ऋ': 'RI', 'ए': 'E', 'ऐ': 'AI', 'ओ': 'O', 'औ': 'AU',
+    'क': 'K', 'ख': 'KH', 'ग': 'G', 'घ': 'GH', 'ङ': 'NG',
+    'च': 'CH', 'छ': 'CHH', 'ज': 'J', 'झ': 'JH', 'ञ': 'NY',
+    'ट': 'T', 'ठ': 'TH', 'ड': 'D', 'ढ': 'DH', 'ण': 'N',
+    'त': 'T', 'थ': 'TH', 'द': 'D', 'ध': 'DH', 'न': 'N',
+    'प': 'P', 'फ': 'F', 'ब': 'B', 'भ': 'BH', 'म': 'M',
+    'य': 'Y', 'र': 'R', 'ल': 'L', 'व': 'W',
+    'श': 'SH', 'ष': 'SH', 'स': 'S', 'ह': 'H',
+    'क्ष': 'KSH', 'त्र': 'TR', 'ज्ञ': 'GY',
     '०': '0', '१': '1', '२': '2', '३': '3', '४': '4', '५': '5', '६': '6', '७': '7', '८': '8', '९': '9'
   };
 
-  let result = '';
-  let i = 0;
-  while (i < text.length) {
-    // Check for 3-char or 2-char combinations first (like क्ष, त्रा)
-    let chunk3 = text.substr(i, 3);
-    let chunk2 = text.substr(i, 2);
-    let chunk1 = text.substr(i, 1);
+  // Mapping for dependent vowel signs (Matras)
+  const matraMap: { [key: string]: string } = {
+    'ा': 'A', 'ि': 'I', 'ी': 'EE', 'ु': 'U', 'ू': 'OO', 'ृ': 'RI', 'े': 'E', 'ै': 'AI', 'ो': 'O', 'ौ': 'AU'
+  };
 
-    if (map[chunk3]) {
-      result += map[chunk3];
-      i += 3;
-    } else if (map[chunk2]) {
-      result += map[chunk2];
-      i += 2;
-    } else if (map[chunk1]) {
-      result += map[chunk1];
-      i += 1;
-    } else {
-      result += chunk1; // Keep original if not in map
-      i += 1;
+  // Set of characters that are standalone consonants requiring an inherent 'A'
+  const consonants = new Set(Object.keys(map).filter(k => !['अ','आ','इ','ई','उ','ऊ','ऋ','ए','ऐ','ओ','औ','०','१','२','३','४','५','६','७','८','९'].includes(k)));
+
+  let result = '';
+  const chars = Array.from(text); // Correctly splits multi-byte Unicode characters
+
+  for (let i = 0; i < chars.length; i++) {
+    let current = chars[i];
+    let next = chars[i + 1];
+
+    // 1. Handle spaces, punctuation, or unmapped characters directly
+    if (!map[current] && !matraMap[current] && current !== 'ं' && current !== '्') {
+      result += current;
+      continue;
+    }
+
+    // 2. Handle standard character mappings
+    if (map[current]) {
+      result += map[current];
+
+      // Check if this is a consonant that needs an inherent 'A' sound
+      if (consonants.has(current)) {
+        // Do NOT add 'A' if followed by a matra, a halant (्), or a space/end of word
+        const isFollowedByMatra = next && matraMap[next];
+        const isFollowedByHalant = next === '्';
+        const isFollowedByAnusvar = next === 'ं';
+        const isEndOfWord = !next || next === ' ' || next === '\n';
+
+        if (!isFollowedByMatra && !isFollowedByHalant && !isEndOfWord && !isFollowedByAnusvar) {
+          result += 'A';
+        }
+      }
+    } 
+    // 3. Handle Matras (Vowel signs)
+    else if (matraMap[current]) {
+      result += matraMap[current];
+    } 
+    // 4. Handle Anusvar (ं) -> Maps to 'N' or 'M' depending on context. Using 'N' for Singh.
+    else if (current === 'ं') {
+      result += 'N';
+    }
+    // 5. Halant (्) suppresses the inherent vowel, so we do nothing (already skipped adding 'A')
+    else if (current === '्') {
+      continue;
     }
   }
-  return text.split('').map(char => map[char] || char).join('');
+
+  return result.toUpperCase();
 };
+
+// Test
+console.log(transliterateToEnglish("दिनेश्वर सिंह")); // Output: DINESHWAR SINGH
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
