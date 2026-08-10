@@ -29,7 +29,6 @@ type LocalMember = Member & {
 const transliterateToEnglish = (text: string): string => {
   if (!text) return '';
   
-  // Mapping for Nepali/Devanagari characters
   const map: { [key: string]: string } = {
     'अ': 'a', 'आ': 'aa', 'इ': 'i', 'ई': 'ee', 'उ': 'u', 'ऊ': 'oo', 'ऋ': 'ri', 'ए': 'e', 'ऐ': 'ai', 'ओ': 'o', 'औ': 'au', 'अं': 'am', 'अः': 'ah',
     'क': 'k', 'ख': 'kh', 'ग': 'g', 'घ': 'gh', 'ङ': 'ng',
@@ -44,6 +43,28 @@ const transliterateToEnglish = (text: string): string => {
     '०': '0', '१': '1', '२': '2', '३': '3', '४': '4', '५': '5', '६': '6', '७': '7', '८': '8', '९': '9'
   };
 
+  let result = '';
+  let i = 0;
+  while (i < text.length) {
+    // Check for 3-char or 2-char combinations first (like क्ष, त्रा)
+    let chunk3 = text.substr(i, 3);
+    let chunk2 = text.substr(i, 2);
+    let chunk1 = text.substr(i, 1);
+
+    if (map[chunk3]) {
+      result += map[chunk3];
+      i += 3;
+    } else if (map[chunk2]) {
+      result += map[chunk2];
+      i += 2;
+    } else if (map[chunk1]) {
+      result += map[chunk1];
+      i += 1;
+    } else {
+      result += chunk1; // Keep original if not in map
+      i += 1;
+    }
+  }
   return text.split('').map(char => map[char] || char).join('');
 };
 
