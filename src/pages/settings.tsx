@@ -505,7 +505,7 @@ export default function SettingsPage() {
           principalPaid: memPrincipalPaid,
           interestPaid: memInterestPaid,
           fines: memFines,
-          netContribution: memSavings + memInterestPaid - memLoans,
+          netContribution: memSavings + memLoans - memPrincipalPaid,
         });
       });
 
