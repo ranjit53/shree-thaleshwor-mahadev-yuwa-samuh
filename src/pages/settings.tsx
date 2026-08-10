@@ -43,6 +43,22 @@ const transliterateToEnglish = (text: string): string => {
   }
 
   // Mapping for individual Devanagari characters
+ const transliterateToEnglish = (text: string): string => {
+  if (!text) return '';
+
+  // 1. Process inline translations for bracket terms dynamically
+  let processedText = text;
+  const translationDict: { [key: string]: string } = {
+    'ट्रैक्टर': 'TRACTOR',
+    'Media': 'MEDIA'
+  };
+
+  // Replace any matching terms inside parentheses
+  for (const [hindiTerm, englishTerm] of Object.entries(translationDict)) {
+    processedText = processedText.replace(hindiTerm, englishTerm);
+  }
+
+  // 2. Primary Devanagari Base Map
   const map: { [key: string]: string } = {
     'अ': 'A', 'आ': 'AA', 'इ': 'I', 'ई': 'EE', 'उ': 'U', 'ऊ': 'OO', 'ऋ': 'RI', 'ए': 'E', 'ऐ': 'AI', 'ओ': 'O', 'औ': 'AU',
     'क': 'K', 'ख': 'KH', 'ग': 'G', 'घ': 'GH', 'ङ': 'NG',
@@ -50,13 +66,13 @@ const transliterateToEnglish = (text: string): string => {
     'ट': 'T', 'ठ': 'TH', 'ड': 'D', 'ढ': 'DH', 'ण': 'N',
     'त': 'T', 'थ': 'TH', 'द': 'D', 'ध': 'DH', 'न': 'N',
     'प': 'P', 'फ': 'F', 'ब': 'B', 'भ': 'BH', 'म': 'M',
-    'य': 'Y', 'र': 'R', 'ल': 'L', 'व': 'W',
+    'य': 'Y', 'र': 'R', 'ल': 'L', 'व': 'W', 
     'श': 'SH', 'ष': 'SH', 'स': 'S', 'ह': 'H',
     'क्ष': 'KSH', 'त्र': 'TR', 'ज्ञ': 'GY',
     '०': '0', '१': '1', '२': '2', '३': '3', '४': '4', '५': '5', '६': '6', '७': '7', '८': '8', '९': '9'
   };
 
-  // Matra overrides tailored to your exact spelling preferences (e.g., प्रदीप -> PRADIP)
+  // Customized Matra choices matching your dataset rules (e.g., प्रदीप -> PRADIP)
   const matraMap: { [key: string]: string } = {
     'ा': 'A', 'ि': 'I', 'ी': 'I', 'ु': 'U', 'ू': 'U', 'ृ': 'RI', 'े': 'E', 'ै': 'AI', 'ो': 'O', 'ौ': 'AU'
   };
@@ -64,14 +80,14 @@ const transliterateToEnglish = (text: string): string => {
   const consonants = new Set(Object.keys(map).filter(k => !['अ','आ','इ','ई','उ','ऊ','ऋ','ए','ऐ','ओ','औ','०','१','२','३','४','५','६','७','८','९'].includes(k)));
 
   let result = '';
-  const chars = Array.from(processedText); 
+  const chars = Array.from(processedText);
 
   for (let i = 0; i < chars.length; i++) {
     let current = chars[i];
     let next = chars[i + 1];
 
-    // Skip processing if this part was already converted by the translation step
-    if (/[A-Z() ]/.test(current)) {
+    // Pass through English letters and brackets unchanged
+    if (/[A-Za-z() ]/.test(current)) {
       result += current;
       continue;
     }
@@ -82,15 +98,22 @@ const transliterateToEnglish = (text: string): string => {
     }
 
     if (map[current]) {
-      result += map[current];
+      const isEndOfWord = !next || next === ' ' || next === '\n' || next === '(';
 
+      // Exception 1: Contextual terminal 'व' mapping to 'V' (e.g., शिव -> SHIV)
+      if (current === 'व' && isEndOfWord) {
+        result += 'V';
+      } else {
+        result += map[current];
+      }
+
+      // Handle inherent vowel addition logic
       if (consonants.has(current)) {
         const isFollowedByMatra = next && matraMap[next];
         const isFollowedByHalant = next === '्';
         const isFollowedByAnusvar = next === 'ं';
-        const isEndOfWord = !next || next === ' ' || next === '\n' || next === '(';
-
-        // Special rule: retain terminal 'A' for conjunct endings like -NDRA or -VRA
+        
+        // Exception 2: Conjunct ending rule to retain terminal 'A' (e.g., नगेन्द्र -> NAGENDRA)
         const isConjunctEnding = current === 'र' && chars[i - 1] === '्';
 
         if (!isFollowedByMatra && !isFollowedByHalant && !isFollowedByAnusvar) {
@@ -103,11 +126,12 @@ const transliterateToEnglish = (text: string): string => {
     else if (matraMap[current]) {
       result += matraMap[current];
     } 
+    // Exception 3: Anusvar conversion context (e.g., सिंह -> SINGH)
     else if (current === 'ं') {
       if (next === 'ह') {
-        result += 'NG'; // For सिंह (SINGH)
+        result += 'NG';
       } else {
-        result += 'N';  // For सन्तोष / रन्जित
+        result += 'N';
       }
     }
     else if (current === '्') {
@@ -115,21 +139,9 @@ const transliterateToEnglish = (text: string): string => {
     }
   }
 
-  // Clean up any double spaces and standardize layout
+  // Normalize spaces and convert everything to upper case
   return result.replace(/\s+/g, ' ').trim().toUpperCase();
 };
-
-// --- Verification Tests ---
-const testNames = [
-  "दिनेश्वर सिंह", "जितेन्द्र कुमार महतो", "संतोष महतो (Media)", "जितेन्द्र महतो",
-  "शिव शंकर साह", "सुरेन्द्र कुमार महतो", "शिव राम महतो", "उमेश साह", "सत्रुधन राय",
-  "नगेन्द्र राय यादव", "बिनोद महतो", "रन्जित कुमार महतो", "बेनी मधब कुशवाहा",
-  "सन्तोष महतो (ट्रैक्टर)", "राम पुकार महतो", "सुरेश महतो", "प्रदीप साह",
-  "उमेश महतो", "किशन महतो", "मुकेश कुमार सिंह महतो", "सरोज महतो"
-];
-
-testNames.forEach(name => console.log(`${name} = ${transliterateToEnglish(name)}`));
-
 
   export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
