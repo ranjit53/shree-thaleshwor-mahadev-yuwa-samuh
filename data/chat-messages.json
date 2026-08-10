@@ -92,6 +92,9 @@
     "sender": "user",
     "text": "👍️",
     "attachment": null,
-    "timestamp": "2026-08-10T14:45:43.441Z"
+    "timestamp": "2026-08-10T14:45:43.441Z",
+    "seenBy": [
+      "user"
+    ]
   }
 ]
