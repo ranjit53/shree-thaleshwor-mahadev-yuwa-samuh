@@ -28,7 +28,20 @@ type LocalMember = Member & {
 // --- HELPER: Devanagari to English Transliteration ---
 const transliterateToEnglish = (text: string): string => {
   if (!text) return '';
+
+  // 1. Handle explicit word-replacement translations first (e.g., brackets)
+  let processedText = text;
+  const translations: { [key: string]: string } = {
+    '(Media)': '(MEDIA)',
+    '(ट्रैक्टर)': '(TRACTOR)'
+  };
   
+  for (const [key, value] of Object.entries(translations)) {
+    if (processedText.includes(key)) {
+      processedText = processedText.replace(key, value);
+    }
+  }
+
   // Mapping for individual Devanagari characters
   const map: { [key: string]: string } = {
     'अ': 'A', 'आ': 'AA', 'इ': 'I', 'ई': 'EE', 'उ': 'U', 'ऊ': 'OO', 'ऋ': 'RI', 'ए': 'E', 'ऐ': 'AI', 'ओ': 'O', 'औ': 'AU',
@@ -43,19 +56,25 @@ const transliterateToEnglish = (text: string): string => {
     '०': '0', '१': '1', '२': '2', '३': '3', '४': '4', '५': '5', '६': '6', '७': '7', '८': '8', '९': '9'
   };
 
-  // Mapping for dependent vowel signs (Matras)
+  // Matra overrides tailored to your exact spelling preferences (e.g., प्रदीप -> PRADIP)
   const matraMap: { [key: string]: string } = {
-    'ा': 'A', 'ि': 'I', 'ी': 'EE', 'ु': 'U', 'ू': 'OO', 'ृ': 'RI', 'े': 'E', 'ै': 'AI', 'ो': 'O', 'ौ': 'AU'
+    'ा': 'A', 'ि': 'I', 'ी': 'I', 'ु': 'U', 'ू': 'U', 'ृ': 'RI', 'े': 'E', 'ै': 'AI', 'ो': 'O', 'ौ': 'AU'
   };
 
   const consonants = new Set(Object.keys(map).filter(k => !['अ','आ','इ','ई','उ','ऊ','ऋ','ए','ऐ','ओ','औ','०','१','२','३','४','५','६','७','८','९'].includes(k)));
 
   let result = '';
-  const chars = Array.from(text); 
+  const chars = Array.from(processedText); 
 
   for (let i = 0; i < chars.length; i++) {
     let current = chars[i];
     let next = chars[i + 1];
+
+    // Skip processing if this part was already converted by the translation step
+    if (/[A-Z() ]/.test(current)) {
+      result += current;
+      continue;
+    }
 
     if (!map[current] && !matraMap[current] && current !== 'ं' && current !== '्') {
       result += current;
@@ -69,22 +88,26 @@ const transliterateToEnglish = (text: string): string => {
         const isFollowedByMatra = next && matraMap[next];
         const isFollowedByHalant = next === '्';
         const isFollowedByAnusvar = next === 'ं';
-        const isEndOfWord = !next || next === ' ' || next === '\n';
+        const isEndOfWord = !next || next === ' ' || next === '\n' || next === '(';
 
-        if (!isFollowedByMatra && !isFollowedByHalant && !isEndOfWord && !isFollowedByAnusvar) {
-          result += 'A';
+        // Special rule: retain terminal 'A' for conjunct endings like -NDRA or -VRA
+        const isConjunctEnding = current === 'र' && chars[i - 1] === '्';
+
+        if (!isFollowedByMatra && !isFollowedByHalant && !isFollowedByAnusvar) {
+          if (!isEndOfWord || isConjunctEnding) {
+            result += 'A';
+          }
         }
       }
     } 
     else if (matraMap[current]) {
       result += matraMap[current];
     } 
-    // FIXED ANUSVAR LOGIC FOR SINGH
     else if (current === 'ं') {
       if (next === 'ह') {
-        result += 'NG'; // Changes si + m + ha into SI + NG + H
+        result += 'NG'; // For सिंह (SINGH)
       } else {
-        result += 'N';  // Fallback for words like कंचन (KANCHAN)
+        result += 'N';  // For सन्तोष / रन्जित
       }
     }
     else if (current === '्') {
@@ -92,8 +115,21 @@ const transliterateToEnglish = (text: string): string => {
     }
   }
 
-  return result.toUpperCase();
+  // Clean up any double spaces and standardize layout
+  return result.replace(/\s+/g, ' ').trim().toUpperCase();
 };
+
+// --- Verification Tests ---
+const testNames = [
+  "दिनेश्वर सिंह", "जितेन्द्र कुमार महतो", "संतोष महतो (Media)", "जितेन्द्र महतो",
+  "शिव शंकर साह", "सुरेन्द्र कुमार महतो", "शिव राम महतो", "उमेश साह", "सत्रुधन राय",
+  "नगेन्द्र राय यादव", "बिनोद महतो", "रन्जित कुमार महतो", "बेनी मधब कुशवाहा",
+  "सन्तोष महतो (ट्रैक्टर)", "राम पुकार महतो", "सुरेश महतो", "प्रदीप साह",
+  "उमेश महतो", "किशन महतो", "मुकेश कुमार सिंह महतो", "सरोज महतो"
+];
+
+testNames.forEach(name => console.log(`${name} = ${transliterateToEnglish(name)}`));
+
 
   export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
